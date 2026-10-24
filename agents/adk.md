@@ -4,9 +4,11 @@ El agente vive en `apps/api/app/agent.py` y usa [ADK para Python](https://adk.de
 
 ## Cómo está armado
 
-- `prais_agent`: un `LlmAgent` con sus instrucciones y la tool `buscar_ofertas`.
-- `buscar_ofertas`: una función `async` que llama a `search_offers`. ADK la convierte en tool: los tipos de los parámetros y el docstring (con su sección `Args`) son lo que lee el modelo.
-- `ask_prais(user_id, message)`: corre el agente con un `Runner` y devuelve el texto de la respuesta. Cada `user_id` tiene su propia conversación (`web:<id>`, `whatsapp:<número>`), así que el agente recuerda lo que ya preguntó.
+- `root_agent` (`app/agents/orchestrator.py`): el orquestador. Entiende qué producto o servicio quiere comparar la persona. Cuando lo sabe, llama a cada especialista y le pasa ese producto. Después resume los hallazgos. Es el único que habla con la persona. `ask_prais` corre este agente.
+- Seis especialistas (`app/agents/specialists.py`), uno por fuente de la pizarra: web abierta, Meta Ad Library, Mercado Libre, Facebook Marketplace, Instagram y TikTok. El orquestador los llama con `AgentTool`. Cada uno corre en su propia sesión y devuelve un informe corto. Ese texto no entra al chat de la persona: solo lo lee el orquestador, que es quien responde.
+- La instrucción de cada especialista sale de una plantilla: busca ofertas en su fuente, mira la fidelidad del vendedor y reporta solo al orquestador (`root-agent`). El producto le llega en el argumento `product`.
+- Cada especialista tiene una tool que llama a `search_offers` y se queda con las ofertas de su canal. La confianza del vendedor es `merchant.trust`, la fórmula de `app/lib/prices.py`. La confianza del precio no está puntuada: el especialista lo dice y no inventa un número. Meta Ad Library todavía no tiene canal ni fuente: su tool devuelve cero ofertas.
+- `ask_prais(user_id, message)`: corre el orquestador con un `Runner` y devuelve el texto de la respuesta. Cada `user_id` tiene su propia conversación (`web:<id>`, `whatsapp:<número>`), así que el orquestador recuerda lo que ya preguntó.
 - Las sesiones están en memoria (`InMemorySessionService`).
 
 ## Reglas
@@ -18,7 +20,7 @@ El agente vive en `apps/api/app/agent.py` y usa [ADK para Python](https://adk.de
 
 ## Agregar una tool
 
-Escribe otra función en `apps/api/app/agent.py` y súmala a `tools`. Si la tool toca una fuente o hace cálculos, la lógica va en `apps/api/app/lib` y la tool queda como una llamada fina.
+Una tool de especialista va en `apps/api/app/agents/specialists.py`, en el especialista de esa fuente. Si la tool toca una fuente o hace cálculos, la lógica va en `apps/api/app/lib` y la tool queda como una llamada fina.
 
 ## Modelos
 

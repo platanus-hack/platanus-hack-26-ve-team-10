@@ -14,7 +14,7 @@ ChatGPT / Claude ─────┘                                             
 ```
 
 - **`apps/api`**: FastAPI con tres rutas, `/health` y una ruta interna para la cola. Cada ruta es un router en `app/routes/`, registrado en `app/main.py`.
-- **El agente** (`app/agent.py`) conversa: pregunta lo que falta (producto, zona, envío), busca con la tool `buscar_ofertas` y explica la mejor opción.
+- **El orquestador** (`app/agents/orchestrator.py`, corrido desde `app/agent.py`) entiende qué producto o servicio comparar, pide el hallazgo a un especialista por fuente y resume. Los especialistas no hablan con la persona.
 - **`search_offers`** (`app/lib/search.py`) llama en paralelo a todas las fuentes de `app/lib/sources/`, convierte, filtra y ordena. Los contratos entre las piezas están en [contracts.md](contracts.md).
 - **WhatsApp** pasa por una cola de Cloud Tasks (`app/lib/tasks.py`): el webhook valida la firma, encola un mensaje por tarea y responde 200; la cola llama a `/internal/whatsapp-task`, que corre el agente y responde por Kapso. Así hay reintentos y no se procesa dos veces el mismo mensaje. Detalle en [kapso.md](kapso.md).
 - **MCP** llama directo a `search_offers`, sin el agente, porque quien pregunta ya es un asistente de IA.
@@ -26,7 +26,7 @@ ChatGPT / Claude ─────┘                                             
 | Pieza | Estado |
 |---|---|
 | Web con chat | Hecha |
-| Agente con una tool | Hecho. Falta probarlo con credenciales de Gemini |
+| Orquestador y un especialista por fuente | Hecho. Las fuentes reales siguen sin conectar: cada especialista lee la búsqueda de ejemplo y filtra por su canal. Falta probarlo con credenciales de Gemini |
 | Webhook de WhatsApp | Hecho, con cola de Cloud Tasks (reintentos y deduplicación). Falta configurarlo en Kapso |
 | MCP con `search_prices` | Hecho |
 | Catálogo SEO (`/ve/...`) | Hecho con datos de ejemplo: 147 modelos, 28 categorías. Se indexa solo cuando hay ofertas reales: ver [seo-geo.md](seo-geo.md) |
@@ -38,7 +38,7 @@ ChatGPT / Claude ─────┘                                             
 
 - Agente con ADK y Gemini, Kapso y MCP en el backend. Web en Next.js, solo interfaz.
 - Infraestructura en GCP, con Cloud Build para desplegar. Cloudflare solo maneja el DNS.
-- Un solo agente con tools. Los sub-agentes de la pizarra ([resources/usaprais.com-agentic-architecture.pdf](../resources/usaprais.com-agentic-architecture.pdf)) se agregan si un solo agente no alcanza.
+- Un orquestador (`root_agent`) y un especialista por fuente de la pizarra ([resources/usaprais.com-agentic-architecture.pdf](../resources/usaprais.com-agentic-architecture.pdf)). El orquestador resume. Los especialistas le reportan a él y no hablan con la persona.
 - Las sesiones del agente viven en memoria. Si se pierden con un reinicio, no importa para la demo.
 
 > **Backend: de Fastify a Python (FastAPI).** El backend se reescribió en Python conservando los contratos: las mismas rutas (`/chat`, `/whatsapp`, `/mcp`, `/health`), las mismas formas de entrada y salida y las mismas reglas. Lo único que cambia son los nombres internos, por el lenguaje (`searchOffers` → `search_offers`, `askPrais` → `ask_prais`, `getRate` → `get_rate`, tipos en `snake_case`) y que una fuente ya no recibe un `AbortSignal`: la búsqueda la cancela a los 8 s. Lo decidió quien arma el backend y la infra. El detalle está en [contracts.md](contracts.md).
