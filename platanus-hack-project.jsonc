@@ -3,10 +3,10 @@
   "project-name": "Prais",
 
   // Short one-line summary of your project (in Spanish).
-  "project-oneliner-spanish": "Encuentra el mejor precio comparando los principales canales de venta con búsqueda inteligente.",
+  "project-oneliner-spanish": "Encuentra el producto exacto que buscas y compara lo que cobra cada vendedor en Venezuela, para que nunca pagues de más.",
 
   // Brief description of your project (in Spanish).
-  "project-description-spanish": "El mismo producto puede costar muy distinto según el negocio, y eso genera desconfianza al comprar. Prais busca en los principales canales de distribución con una búsqueda inteligente y te muestra cuál es el mejor precio en general, para que compres sin dudar de si estás pagando de más.",
+  "project-description-spanish": "En Venezuela es común pagar de más: el mismo producto cuesta muy distinto según quién lo venda, y no hay forma fácil de saber cuál es el precio justo. Prais encuentra el producto exacto que buscas en los principales canales de venta, compara lo que cobra cada vendedor y te dice dónde comprarlo al mejor precio. Se encarga también de las conversiones entre dólares y bolívares, para que compares precios reales y compres con confianza.",
 
   // Public URL where your project is deployed and running.
   // Must be a valid URL, for example: https://my-project.vercel.app
