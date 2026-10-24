@@ -1,75 +1,43 @@
-# Agente: apps/agent y packages/core
+# Agente con ADK
 
-El agente hace la búsqueda inteligente. Está hecho con [ADK para TypeScript](https://github.com/google/adk-js) (`@google/adk`) y usa Gemini en Vertex AI. La lógica que no necesita un modelo vive en `packages/core`, y el agente la usa como tools.
+El agente vive en `src/agent/index.ts` y usa [ADK para TypeScript](https://github.com/google/adk-js) (`@google/adk` 2.3.0).
 
-## Orquestador y sub-agentes
+## Cómo está armado
 
-La pizarra tiene un agente central con tres sub-agentes. Esta es la propuesta para los tres, que coincide con lo que la pizarra pide en el onboarding y en la confianza:
+- `praisAgent`: un `LlmAgent` con sus instrucciones y la tool `buscar_ofertas`.
+- `buscar_ofertas`: una `FunctionTool` con parámetros en zod 4 que llama a `searchOffers`.
+- `askPrais({ userId, message })`: corre el agente con un `Runner` y devuelve el texto de la respuesta. Cada `userId` tiene su propia conversación (`web:<id>`, `whatsapp:<número>`), así que el agente recuerda lo que ya preguntó.
+- Las sesiones están en memoria (`InMemorySessionService`).
 
-| Agente | Qué hace | Tools |
-|---|---|---|
-| `prais` (orquestador) | Recibe la consulta, delega y arma la respuesta final | Los tres sub-agentes |
-| `onboarding` | Junta lo que falta para buscar bien: zona, si necesita envío, características del producto. Recuerda lo que el usuario ya dijo | Leer y guardar el perfil del usuario |
-| `search` | Busca ofertas: primero en el índice, después en vivo si hace falta | `searchIndex`, `searchLive`, `convertCurrency`, `rankOffers` |
-| `trust` | Califica a cada comercio y decide si un resultado necesita revisión humana | `getMerchantTrust`, `openReviewCase` |
+## Reglas
 
-Si el equipo los define distinto, cambia esta tabla primero.
+1. **No inventa precios.** Todo precio sale de una tool. Si no hay resultados, lo dice.
+2. **Una pregunta a la vez** cuando le falta un dato.
+3. **Las cuentas las hace el código**, no el modelo: conversión de moneda, orden y confianza están en `src/lib`.
 
-## Reparto entre core y el agente
+## Agregar una tool
 
-| Va en `packages/core` | Va en `apps/agent` |
-|---|---|
-| Tipos: `Offer`, `Merchant`, `TrustScore`, `SearchResult` | Entender la consulta y decidir qué preguntar |
-| Adapters de fuentes ([sources.md](sources.md)) | Decidir cuándo buscar en vivo |
-| Conversión de monedas con la tasa registrada | Explicar por qué una oferta es la mejor |
-| Ranking de ofertas | Decidir cuándo abrir un caso en el human loop |
-| Puntaje de confianza | El servidor HTTP `POST /search` |
-| Formateo de precios | |
+Crea otra `FunctionTool` en `src/agent/index.ts` y súmala a `tools`. Si la tool toca una fuente o hace cálculos, ponle la lógica en `src/lib` y deja la tool como una llamada fina.
 
-Regla práctica: si se puede probar con un test sin llamar a un modelo, va en core.
+## Modelos
 
-## Estructura
+El modelo se elige con `PRAIS_MODEL`, y por defecto es `gemini-flash-latest`. ADK 2.3 reconoce por nombre:
 
-```
-packages/core/src/
-  types.ts
-  money.ts              Conversión y formateo
-  rank.ts               Mejor precio en general
-  trust.ts              Puntaje de confianza del comercio
-  sources/              Un adapter por fuente
-apps/agent/src/
-  agent.ts              Orquestador (rootAgent)
-  agents/               onboarding.ts, search.ts, trust.ts
-  tools/                Tools finas sobre core
-  server.ts             POST /search → SearchResult
-  .env.example
-```
+- `gemini-*`: cualquier Gemini, por Google AI Studio o por Vertex AI.
+- Endpoints de Vertex AI con modelos de Gemini afinados (`projects/.../endpoints/...`).
+- `apigee/...`: Gemini a través de un proxy de Apigee.
 
-## Reglas del agente
+Para usar otro proveedor (Claude, OpenAI...) hay que escribir una clase que extienda `BaseLlm` y registrarla en `LLMRegistry`. La versión de TypeScript no trae el adaptador LiteLLM que sí tiene la de Python.
 
-1. **No inventa precios.** Todo precio de la respuesta sale de una tool. Si no hay resultados, lo dice.
-2. **Cita.** Cada oferta de la respuesta trae su fuente, su fecha, su enlace y el puntaje del comercio.
-3. **Convierte con core.** El modelo nunca hace cuentas de moneda.
-4. **Pregunta una sola cosa a la vez.** Si le falta un dato, devuelve `kind: "question"` con una pregunta concreta.
-5. **Si duda, escala.** Un precio que no puede confirmar o un comercio con poca confianza abren un caso en el human loop. Mientras tanto, el agente le avisa al usuario.
-6. **Contesta en español de Venezuela**, con un tono breve y directo.
+## Credenciales
 
-## Desarrollo
+- **En local:** `GOOGLE_GENAI_API_KEY` con una key de Google AI Studio.
+- **En Cloud Run:** `GOOGLE_GENAI_USE_VERTEXAI=true`, `GOOGLE_CLOUD_PROJECT` y `GOOGLE_CLOUD_LOCATION`. La autenticación la da la cuenta de servicio, sin key.
 
-- `@google/adk` va por la versión 2.x (2.3.0 al 2026-10-24). Fija la versión exacta.
-- Usa zod 4, la misma versión de la que depende ADK.
-- En local, el modelo puede usar una API key de Google AI Studio en `.env`. En Cloud Run usa Vertex AI con la cuenta de servicio. El README de adk-js explica las dos configuraciones.
-- Para empezar, el modelo es `gemini-flash-latest`.
+## Probar sin la web
 
 ```bash
-npx @google/adk-devtools web                # UI de desarrollo
-npx @google/adk-devtools run src/agent.ts   # Probar en la terminal
+npx @google/adk-devtools web
 ```
 
 Siempre escribe el nombre completo del paquete en `npx`. Un `npx adk` a secas descarga un paquete que no tiene nada que ver.
-
-Las consultas de ejemplo para probar el agente van en `resources/`. Cuando cambies un prompt o una tool, córrelas otra vez.
-
-## Deploy
-
-Es un servicio de Cloud Run, privado: solo lo invocan las otras apps con sus cuentas de servicio. Ver [gcp.md](gcp.md).
