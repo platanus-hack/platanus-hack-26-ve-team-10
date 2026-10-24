@@ -1,0 +1,97 @@
+{
+ "method": "curl -sL, no login, 2026-10-24 13:32 -0400",
+ "results": {
+  "https://gemini.google.com/app/feb9fce4d93b8a82": {
+   "http": 200,
+   "final": "https://gemini.google.com/app/feb9fce4d93b8a82"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16ed6-2d30-736f-81de-e6c72e9ffdd7": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16ed6-2d30-736f-81de-e6c72e9ffdd7"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16ed6-2d78-77a8-bf44-fcbaa9cc6050": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16ed6-2d78-77a8-bf44-fcbaa9cc6050"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16eda-b58d-749f-b17a-8ccc9741ed51": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16eda-b58d-749f-b17a-8ccc9741ed51"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16eda-b6d8-702c-bfa3-9713d043c3cb": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16eda-b6d8-702c-bfa3-9713d043c3cb"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16eda-b7e8-7202-bb7e-4930eb27256a": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16eda-b7e8-7202-bb7e-4930eb27256a"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16eda-b940-761a-a296-e9b127e596a8": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16eda-b940-761a-a296-e9b127e596a8"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16eda-ba75-75b9-a7ff-78a05e789837": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16eda-ba75-75b9-a7ff-78a05e789837"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edc-34a4-715a-9f3d-e3bdb6715b56": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edc-34a4-715a-9f3d-e3bdb6715b56"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edc-60e6-7266-b026-5c261e292375": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edc-60e6-7266-b026-5c261e292375"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edc-ac9e-775c-ba58-a29e35760f71": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edc-ac9e-775c-ba58-a29e35760f71"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edc-adbd-70d9-b9b2-06f1be7a8ffa": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edc-adbd-70d9-b9b2-06f1be7a8ffa"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edc-b0a3-711f-b294-923275e8006f": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edc-b0a3-711f-b294-923275e8006f"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edd-60ae-7638-81d3-b1a9031cd3d3": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edd-60ae-7638-81d3-b1a9031cd3d3"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edd-8d16-7103-b484-7df98cc03422": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edd-8d16-7103-b484-7df98cc03422"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edd-dcb8-756f-bf16-8b03c42cf291": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edd-dcb8-756f-bf16-8b03c42cf291"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16ede-5223-760b-9d6e-566d5aeb1787": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16ede-5223-760b-9d6e-566d5aeb1787"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16ede-672f-728f-b992-daf8c958a5c1": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16ede-672f-728f-b992-daf8c958a5c1"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16ede-8c97-76d5-8e57-768b4e52bc75": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16ede-8c97-76d5-8e57-768b4e52bc75"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16ede-a406-746d-a605-080b4b06af22": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16ede-a406-746d-a605-080b4b06af22"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16ede-b95a-77d9-ba9a-e815d45e80b7": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16ede-b95a-77d9-ba9a-e815d45e80b7"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edf-6b4c-760a-96a2-c7bf2bbc285c": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edf-6b4c-760a-96a2-c7bf2bbc285c"
+  },
+  "https://www.firecrawl.dev/app/agent/01a16edf-7e77-75d9-a607-1c77d3b8012a": {
+   "http": 404,
+   "final": "https://www.firecrawl.dev/app/agent/01a16edf-7e77-75d9-a607-1c77d3b8012a"
+  }
+ }
+}

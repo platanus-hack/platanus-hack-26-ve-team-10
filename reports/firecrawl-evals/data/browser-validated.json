@@ -1,0 +1,1274 @@
+{
+ "meta": {
+  "validator": "/workspace/prais-evals/baseline/validate.py",
+  "sha256": "815aab02c846cdb570d826197baed9ca0968ba7c618682960ea38a7fdc228379"
+ },
+ "note": "browser rows have no structured price per URL; source_urls checked with price=None",
+ "offers": [
+  {
+   "row": 0,
+   "product_id": "p01",
+   "surface": "gemini_app",
+   "offer": {
+    "title": "¿Dónde puedo comprar iphone 17 precio en dolares en Venezuela y a qué precio? Dame vendedores con contacto y precio.",
+    "url": "https://mundoelectronica.com/marca/apple",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://mundoelectronica.com/marca/apple",
+    "ve_evidence": [
+     "phone",
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 0,
+   "product_id": "p01",
+   "surface": "gemini_app",
+   "offer": {
+    "title": "¿Dónde puedo comprar iphone 17 precio en dolares en Venezuela y a qué precio? Dame vendedores con contacto y precio.",
+    "url": "https://iphonizate.co/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://iphonizate.co/",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 0,
+   "product_id": "p01",
+   "surface": "gemini_app",
+   "offer": {
+    "title": "¿Dónde puedo comprar iphone 17 precio en dolares en Venezuela y a qué precio? Dame vendedores con contacto y precio.",
+    "url": "https://www.iphonevenezuela.com/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.iphonevenezuela.com/",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 0,
+   "product_id": "p01",
+   "surface": "gemini_app",
+   "offer": {
+    "title": "¿Dónde puedo comprar iphone 17 precio en dolares en Venezuela y a qué precio? Dame vendedores con contacto y precio.",
+    "url": "https://mundomac.com.ve/contacto/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://mundomac.com.ve/contacto/",
+    "ve_evidence": [
+     "domain:mundomac.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 1,
+   "product_id": "p01",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "iphone 17 precio en dolares",
+    "url": "https://www.apple.com/shop/buy-iphone/iphone-17",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.apple.com/shop/buy-iphone/iphone-17",
+    "ve_evidence": [],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 1,
+   "product_id": "p01",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "iphone 17 precio en dolares",
+    "url": "https://www.apple.com/us-es/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.apple.com/us-es/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+    "ve_evidence": [],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 1,
+   "product_id": "p01",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "iphone 17 precio en dolares",
+    "url": "https://soytechno.com/iphone-17/",
+    "price": null
+   },
+   "validation": {
+    "status": "unverifiable",
+    "reason": "blocked/empty (403)",
+    "http": 403,
+    "final_url": "https://soytechno.com/iphone-17/"
+   }
+  },
+  {
+   "row": 1,
+   "product_id": "p01",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "iphone 17 precio en dolares",
+    "url": "https://www.lanacion.com.ar/estados-unidos/cuanto-cuesta-el-iphone-17-en-estados-unidos-en-diciembre-de-2025-y-antes-de-2026-nid05122025/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.lanacion.com.ar/estados-unidos/cuanto-cuesta-el-iphone-17-en-estados-unidos-en-diciembre-de-2025-y-antes-de-2026-nid05122025/",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 1,
+   "product_id": "p01",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "iphone 17 precio en dolares",
+    "url": "https://www.apple.com/shop/buy-iphone/iphone-17/6.3-inch-display-256gb-black-unlocked",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.apple.com/shop/buy-iphone/iphone-17/6.3-inch-display-256gb-black-unlocked",
+    "ve_evidence": [],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 1,
+   "product_id": "p01",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "iphone 17 precio en dolares",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598701641378-1647288774&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 2,
+   "product_id": "p02",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "redmi 15c precio",
+    "url": "https://listado.mercadolibre.com.ve/celulares-y-telefonos/celulares-y-smartphones/xiaomi/redmi-15c",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Fcelulares-y-telefonos%2Fcelulares-y-smartphones%2Fxiaomi%2Fredmi-15c&tid=5aaaf66d-2508-4adb-91a7-8278e36e50a4",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 2,
+   "product_id": "p02",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "redmi 15c precio",
+    "url": "https://cangurovenezuela.com/producto/smartphone-xiaomi-redmi-15c-256gb-rom-8gb-ram/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://cangurovenezuela.com/producto/smartphone-xiaomi-redmi-15c-256gb-rom-8gb-ram/",
+    "ve_evidence": [
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 2,
+   "product_id": "p02",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "redmi 15c precio",
+    "url": "https://tiendasdaka.com/products/celular-redmi-15c-4gb-ram-128gb-memoria-verde-xiaomi-celulares",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://tiendasdaka.com/ve/products/celular-redmi-15c-4gb-ram-128gb-memoria-verde-xiaomi-celulares",
+    "ve_evidence": [
+     "phone",
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 2,
+   "product_id": "p02",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "redmi 15c precio",
+    "url": "https://soytechno.com/xiaomi-redmi-15c-6/",
+    "price": null
+   },
+   "validation": {
+    "status": "unverifiable",
+    "reason": "blocked/empty (403)",
+    "http": 403,
+    "final_url": "https://soytechno.com/xiaomi-redmi-15c-6/"
+   }
+  },
+  {
+   "row": 2,
+   "product_id": "p02",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "redmi 15c precio",
+    "url": "https://www.instagram.com/reel/DY5wfx1seHY/?hl=es",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DY5wfx1seHY/?hl=es",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 2,
+   "product_id": "p02",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "redmi 15c precio",
+    "url": "https://listado.mercadolibre.com.ve/celulares-y-telefonos/celulares-y-smartphones/redmi-15c",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Fcelulares-y-telefonos%2Fcelulares-y-smartphones%2Fredmi-15c&tid=26ce4de2-db45-46e8-b196-9ab4e7eeca8b",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 2,
+   "product_id": "p02",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "redmi 15c precio",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598706866355-2198178707&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 6,
+   "product_id": "p06",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "neveras en daka precios",
+    "url": "https://tiendasdaka.com/ve/store/electrodomesticos/refrigeracion/neveras",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://tiendasdaka.com/ve/store/electrodomesticos/refrigeracion/neveras",
+    "ve_evidence": [
+     "phone",
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 6,
+   "product_id": "p06",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "neveras en daka precios",
+    "url": "https://tiendasdaka.com/store/electrodomesticos/refrigeracion/neveras",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://tiendasdaka.com/ve/store/electrodomesticos/refrigeracion/neveras",
+    "ve_evidence": [
+     "phone",
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 6,
+   "product_id": "p06",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "neveras en daka precios",
+    "url": "https://tiendasdaka.com/ve/results/nevera",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://tiendasdaka.com/ve/results/nevera",
+    "ve_evidence": [
+     "phone",
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 6,
+   "product_id": "p06",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "neveras en daka precios",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598701641378-1647288774&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://listado.mercadolibre.com.ve/lavado-lavadoras-lavasecadoras/lavadoras-doble-tina",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Flavado-lavadoras-lavasecadoras%2Flavadoras-doble-tina&tid=8c3da4e8-bb59-486f-9e30-368eef514acd",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://www.instagram.com/reel/DW1mH7UEe_v/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DW1mH7UEe_v/",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://multimax.com.ve/producto/lavadora-doble-tina-condesa-12-kg",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://multimax.com.ve/producto/lavadora-doble-tina-condesa-12-kg",
+    "ve_evidence": [
+     "domain:multimax.com.ve",
+     "phone",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://www.instagram.com/reel/DVKR8mMDXZj/?hl=es",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DVKR8mMDXZj/?hl=es",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://www.instagram.com/reel/DY50JghRO6C/?hl=es",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DY50JghRO6C/?hl=es",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://listado.mercadolibre.com.ve/lavado-lavadoras-lavasecadoras/lavadora-doble-tina-20-kg",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Flavado-lavadoras-lavasecadoras%2Flavadora-doble-tina-20-kg&tid=26a102b5-f69b-41b7-98ee-f553189315fb",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://www.instagram.com/reel/DXuKxMCRpPU/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DXuKxMCRpPU/",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 8,
+   "product_id": "p08",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "lavadora doble tina precio",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598706866355-2198178707&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 9,
+   "product_id": "p09",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "licuadora oster precio",
+    "url": "https://listado.mercadolibre.com.ve/para-cocina-preparacion-bebidas-licuadoras/licuadora-oster",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Fpara-cocina-preparacion-bebidas-licuadoras%2Flicuadora-oster&tid=401ac51d-4dd7-40ee-84ed-a2a5a4caef47",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 9,
+   "product_id": "p09",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "licuadora oster precio",
+    "url": "https://soytechno.com/licuadora-oster-10-velocidades/",
+    "price": null
+   },
+   "validation": {
+    "status": "unverifiable",
+    "reason": "blocked/empty (403)",
+    "http": 403,
+    "final_url": "https://soytechno.com/licuadora-oster-10-velocidades/"
+   }
+  },
+  {
+   "row": 9,
+   "product_id": "p09",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "licuadora oster precio",
+    "url": "https://multimax.com.ve/producto/licuadora-oster-jarra-plastica-2-velocidades",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://multimax.com.ve/producto/licuadora-oster-jarra-plastica-2-velocidades",
+    "ve_evidence": [
+     "domain:multimax.com.ve",
+     "phone",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 9,
+   "product_id": "p09",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "licuadora oster precio",
+    "url": "https://listado.mercadolibre.com.ve/para-cocina-preparacion-bebidas-licuadoras/nuevo/licuadora-oster-nueva",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Fpara-cocina-preparacion-bebidas-licuadoras%2Fnuevo%2Flicuadora-oster-nueva&tid=d2e2ea1a-1e82-4122-869c-9d15cccd76c1",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 9,
+   "product_id": "p09",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "licuadora oster precio",
+    "url": "https://www.instagram.com/reel/DUN4fa9Dd6q/?hl=es",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DUN4fa9Dd6q/?hl=es",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 9,
+   "product_id": "p09",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "licuadora oster precio",
+    "url": "https://comercialcaracas.com/productos/licuadora-oster-cromada-vaso-plastico-2v-450-21/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://comercialcaracas.com/productos/licuadora-oster-cromada-vaso-plastico-2v-450-21/",
+    "ve_evidence": [
+     "phone",
+     "place:caracas"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 9,
+   "product_id": "p09",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "licuadora oster precio",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598706866355-2198178707&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 10,
+   "product_id": "p10",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "planta eléctrica pequeña precio",
+    "url": "https://genpar.com.ve/precio-planta-electrica-pequena-venezuela/",
+    "price": null
+   },
+   "validation": {
+    "status": "unverifiable",
+    "reason": "blocked/empty (202)",
+    "http": 202,
+    "final_url": "https://genpar.com.ve/precio-planta-electrica-pequena-venezuela/"
+   }
+  },
+  {
+   "row": 10,
+   "product_id": "p10",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "planta eléctrica pequeña precio",
+    "url": "https://ve.epaenlinea.com/productos/herramientas/plantas-electricas.html",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://ve.epaenlinea.com/productos/herramientas/plantas-electricas.html",
+    "ve_evidence": [
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 10,
+   "product_id": "p10",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "planta eléctrica pequeña precio",
+    "url": "https://totaltoolsoficial.com.ve/plantas-electricas/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://totaltoolsoficial.com.ve/plantas-electricas/",
+    "ve_evidence": [
+     "domain:totaltoolsoficial.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 10,
+   "product_id": "p10",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "planta eléctrica pequeña precio",
+    "url": "https://www.instagram.com/reel/DYN7aYCxdmB/?hl=es",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DYN7aYCxdmB/?hl=es",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 10,
+   "product_id": "p10",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "planta eléctrica pequeña precio",
+    "url": "https://www.tiktok.com/@mundofix.ve/video/7649183576923082005",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.tiktok.com/@mundofix.ve/video/7649183576923082005",
+    "ve_evidence": [
+     "phone",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 10,
+   "product_id": "p10",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "planta eléctrica pequeña precio",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598706866355-2198178707&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://www.duncan.com.ve/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.duncan.com.ve/",
+    "ve_evidence": [
+     "domain:www.duncan.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://www.duncan.com.ve/carros/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.duncan.com.ve/carros/",
+    "ve_evidence": [
+     "domain:www.duncan.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://www.instagram.com/reel/Ddlf5ROC4L_/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/Ddlf5ROC4L_/",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://ve.epaenlinea.com/duncan-liberty-grupo-24m-800.html",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://ve.epaenlinea.com/duncan-liberty-grupo-24m-800.html",
+    "ve_evidence": [
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://www.duncan.com.ve/buscador-de-baterias/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.duncan.com.ve/buscador-de-baterias/",
+    "ve_evidence": [
+     "domain:www.duncan.com.ve",
+     "place:caracas"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://www.duncan.com.ve/tienda/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.duncan.com.ve/tienda/",
+    "ve_evidence": [
+     "domain:www.duncan.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://www.duncan.com.ve/modelo/todos/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.duncan.com.ve/modelo/todos/",
+    "ve_evidence": [
+     "domain:www.duncan.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://www.duncan.com.ve/automotriz/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.duncan.com.ve/automotriz/",
+    "ve_evidence": [
+     "domain:www.duncan.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 15,
+   "product_id": "p15",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "bateria duncan precio",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598706866355-2198178707&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://listado.mercadolibre.com.ve/perforacion-taladros-mano/taladro-inalambrico",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Fperforacion-taladros-mano%2Ftaladro-inalambrico&tid=23324d98-26e9-4a8b-8eb9-c917d9d6ff09",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://multimax.com.ve/producto/taladro-drill-inalambrico-de-20v-wadfow",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://multimax.com.ve/producto/taladro-drill-inalambrico-de-20v-wadfow",
+    "ve_evidence": [
+     "domain:multimax.com.ve",
+     "phone",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://totaltoolsoficial.com.ve/taladros-inalambricos/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://totaltoolsoficial.com.ve/taladros-inalambricos/",
+    "ve_evidence": [
+     "domain:totaltoolsoficial.com.ve",
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://ve.epaenlinea.com/herramientas-inalambricas/taladros-inalambricos.html",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://ve.epaenlinea.com/herramientas-inalambricas/taladros-inalambricos.html",
+    "ve_evidence": [
+     "place:venezuela",
+     "Bs"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://listado.mercadolibre.com.ve/herramientas-electricas/taladro-percutor-inalambrico",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Fherramientas-electricas%2Ftaladro-percutor-inalambrico&tid=4268ac1f-5a30-4504-82df-303e202f9b98",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://listado.mercadolibre.com.ve/herramientas-electricas/taladros-inalambricos-baratos",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.mercadolibre.com.ve/gz/account-verification?go=https%3A%2F%2Flistado.mercadolibre.com.ve%2Fherramientas-electricas%2Ftaladros-inalambricos-baratos&tid=d7bacf84-06d0-4d87-b508-1f4f7b4d25e2",
+    "ve_evidence": [
+     "domain:www.mercadolibre.com.ve"
+    ],
+    "price_on_page": false,
+    "product_on_page": true,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://www.instagram.com/reel/DZU9pUpxnzZ/?hl=es",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DZU9pUpxnzZ/?hl=es",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://www.instagram.com/reel/DceS0x7uqNe/",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://www.instagram.com/reel/DceS0x7uqNe/",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  },
+  {
+   "row": 19,
+   "product_id": "p19",
+   "surface": "ai_overview",
+   "offer": {
+    "title": "taladro inalámbrico precio",
+    "url": "https://support.google.com/websearch?p=ai_overviews",
+    "price": null
+   },
+   "validation": {
+    "http": 200,
+    "final_url": "https://support.google.com/websearch/answer/14901683?visit_id=639284598706866355-2198178707&p=ai_overviews&rd=1",
+    "ve_evidence": [
+     "place:venezuela"
+    ],
+    "price_on_page": false,
+    "product_on_page": false,
+    "status": "unverifiable",
+    "reason": "no price claimed"
+   }
+  }
+ ]
+}
