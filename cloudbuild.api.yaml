@@ -1,0 +1,47 @@
+# Pipeline de prais-api (apps/api, Python/FastAPI): lint -> build -> push -> deploy.
+# El deploy solo cambia la imagen: variables, secreto y flags (--no-cpu-throttling, etc.) se
+# conservan de infra/50-deploy-api.sh.
+substitutions:
+  _REGION: us-east1
+  _REPO: prais
+  _SERVICE: prais-api
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - id: lint
+    name: python:3.12-slim
+    dir: apps/api
+    entrypoint: sh
+    args: ["-c", "pip install --quiet -r requirements.txt ruff && ruff check ."]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - apps/api/Dockerfile
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - apps/api
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest

@@ -1,0 +1,45 @@
+# Pipeline de prais-web (apps/web): build -> push -> deploy. El build de Next ya compila y revisa tipos.
+# Contexto = raíz del repo (workspace de pnpm). API_URL se fija al construir (rewrite de /api/*):
+# lo pasa el trigger como _API_URL, con la URL del backend.
+# El deploy solo cambia la imagen: el resto de la configuración se conserva de infra/51-deploy-web.sh.
+substitutions:
+  _REGION: us-east1
+  _REPO: prais
+  _SERVICE: prais-web
+  _API_URL: ""
+
+options:
+  logging: CLOUD_LOGGING_ONLY   # obligatorio al usar una service account propia
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - apps/web/Dockerfile
+      - --build-arg
+      - API_URL=${_API_URL}
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
