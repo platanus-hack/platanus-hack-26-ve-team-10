@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "kapso-docs": {
+      "type": "http",
+      "url": "https://docs.kapso.ai/mcp"
+    },
+    "kapso": {
+      "type": "http",
+      "url": "https://api.kapso.ai/mcp"
+    },
+    "firecrawl": {
+      "type": "http",
+      "url": "https://mcp.firecrawl.dev/v2/mcp"
+    },
+    "apify": {
+      "type": "http",
+      "url": "https://mcp.apify.com"
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ]
+    }
+  }
+}
