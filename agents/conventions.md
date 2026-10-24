@@ -14,7 +14,7 @@
 
 ## Deploy
 
-No hay nada que hacer después del merge. Cloud Build revisa `main` de la org cada 5 minutos y despliega solo si cambió la app: ver [gcp.md](gcp.md). No usamos GitHub Actions para desplegar. El único workflow es el auto-merge, que corre en el repo de la org; como es público, no gasta minutos.
+Pendiente: lo arma el dev a cargo de GCP. Ver los requisitos en [gcp.md](gcp.md).
 
 ## Código
 
