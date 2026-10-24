@@ -1,15 +1,47 @@
-import json
 from typing import Annotated
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
-from pydantic import Field
+from pydantic import BaseModel, Field
 
-from app.lib.search import search_offers
+from app.lib.search import search_all
 from app.lib.types import SearchQuery
 
-mcp_server = MCPServer("prais", version="0.1.0")
+mcp_server = MCPServer("prais", version="0.2.0")
+
+# Plazo de la web abierta (Firecrawl) dentro de una llamada al MCP. El agente le da 45 s; aquí
+# se responde antes con lo que haya, porque el cliente es otro asistente que espera en vivo.
+OPEN_WEB_BUDGET_S = 25
+
+
+# Salida estructurada: el cliente recibe este schema como outputSchema. Los nombres van en
+# camelCase, igual que la respuesta de search_offers (agents/contracts.md).
+class Merchant(BaseModel):
+    name: str
+    channel: str = Field(description="web, mercadolibre, instagram, tiktok or facebook")
+    zone: str | None = Field(default=None, description="City or area the merchant reports")
+    delivers: bool | None = None
+    trust: int | None = Field(default=None, description="0-100 seller trust score; null when not scored yet")
+
+
+class Offer(BaseModel):
+    title: str
+    url: str
+    price: str | None = Field(default=None, description="Price as the merchant published it; null means 'ask by DM'")
+    priceUsd: float | None = Field(default=None, description="Price converted to USD")
+    rate: str | None = Field(default=None, description="Exchange rate used, with its source and date, if converted")
+    seenAt: str = Field(description="When the price was seen (ISO 8601)")
+    source: str = Field(description="Where the offer came from: firecrawl, ejemplo…")
+    example: bool = Field(default=False, description="True for made-up demo data: never present it as real")
+    merchant: Merchant
+
+
+class PriceSearch(BaseModel):
+    query: str
+    offers: list[Offer] = Field(description="Cheapest first; offers without a price go last")
+    failedSources: list[str] = Field(default=[], description="Sources that failed or ran out of time")
+    notice: str | None = Field(default=None, description="Caveats to show the user")
 
 
 # Las tools llaman directo a la búsqueda, sin el agente: quien pregunta ya es un asistente de IA.
@@ -17,20 +49,22 @@ mcp_server = MCPServer("prais", version="0.1.0")
     name="search_prices",
     title="Search prices in Venezuela",
     description=(
-        "Find where a product is cheapest in Venezuela across the main sales channels. Returns offers sorted "
-        "by USD price, with the original price, the exchange rate used, when the price was seen and a 0-100 "
-        "trust score for each merchant."
+        "Find where a product is cheapest in Venezuela across online shops and the main sales channels. "
+        "Returns offers sorted by USD price, each with the price as published, the exchange rate used, when "
+        "it was seen, its source and the merchant's 0-100 trust score. Web shops do not report their city, "
+        "so the zone filter does not apply to them. Takes up to ~30 seconds. Never invent prices: use only "
+        "what this tool returns, and say so when an offer is example data."
     ),
-    annotations=ToolAnnotations(read_only_hint=True),
-    structured_output=False,
+    annotations=ToolAnnotations(read_only_hint=True, open_world_hint=True),
+    structured_output=True,
 )
 async def search_prices(
     query: Annotated[str, Field(description="Product with brand and size or model, e.g. 'Harina PAN 1 kg'")],
     zone: Annotated[str | None, Field(description="City or area in Venezuela")] = None,
     needs_delivery: bool | None = None,
-) -> str:
-    result = await search_offers(SearchQuery(text=query, zone=zone, needs_delivery=needs_delivery))
-    return json.dumps(result, indent=2, ensure_ascii=False)
+) -> PriceSearch:
+    result = await search_all(SearchQuery(text=query, zone=zone, needs_delivery=needs_delivery), OPEN_WEB_BUDGET_S)
+    return PriceSearch.model_validate(result)
 
 
 # Sin sesiones (cada request es independiente) y respuesta JSON, como el servidor de Fastify.

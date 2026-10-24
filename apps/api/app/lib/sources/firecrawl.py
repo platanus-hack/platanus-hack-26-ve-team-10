@@ -1,4 +1,4 @@
-"""Web abierta con Firecrawl. La usa solo el especialista open_web.
+"""Web abierta con Firecrawl. La usan el especialista open_web y la tool search_prices del MCP.
 
 No está en el registro de sources: search_offers cancela a los 8 s y cada
 especialista la llamaría. Una búsqueda de Firecrawl tarda más y cobra por uso.
@@ -6,6 +6,7 @@ especialista la llamaría. Una búsqueda de Firecrawl tarda más y cobra por uso
 
 import asyncio
 import os
+import time
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
@@ -21,6 +22,12 @@ SCRAPE_LIMIT = 3
 SEARCH_TIMEOUT_MS = 20_000
 SCRAPE_TIMEOUT_MS = 15_000
 BUDGET_S = 45
+# Cada búsqueda cobra créditos: el mismo producto no se vuelve a buscar en una hora. Un resultado
+# sin ofertas dura menos, y uno que falló no se guarda.
+CACHE_S = 60 * 60
+EMPTY_CACHE_S = 10 * 60
+
+_cache: dict[str, tuple[float, dict[str, Any]]] = {}
 
 # Esas tiendas las cubren otros especialistas. La web abierta no las repite.
 _SKIP_HOSTS = (
@@ -99,7 +106,7 @@ async def _scrape_price(client: AsyncFirecrawl, url: str) -> tuple[str | None, s
     return _from_product(document)
 
 
-async def search_open_web(product: str) -> dict[str, Any]:
+async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str, Any]:
     """Busca el producto en la web de Venezuela y lee el precio publicado de hasta 3 páginas."""
     if not os.environ.get("FIRECRAWL_API_KEY"):
         return {
@@ -108,6 +115,11 @@ async def search_open_web(product: str) -> dict[str, Any]:
             "offers": [],
             "notice": "Firecrawl is not configured.",
         }
+
+    key = " ".join(product.lower().split())
+    hit = _cache.get(key)
+    if hit and time.monotonic() < hit[0]:
+        return hit[1]
 
     async def _run() -> dict[str, Any]:
         client = AsyncFirecrawl(api_key=os.environ["FIRECRAWL_API_KEY"])
@@ -166,11 +178,14 @@ async def search_open_web(product: str) -> dict[str, Any]:
         }
 
     try:
-        return await asyncio.wait_for(_run(), BUDGET_S)
+        result = await asyncio.wait_for(_run(), budget_s)
     except Exception as error:  # noqa: BLE001  la web abierta no tumba al orquestador
         return {
             "source": "the open web",
             "product": product,
             "offers": [],
-            "notice": f"Firecrawl search failed: {error}",
+            "failed": True,
+            "notice": f"Firecrawl search failed: {type(error).__name__}",
         }
+    _cache[key] = (time.monotonic() + (CACHE_S if result["offers"] else EMPTY_CACHE_S), result)
+    return result
