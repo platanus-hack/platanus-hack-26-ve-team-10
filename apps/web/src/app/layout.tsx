@@ -62,6 +62,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   {g.h1}
                 </Link>
               ))}
+              <Link href="/ve/marcas" className="underline underline-offset-2">
+                Marcas y categorías
+              </Link>
             </div>
             <div className="flex flex-col gap-2">
               <strong>Legal</strong>
