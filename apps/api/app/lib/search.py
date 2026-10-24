@@ -4,6 +4,7 @@ from typing import Any
 from app.lib.prices import format_money, to_usd, trust_score
 from app.lib.rate import get_rate
 from app.lib.sources import sources
+from app.lib.sources.firecrawl import search_open_web
 from app.lib.types import Merchant, SearchQuery, Source, SourceResult
 
 SOURCE_TIMEOUT_S = 8
@@ -73,6 +74,23 @@ async def search_offers(query: SearchQuery) -> dict[str, Any]:
     response: dict[str, Any] = {"query": query.text, "failedSources": failed_sources, "offers": offers}
     if any(source.id == "ejemplo" for source in active):
         response["notice"] = "Incluye datos de ejemplo: no todas las fuentes reales están conectadas."
+    return response
+
+
+# Para el MCP: las fuentes del registro y la web abierta (Firecrawl) a la vez, con la misma forma
+# que search_offers. La web abierta no entra en search_offers porque tarda más de 8 s: aquí tiene
+# su propio plazo. Las tiendas web no dicen su ciudad, así que no se filtran por zona.
+async def search_all(query: SearchQuery, open_web_budget_s: float) -> dict[str, Any]:
+    found, web = await asyncio.gather(search_offers(query), search_open_web(query.text, open_web_budget_s))
+
+    offers = found["offers"] + web["offers"]
+    offers.sort(key=lambda o: o["priceUsd"] if o["priceUsd"] is not None else float("inf"))
+    failed_sources = found["failedSources"] + (["firecrawl"] if web.get("failed") else [])
+    notices = [found.get("notice"), web.get("notice") if web["offers"] else None]
+
+    response: dict[str, Any] = {"query": query.text, "failedSources": failed_sources, "offers": offers}
+    if any(notices):
+        response["notice"] = " ".join(notice for notice in notices if notice)
     return response
 
 
