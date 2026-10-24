@@ -7,6 +7,12 @@
 
 ## Ramas y PRs
 
+`main` está bloqueado: nadie hace push directo, todo entra por PR. Lo frenan dos hooks, porque GitHub no nos deja proteger la rama (no somos admins del repo):
+
+- **Claude Code** (`.claude/hooks/guard-main.mjs`): se activa solo al abrir el repo.
+- **git** (`.githooks/pre-push`): cada uno lo activa una vez en su clon con `git config core.hooksPath .githooks`.
+
+
 1. Crea la rama desde `main` actualizado, con el nombre `<tipo>/<tema-corto>`. Por ejemplo, `feat/whatsapp-webhook`.
 2. Abre el PR a `main` del repo de la org. `.github/workflows/auto-merge.yml` lo mergea solo, con merge commit y sin squash, para que se conserven los commits y autores de cada uno.
 3. Si el PR no está listo, ábrelo como borrador: los borradores no se mergean.

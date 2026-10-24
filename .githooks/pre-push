@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# main está bloqueado: todo entra por PR. Se activa una vez por clon con:
+#   git config core.hooksPath .githooks
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    echo "main está bloqueado: haz push de una rama y abre un PR." >&2
+    exit 1
+  fi
+done
+exit 0
