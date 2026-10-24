@@ -25,14 +25,15 @@ Todo se sube en paralelo al repo de Platanus y a `Pleo2/usaprais.com`:
 
 ## Deploy
 
-Pendiente: lo arma el dev a cargo de GCP. Ver los requisitos en [gcp.md](gcp.md).
+Cómo funciona, en [gcp.md](gcp.md).
 
 ## Código
 
-- TypeScript en modo `strict`. En `apps/api` los imports internos llevan `.js` (ESM de Node); en `apps/web`, `@/` apunta a `src/`.
-- Toda entrada externa se valida con zod 4: bodies de las rutas, webhooks y argumentos de tools.
+- `apps/web`: TypeScript en modo `strict`, y `@/` apunta a `src/`.
+- `apps/api`: Python 3.12, con `ruff` (`pnpm lint`). Los imports internos son `app.*`.
+- Toda entrada externa se valida: en `apps/api` con pydantic (bodies de las rutas y argumentos de tools); los webhooks, con la firma y el JSON esperado.
 - Los secretos van en `.env`, que nunca se sube, y se listan en `.env.example`. En GCP van en Secret Manager.
-- Fija versiones exactas de `@google/adk` y de los SDKs de las fuentes: cambian rápido.
+- Fija versiones exactas en `apps/api/requirements.txt` (`google-adk`, `mcp`, los SDKs de las fuentes): cambian rápido.
 - Lo simple primero: nada de paquetes, servicios o capas nuevas hasta que la demo los necesite.
 
 ## Docs

@@ -2,23 +2,10 @@
   "name": "@prais/api",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "lint": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "@google/adk": "2.3.0",
-    "@kapso/whatsapp-cloud-api": "0.4.0",
-    "@modelcontextprotocol/sdk": "1.32.2",
-    "fastify": "5.12.7",
-    "zod": "4.6.7"
-  },
-  "devDependencies": {
-    "@types/node": "^22.20.5",
-    "tsx": "4.23.15",
-    "typescript": "5.9.3"
+    "venv": "python3 -m venv .venv && .venv/bin/pip install -q -r requirements.txt ruff==0.17.2",
+    "dev": "[ -d .venv ] || pnpm run venv; .venv/bin/uvicorn app.main:app --reload --port 4000 --env-file .env",
+    "build": "[ -d .venv ] || pnpm run venv; .venv/bin/python -m compileall -q app",
+    "lint": "[ -d .venv ] || pnpm run venv; .venv/bin/ruff check ."
   }
 }

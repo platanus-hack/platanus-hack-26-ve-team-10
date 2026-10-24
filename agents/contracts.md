@@ -4,27 +4,35 @@ Los puntos donde se conectan las piezas. Hay una vista visual para el equipo en 
 
 ```
 Web ──► POST /chat ─────┐
-Kapso ─► POST /whatsapp ┼─► askPrais() ─► tool buscar_ofertas ─┐
-                        │                                       ├─► searchOffers() ─┬─► Source × N (en paralelo)
-Asistentes ─► /mcp ─────┴─► tool search_prices ─────────────────┘                   └─► getRate()
+Kapso ─► POST /whatsapp ┼─► ask_prais() ─► tool buscar_ofertas ─┐
+                        │                                        ├─► search_offers() ─┬─► Source × N (en paralelo)
+Asistentes ─► /mcp ─────┴─► tool search_prices ──────────────────┘                    └─► get_rate()
 ```
+
+El backend es Python (FastAPI). Las rutas y las formas JSON son las del contrato; los nombres internos van en `snake_case`.
 
 | Contrato | Dónde | Forma |
 |---|---|---|
-| **Web → API** | `apps/api/src/routes/chat.ts` | `POST /chat` `{ sessionId, message }` → `{ reply }`. La web lo llama como `/api/chat` |
-| **Kapso → API** | `apps/api/src/routes/whatsapp.ts` | `POST /whatsapp`, firmado con `X-Webhook-Signature`. Responde 200 y contesta por la API de Kapso: ver [kapso.md](kapso.md) |
-| **Canal → agente** | `apps/api/src/agent.ts` | `askPrais({ userId, message })` → texto. `userId` lleva el canal delante (`web:…`, `whatsapp:…`), y cada uno tiene su conversación |
-| **Agente / MCP → búsqueda** | `apps/api/src/lib/search.ts` | `searchOffers({ text, zone?, needsDelivery? })` → `{ offers, failedSources, notice? }`, ordenadas por precio en USD |
-| **Búsqueda → fuente** | `apps/api/src/lib/types.ts` (`Source`) | `search(query, signal)` → `{ offers, merchants }`. Tiene 8 s; si falla o tarda más, la búsqueda sigue sin ella |
-| **Búsqueda → tasa** | `apps/api/src/lib/rate.ts` | `getRate()` → `{ source, usdToVes, observedAt }` |
+| **Web → API** | `apps/api/app/routes/chat.py` | `POST /chat` `{ sessionId, message }` → `{ reply }`. La web lo llama como `/api/chat`. Un body inválido responde 400 |
+| **Kapso → API** | `apps/api/app/routes/whatsapp.py` | `POST /whatsapp`, firmado con `X-Webhook-Signature`. Encola el mensaje, responde 200 y contesta por la API de Kapso: ver [kapso.md](kapso.md) |
+| **Canal → agente** | `apps/api/app/agent.py` | `ask_prais(user_id, message)` → texto. `user_id` lleva el canal delante (`web:…`, `whatsapp:…`), y cada uno tiene su conversación |
+| **Agente / MCP → búsqueda** | `apps/api/app/lib/search.py` | `search_offers(SearchQuery(text, zone?, needs_delivery?))` → `{ query, offers, failedSources, notice? }`, ordenadas por precio en USD. Las claves del resultado van en camelCase, igual que antes |
+| **Búsqueda → fuente** | `apps/api/app/lib/types.py` (`Source`) | `await search(query)` → `SourceResult(offers, merchants)`. Tiene 8 s (`asyncio.wait_for`) y se cancela si tarda más; si falla o tarda, la búsqueda sigue sin ella |
+| **Búsqueda → tasa** | `apps/api/app/lib/rate.py` | `get_rate()` → `ExchangeRate(source, usd_to_ves, observed_at)` |
+
+Cada oferta de `offers` lleva `title`, `url`, `price` (como la publica el comercio), `priceUsd`, `rate` (si hubo conversión), `seenAt`, `source` y `merchant { name, channel, zone, delivers, trust }`.
+
+**Ruta interna, fuera del contrato.** `POST /internal/whatsapp-task` (`app/routes/whatsapp.py`) la llama solo Cloud Tasks, con un token OIDC. No la uses desde la web ni desde Kapso, y su forma puede cambiar sin avisar: los contratos públicos de arriba no cambian.
+
+Los tipos son `dataclass` en `app/lib/types.py`, en `snake_case` (`merchant_id`, `usd_to_ves`, `response_time_min`). `Source` es un `Protocol`: `id`, `enabled` y `async search(query)`.
 
 ## Sumar una fuente
 
-1. Crea `apps/api/src/lib/sources/<fuente>.ts` que exporte un `Source`. Copia `sources/mock.ts` como modelo.
-2. `enabled` depende de su API key: `enabled: Boolean(process.env.FIRECRAWL_API_KEY)`. Agrega la variable a `apps/api/.env.example`.
-3. Agrégala a la lista de `sources/index.ts`. Es la única línea que tocas fuera de tu archivo.
+1. Crea `apps/api/app/lib/sources/<fuente>.py` con un objeto que cumpla `Source`. Copia `sources/mock.py` como modelo.
+2. `enabled` depende de su API key: `enabled = bool(os.environ.get("FIRECRAWL_API_KEY"))`. Agrega la variable a `apps/api/.env.example`.
+3. Agrégala a la lista de `sources/__init__.py`. Es la única línea que tocas fuera de tu archivo.
 4. Los ids de comercio llevan el prefijo de tu fuente (`ig:bodegon`, `ml:12345`), para no chocar con otras fuentes.
-5. Tu fuente solo trae datos. No filtres por zona, no conviertas monedas ni ordenes: eso lo hace `searchOffers` para todas.
+5. Tu fuente solo trae datos. No filtres por zona, no conviertas monedas ni ordenes: eso lo hace `search_offers` para todas.
 
 Las particularidades de cada fuente están en [sources.md](sources.md).
 
