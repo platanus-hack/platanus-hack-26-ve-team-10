@@ -9,14 +9,14 @@
 
 `main` está bloqueado: nadie hace push directo, todo entra por PR. GitHub no nos deja proteger la rama (no somos admins del repo), así que lo frenan dos hooks: el de Claude Code (`.claude/hooks/guard-main.mjs`) y el de git (`.githooks/pre-push`).
 
-### Sincronización con prais.com
+### Sincronización con usaprais.com
 
-Todo se sube en paralelo al repo de Platanus y a `Pleo2/prais.com`:
+Todo se sube en paralelo al repo de Platanus y a `Pleo2/usaprais.com`:
 
 - **Automático:** `pnpm install` corre `pnpm setup:git`, que activa los hooks y le pone a `origin` dos URLs de push. Así cada `git push` de una rama llega a los dos repos.
 - **Obligatorio:** si un clon no sube a los dos repos, los hooks frenan el push y piden correr `pnpm setup:git`.
-- **Nunca mergees PRs en `prais.com`:** GitHub no deja proteger ese repo en el plan actual, así que la regla depende del equipo.
-- **Después de cada merge:** `pnpm sync`. Copia el `main` de Platanus a `prais.com`. Es el único push a `main` que permiten los hooks.
+- **Nunca mergees PRs en `usaprais.com`:** GitHub no deja proteger ese repo en el plan actual, así que la regla depende del equipo.
+- **Después de cada merge:** `pnpm sync`. Copia el `main` de Platanus a `usaprais.com`. Es el único push a `main` que permiten los hooks.
 
 1. Crea la rama desde `main` actualizado, con el nombre `<tipo>/<tema-corto>`. Por ejemplo, `feat/whatsapp-webhook`.
 2. Abre el PR a `main` del repo de la org. `.github/workflows/auto-merge.yml` lo mergea solo, con merge commit y sin squash, para que se conserven los commits y autores de cada uno.
