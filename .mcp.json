@@ -12,10 +12,6 @@
       "type": "http",
       "url": "https://mcp.firecrawl.dev/v2/mcp"
     },
-    "apify": {
-      "type": "http",
-      "url": "https://mcp.apify.com"
-    },
     "next-devtools": {
       "command": "npx",
       "args": [

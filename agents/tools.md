@@ -1,6 +1,21 @@
-# Herramientas para agentes: MCP y docs oficiales
+# Herramientas para agentes: skills, MCP y docs oficiales
 
-Antes de escribir código contra una API externa, consulta su documentación oficial en vez de adivinarla. Si el producto tiene un MCP, úsalo. Si no, lee su `llms.txt`.
+Antes de escribir código contra una API externa, consulta su documentación oficial en vez de adivinarla. El orden es: el skill del producto, después su MCP y, si no hay, su `llms.txt`.
+
+## Skills y plugins
+
+Se activan solos al abrir el repo con Claude Code. La primera vez, Claude Code pide instalar los plugins del proyecto.
+
+| Skill o plugin | Qué trae | Dónde |
+|---|---|---|
+| **Apify** (plugin oficial) | Skills para usar y construir actores, un agente que elige el actor correcto y el MCP de Apify (OAuth con `/mcp`) | `.claude/settings.json` |
+| **Firecrawl** (plugin oficial) | Skills para buscar en la web y en docs de desarrollo, y el MCP de búsqueda de Firecrawl. `/firecrawl:setup` pide la key | `.claude/settings.json` |
+| **Fastify** | Buenas prácticas de Fastify: plugins, rutas, schemas, hooks, errores, tests y deploy | `.claude/skills/fastify/`, copiado de [mcollina/skills](https://github.com/mcollina/skills) (MIT) |
+| **Kapso** (oficial) | Integrar WhatsApp, automatizarlo y depurar webhooks | No viene en el repo, porque no tiene licencia publicada. Cada uno lo instala con `npx skills add gokapso/agent-skills` |
+
+Sin skill propio:
+- **Next.js:** su doc viene con la versión instalada (`node_modules/next/dist/docs/`), y está el MCP `next-devtools`.
+- **ADK para TypeScript:** los skills de Google (`google/agents-cli`) apuntan sobre todo a ADK en Python. Para TypeScript, usa el `llms.txt` de ADK y los tipos del paquete.
 
 ## MCP del repo (`.mcp.json`)
 
@@ -11,7 +26,6 @@ Claude Code los carga al abrir el repo. La primera vez pide aprobarlos, y los qu
 | `kapso-docs` | Buscar en la documentación de Kapso y WhatsApp | Ninguna |
 | `kapso` | Operar el proyecto de Kapso: números, webhooks, conversaciones, plantillas | OAuth (solo lectura por defecto) o API key |
 | `firecrawl` | Scrapear y buscar en webs de tiendas mientras desarrollas el adapter | Sin key: `scrape` y `search`, con límite. Con key: todo |
-| `apify` | Buscar actores (Instagram, TikTok, Marketplace), probarlos y leer sus datasets | OAuth o `APIFY_TOKEN` |
 | `next-devtools` | Errores, rutas y logs de la web corriendo con `pnpm dev` (Next 16+) | Ninguna |
 
 ## Se agregan a mano (necesitan credenciales propias)

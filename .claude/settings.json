@@ -17,5 +17,23 @@
         ]
       }
     ]
+  },
+  "extraKnownMarketplaces": {
+    "firecrawl": {
+      "source": {
+        "source": "github",
+        "repo": "firecrawl/firecrawl-claude-plugin"
+      }
+    },
+    "apify": {
+      "source": {
+        "source": "github",
+        "repo": "apify/apify-claude-code-plugin"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "firecrawl@firecrawl": true,
+    "apify@apify": true
   }
 }
