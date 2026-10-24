@@ -4,11 +4,12 @@ SEO es aparecer en buscadores. GEO es aparecer citado en las respuestas de los a
 
 ## Qué páginas compiten
 
-Hoy solo existe `/`. Las demás de la tabla son para cuando la demo las necesite.
+Hoy existen `/`, `/privacidad` y `/terminos`. Las demás de la tabla son para cuando la demo las necesite.
 
 | Página | Indexable | Para qué |
 |---|---|---|
 | Landing `/` | Sí | Marca, propuesta y el chat |
+| Privacidad `/privacidad` y términos `/terminos` | Sí | Los pide Meta para verificar el negocio y el número de WhatsApp. Los datos legales y de contacto están en `apps/web/src/lib/empresa.ts` y tienen que coincidir con los documentos de la empresa |
 | Blog `/blog/...` | Sí | Preguntas que la gente busca: "dónde comprar X más barato en Caracas" |
 | Producto `/ve/p/[slug]-[id]` | Sí | La comparación de precios de un producto. Es la página que más tráfico puede traer. Detalle en [docs/ficha-producto.md](../docs/ficha-producto.md) |
 | Categoría `/ve/[categoria]/`, `/ve/[categoria]/[marca]/` | Sí, con reglas | Listado de modelos por categoría, marca o faceta con demanda. Detalle en [docs/categoria.md](../docs/categoria.md) |
@@ -21,7 +22,7 @@ Hoy solo existe `/`. Las demás de la tabla son para cuando la demo las necesite
 - `generateMetadata` con title, description, `canonical` y Open Graph.
 - `<html lang="es-VE">`.
 - JSON-LD de schema.org:
-  - Landing: `Organization` y `WebSite` con `SearchAction`.
+  - Landing: `Organization` y `WebSite`. Falta el `SearchAction`: la landing todavía no recibe la búsqueda por URL.
   - Blog: `BlogPosting`.
   - Producto: `Product` con `AggregateOffer` (`lowPrice`, `highPrice`, `priceCurrency`, `offerCount`).
   - Comercio: `LocalBusiness` u `Organization`, según tenga local físico o no.

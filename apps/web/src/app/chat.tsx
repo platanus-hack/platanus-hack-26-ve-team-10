@@ -35,33 +35,34 @@ export function Chat() {
   }
 
   return (
-    <div className="flex w-full max-w-xl flex-col gap-3">
-      <div className="flex flex-col gap-2">
+    <div className="flex w-full max-w-xl flex-col gap-3 rounded-[12px] border border-linea bg-papel-alto p-3">
+      <div className="flex flex-col gap-2 empty:hidden">
         {messages.map((message, index) => (
           <p
             key={index}
             className={`whitespace-pre-wrap rounded-2xl px-4 py-2 ${
               message.role === "user"
-                ? "self-end bg-foreground text-background"
-                : "self-start bg-black/5 dark:bg-white/10"
+                ? "self-end bg-accion text-on-accion"
+                : "self-start bg-papel-bajo"
             }`}
           >
             {message.text}
           </p>
         ))}
-        {loading && <p className="self-start text-sm opacity-60">Buscando precios…</p>}
+        {loading && <p className="self-start text-sm text-tinta-suave">Buscando precios…</p>}
       </div>
       <form onSubmit={send} className="flex gap-2">
         <input
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder="¿Qué quieres comprar? Ej: Harina PAN 1 kg en Caracas"
-          className="flex-1 rounded-full border border-black/15 bg-transparent px-4 py-2 dark:border-white/20"
+          aria-label="Qué quieres comprar"
+          className="min-w-0 flex-1 rounded-[12px] border border-borde bg-papel-alto px-4 py-3"
         />
         <button
           type="submit"
           disabled={loading}
-          className="rounded-full bg-foreground px-5 py-2 text-background disabled:opacity-50"
+          className="rounded-[12px] bg-accion px-5 py-3 font-medium text-on-accion hover:bg-accion-hover disabled:opacity-50"
         >
           Buscar
         </button>

@@ -4,3 +4,5 @@
 
 - [Inicio](https://usaprais.com/): chat para buscar el mejor precio
 - [MCP](https://usaprais.com/api/mcp): servidor MCP con la tool `search_prices`
+- [Política de privacidad](https://usaprais.com/privacidad)
+- [Términos de uso](https://usaprais.com/terminos)

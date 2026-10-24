@@ -1,26 +1,99 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Copia de docs/design-system/tokens/tokens.css: la web se construye sola, sin leer docs/. */
+@import "./tokens.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-papel: var(--papel);
+  --color-papel-alto: var(--papel-alto);
+  --color-papel-bajo: var(--papel-bajo);
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+  --color-linea: var(--linea);
+  --color-borde: var(--borde);
+  --color-accion: var(--accion);
+  --color-on-accion: var(--on-accion);
+  --color-accion-hover: var(--accion-hover);
+  --color-sol: var(--sol);
+  --color-on-sol: var(--on-sol);
+  --color-sol-tinte: var(--sol-tinte);
+  --color-anil: var(--anil);
+  --color-foco: var(--foco);
+  --color-kraft: var(--kraft);
+  --color-trazo: var(--trazo);
+  --color-tomate-texto: var(--tomate-texto);
+  --font-sans: var(--font-outfit), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-bungee), "Arial Black", Impact, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Capa de marca: wordmark, botón cartel y stickers (ver docs/design-system/README.md) */
+@layer components {
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--tinta);
+  }
+  .wordmark > span {
+    display: inline-block;
+    margin-left: 2px;
+    padding: 2px 8px 4px;
+    background: var(--sol);
+    color: var(--on-sol);
+    border: var(--grosor-cartel) solid var(--prais-linea);
+    border-radius: 6px 10px 10px 6px;
+    transform: rotate(-4deg);
+  }
+  .btn-cartel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: var(--radius-md);
+    background: var(--sol);
+    color: var(--on-sol);
+    font-weight: 500;
+    border: var(--grosor-cartel) solid var(--trazo);
+    box-shadow: var(--sombra-sticker);
+    transition:
+      transform 80ms,
+      box-shadow 80ms;
+  }
+  .btn-cartel:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+  }
+  .sticker {
+    position: absolute;
+    padding: 8px 12px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    line-height: 1.1;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: var(--papel-alto);
+    color: var(--tinta);
+    border: var(--grosor-cartel) solid var(--trazo);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--sombra-sticker);
+  }
 }
