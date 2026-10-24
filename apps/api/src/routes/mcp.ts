@@ -22,7 +22,7 @@ function createServer() {
       annotations: { readOnlyHint: true },
     },
     async ({ query, zone, needs_delivery }) => {
-      const result = searchOffers(query, { zone, needsDelivery: needs_delivery });
+      const result = await searchOffers({ text: query, zone, needsDelivery: needs_delivery });
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     },
   );

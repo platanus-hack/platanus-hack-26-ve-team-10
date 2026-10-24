@@ -1,15 +1,9 @@
-import type { ExchangeRate, Merchant, Offer } from "./types.js";
+import type { Merchant, Offer, Source } from "../types.js";
 
-// Datos de ejemplo para probar el flujo completo mientras conectamos las fuentes reales.
-// Los comercios y los precios son inventados.
+// Fuente de ejemplo: comercios y precios inventados, para probar el flujo completo mientras
+// conectamos las fuentes reales. Sirve también de modelo para escribir una fuente nueva.
 
-export const exampleRate: ExchangeRate = {
-  source: "tasa de ejemplo",
-  usdToVes: 200,
-  observedAt: "2026-10-24T08:00:00-04:00",
-};
-
-export const merchants: Merchant[] = [
+const merchants: Merchant[] = [
   {
     id: "bodegon-la-esquina",
     name: "Bodegón La Esquina (ejemplo)",
@@ -57,7 +51,7 @@ export const merchants: Merchant[] = [
 
 const seenAt = "2026-10-24T09:00:00-04:00";
 
-export const offers: Offer[] = [
+const offers: Offer[] = [
   { merchantId: "bodegon-la-esquina", title: "Harina PAN 1 kg", url: "https://instagram.com/p/ejemplo1", price: { amount: 1.35, currency: "USD" }, seenAt },
   { merchantId: "mercado-express", title: "Harina P.A.N. maíz blanco 1kg", url: "https://example.com/p/harina-pan", price: { amount: 250, currency: "VES" }, seenAt },
   { merchantId: "tienda-maracaibo", title: "Harina Pan 1 kilo", url: "https://example.com/ml/harina-pan", price: { amount: 1.1, currency: "USD" }, seenAt },
@@ -67,3 +61,19 @@ export const offers: Offer[] = [
   { merchantId: "ventas-tiktok", title: "iPhone 15 128 GB", url: "https://tiktok.com/@ejemplo_ofertas/video/2", price: { amount: 690, currency: "USD" }, seenAt },
   { merchantId: "tienda-maracaibo", title: "iPhone 15 128GB nuevo", url: "https://example.com/ml/iphone-15", price: { amount: 720, currency: "USD" }, seenAt },
 ];
+
+const normalize = (text: string) =>
+  text.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9 ]/gi, "").toLowerCase();
+
+export const mockSource: Source = {
+  id: "ejemplo",
+  enabled: process.env.USE_MOCK_SOURCE !== "false",
+  async search({ text }) {
+    const words = normalize(text).split(/\s+/).filter((word) => word.length >= 3);
+    const found = offers.filter((offer) => {
+      const title = normalize(offer.title).replace(/ /g, "");
+      return words.every((word) => title.includes(word));
+    });
+    return { offers: found, merchants: merchants.filter((m) => found.some((o) => o.merchantId === m.id)) };
+  },
+};

@@ -1,6 +1,6 @@
 # Fuentes
 
-Las fuentes se conectan dentro de `searchOffers` (`apps/api/src/lib/search.ts`). Hoy esa función lee `mock-data.ts`, en la misma carpeta. Para conectar una fuente real, agrega su llamada ahí y convierte lo que devuelva al formato de `Offer` y `Merchant` de `types.ts`.
+Cada fuente es un archivo en `apps/api/src/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). Hoy solo existe la de ejemplo (`mock.ts`), que se apaga con `USE_MOCK_SOURCE=false`.
 
 ## Qué hay que saber de cada una
 
@@ -15,9 +15,9 @@ Las fuentes se conectan dentro de `searchOffers` (`apps/api/src/lib/search.ts`).
 
 ## Reglas
 
-- **Lento no va en vivo.** Si una fuente tarda más de unos segundos (Apify), córrela antes de la demo y guarda los resultados en `mock-data.ts` o en un JSON. No la llames en cada consulta.
+- **Lento no va en vivo.** Cada fuente tiene 8 segundos. Si tarda más (Apify), el actor corre antes y el adapter lee su último resultado.
 - **Sin precio no hay inventos.** Si la publicación no tiene precio, `price` va en `null`.
-- **Una fuente que falla no tumba la búsqueda.** Envuelve cada llamada con un timeout y sigue con las demás.
+- **Una fuente que falla no tumba la búsqueda.** `searchOffers` ya la deja fuera y la anota en `failedSources`.
 - **Guarda los datos del comercio** (seguidores, comentarios), porque los usa el puntaje de confianza.
 
 ## Variables

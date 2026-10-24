@@ -19,7 +19,7 @@ const buscarOfertas = new FunctionTool({
     necesitaEnvio: z.boolean().optional().describe("Si la persona necesita que se lo envíen"),
   }),
   execute: ({ producto, zona, necesitaEnvio }) =>
-    searchOffers(producto, { zone: zona, needsDelivery: necesitaEnvio }),
+    searchOffers({ text: producto, zone: zona, needsDelivery: necesitaEnvio }),
 });
 
 export const praisAgent = new LlmAgent({
