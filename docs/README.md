@@ -5,3 +5,4 @@ Producto y decisiones: el porqué de Prais. Para saber cómo se construye cada p
 | Ruta | Qué hay |
 |---|---|
 | `decisions/` | Una decisión por archivo: `NNNN-titulo.md`, con contexto, opciones consideradas y la decisión |
+| `design-system/` | Sistema de diseño de usaprais: tokens, componentes, personaje Prais, canales y capturas |

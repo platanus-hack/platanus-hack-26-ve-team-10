@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es" data-theme="papel">
+<head><link rel="stylesheet" href="./tokens/tokens.css">
+<link rel="stylesheet" href="./components/bundle.css">
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="./components/bundle.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PantallasMovil — usaprais</title>
+<style>html,body{margin:0;background:var(--papel-bajo)}.wrap { display: flex; gap: 40px; align-items: flex-start; padding: 32px; }
+  .cap { font: 500 13px/16px var(--font-sans); color: var(--tinta-suave); margin: 0 0 10px 8px; }
+  .phone { width: 390px; flex: none; border: 1px solid var(--borde); border-radius: 32px; overflow: hidden; background: var(--papel); }
+  .phone.fixed { height: 844px; }
+  .screen { height: 100%; overflow: hidden; }
+  .pad { padding: 16px; display: flex; flex-direction: column; gap: 20px; }</style></head>
+<body>
+<p style="font:500 14px/20px Outfit,system-ui,sans-serif;margin:16px 32px 0"><button onclick="var r=document.documentElement;r.dataset.theme=r.dataset.theme==='noche'?'papel':'noche'" style="font:inherit;padding:6px 12px;border-radius:8px;border:1px solid #8a909b;background:#fff;cursor:pointer">Cambiar tema</button></p>
+<div id="root" class="up-root" style="background:transparent"></div>
+<script>
+var P = window.Prais, h = React.createElement;
+var TASA = 285.10; // tasa de ejemplo, no real
+var NOOP = function () {};
+var OFERTAS = [
+  {tienda:'Casa Kitchen CCS', canal:'Instagram', usd:72.5, envio:4, condicion:'Nuevo', garantia:'3 meses', ubicacion:'Caracas', confianza:4, nota:'Responde rápido por DM y acepta pago móvil.', onAbrir:NOOP},
+  {tienda:'ElectroMarket', canal:'Web', usd:79.99, envio:0, condicion:'Nuevo', garantia:'12 meses', ubicacion:'Caracas', confianza:5, onAbrir:NOOP},
+  {tienda:'Marketplace · Andrés R.', canal:'Marketplace', usd:78, envio:6, condicion:'Usado como nuevo', ubicacion:'Maracay', confianza:1, nota:'Pocas referencias: pide un video del equipo funcionando antes de pagar.', publicado:'hace 3 días',
+   vendedor:{nombre:'Andrés R.', tipo:'Particular', desde:2025, referencias:2}, onAbrir:NOOP},
+  {tienda:'TodoHogar', canal:'Mercado Libre', usd:76, envio:8.5, condicion:'Nuevo', garantia:'6 meses', ubicacion:'Barquisimeto', confianza:4, publicado:'hace 12 días',
+   vendedor:{nombre:'TodoHogar', tipo:'Tienda', desde:2021, referencias:318}, onAbrir:NOOP},
+  {tienda:'Bodegón Don Luis', canal:'Tienda física', usd:84, envio:5, condicion:'Nuevo', ubicacion:'Maracaibo', confianza:4, onAbrir:NOOP}
+];
+var FICHA_MP = {producto:'Freidora de aire 5,5 L', oferta:OFERTAS[2], tasa:TASA, rank:3, de:5, promedio:82.8, min:76.5, max:89, masBaratas:2, mejor:OFERTAS[0],
+  revisiones:[{tono:'ok', texto:'El precio incluye el envío a Maracay.'},{tono:'ok', texto:'Es el mismo modelo que buscaste.'},{tono:'ojo', texto:'Usado: el anuncio no dice cuánto tiempo de uso tiene.'},{tono:'ojo', texto:'Sin garantía.'},{tono:'ojo', texto:'El vendedor solo tiene 2 referencias.'}],
+  consejo:'Pide un video del equipo encendido y, si puedes, paga al recibir. Por $7,50 menos tienes uno nuevo con garantía en la #1.'};
+var FICHA_ML = {producto:'Freidora de aire 5,5 L', oferta:OFERTAS[3], tasa:TASA, rank:4, de:5, promedio:82.8, min:76.5, max:89, masBaratas:3, mejor:OFERTAS[0],
+  revisiones:[{tono:'ok', texto:'Tienda con 318 referencias desde 2021.'},{tono:'ok', texto:'Nuevo, con 6 meses de garantía.'},{tono:'ojo', texto:'El envío de $8,50 lo deja por encima del promedio.'},{tono:'ok', texto:'Envía a todo el país.'}],
+  consejo:'Buen vendedor, pero el envío lo encarece. Si estás en Caracas, la #1 te sale $8 menos.'};
+
+function tel(cap, kids) { return h('div', null, h('p', { className: 'cap' }, cap), h('div', { className: 'phone fixed' }, h('div', { className: 'screen' }, kids))); }
+var inicio = [
+  h('header', { key: 'b', className: 'up-bar', style: { justifyContent: 'space-between', paddingLeft: 16, paddingRight: 16 } }, h(P.Wordmark, { size: 'sm' }), h(P.Button, { variant: 'fantasma', icon: 'reloj' }, 'Historial')),
+  h('div', { key: 'p', className: 'pad', style: { paddingTop: 32 } },
+    h('div', null, h('h1', { style: { margin: 0, font: '600 28px/34px var(--font-sans)', letterSpacing: '-0.02em' } }, '¿Ese precio está bien?'),
+      h('p', { style: { margin: '8px 0 0', font: '400 15px/22px var(--font-sans)', color: 'var(--tinta-suave)' } }, 'Pega el link del anuncio o escribe el producto. Prais te dice dónde está más barato.')),
+    h(P.SearchBox, { label: 'Producto o link', cta: 'Buscar precios' }),
+    h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 8 } }, ['Instagram', 'Mercado Libre', 'Marketplace', 'Tiendas web'].map(function (c) { return h(P.Chip, { key: c }, c); })),
+    h('div', null, h('p', { style: { margin: '8px 0 4px', font: '500 15px/20px var(--font-sans)' } }, 'Búsquedas recientes'),
+      h('div', { className: 'up-list-items' },
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', padding: '12px 16px', font: '400 15px/20px var(--font-sans)' } }, h('span', null, 'Freidora de aire 5,5 L'), h('span', { style: { color: 'var(--tinta-suave)' } }, 'desde ', h('b', { style: { color: 'var(--tinta)', fontWeight: 600 } }, '$76,50'))),
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', padding: '12px 16px', font: '400 15px/20px var(--font-sans)', borderTop: '1px solid var(--linea)' } }, h('span', null, 'Audífonos Bluetooth'), h('span', { style: { color: 'var(--tinta-suave)' } }, 'desde ', h('b', { style: { color: 'var(--tinta)', fontWeight: 600 } }, '$18'))))))
+];
+var resultados = [
+  h('header', { key: 'b', className: 'up-bar' }, h('span', { className: 'up-bar-btn' }, h(P.Icon, { name: 'volver', size: 22 })), h('span', { className: 'up-bar-title' }, 'Freidora de aire 5,5 L'), h('span', { className: 'up-bar-btn' }, h(P.Icon, { name: 'compartir', size: 20 }))),
+  h('div', { key: 'p', className: 'pad' },
+    h(P.PraisSays, { mood: 'ganga' }, h('span', null, 'La más barata con buen vendedor te ahorra ', h('b', null, '$6,30'), ' frente al promedio.')),
+    h(P.RankedList, { ofertas: OFERTAS, tasa: TASA, actualizado: 'hoy a las 8:12 a. m.' }))
+];
+var cargando = [
+  h('header', { key: 'b', className: 'up-bar' }, h('span', { className: 'up-bar-btn' }, h(P.Icon, { name: 'volver', size: 22 })), h('span', { className: 'up-bar-title' }, 'Freidora de aire 5,5 L')),
+  h('div', { key: 'p', style: { paddingTop: 120 } }, h(P.EstadoPrais, { tipo: 'cargando' }))
+];
+ReactDOM.createRoot(document.getElementById('root')).render(h('div', { className: 'wrap' },
+  tel('1 · Inicio', inicio), tel('2 · Buscando', cargando), tel('3 · Resultados', resultados), tel('4 · Ficha de un anuncio de Marketplace', h(P.FichaOferta, FICHA_MP))));
+</script>
+</body>
+</html>
