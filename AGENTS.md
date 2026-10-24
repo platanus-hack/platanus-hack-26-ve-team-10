@@ -31,7 +31,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 ## Reglas
 
 1. `main` está bloqueado: todo cambio entra por PR a `main` del repo de la org, y el PR se mergea solo. Nunca hagas push a `main`.
-2. Todo se sube en paralelo a Platanus y a `Pleo2/prais.com`: `pnpm setup:git` una vez por clon y `pnpm sync` después de cada merge.
+2. Todo se sube en paralelo a Platanus y a `Pleo2/prais.com`. `pnpm install` lo configura y los hooks lo exigen. Después de cada merge, `pnpm sync`.
 3. **No te repitas.** La lógica de precios vive solo en `apps/api/src/lib`. La web no calcula nada: le pregunta al backend.
 4. **Sin boilerplate.** Antes de agregar un archivo, una capa o un paquete, piensa si la demo lo necesita hoy. Si no, no va.
 5. **No adivines APIs externas.** Antes de escribir contra una, consulta su skill, su MCP o su `llms.txt` ([agents/tools.md](agents/tools.md)).
@@ -43,8 +43,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 ## Comandos
 
 ```bash
-pnpm install
-pnpm setup:git                           # una vez: hooks y push en paralelo a Platanus y prais.com
+pnpm install                             # también configura git: hooks y push en paralelo a Platanus y prais.com
 cp apps/api/.env.example apps/api/.env   # pon GOOGLE_GENAI_API_KEY
 pnpm dev                                 # api en :4000, web en :3000
 git pull origin main                     # antes del PR: trae lo último de main a tu rama
