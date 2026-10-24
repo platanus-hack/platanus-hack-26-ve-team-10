@@ -9,7 +9,7 @@ Cada fuente es un archivo en `apps/api/app/lib/sources/` que cumple el contrato 
 | **Firecrawl** | SDK de Python de Firecrawl: `search`, `scrape` y extracción con schema (confirma el paquete en su `llms.txt`) | Cobra por uso |
 | **Apify: Instagram** | Cliente de Python de Apify + actor `apify/instagram-scraper` | Tarda de segundos a minutos. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
 | **Apify: TikTok** | Cliente de Python de Apify + actor `clockworks/tiktok-scraper` | Igual que Instagram |
-| **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. El actor está sin elegir |
+| **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts)) |
 | **Mercado Libre** | API oficial, sitio `MLV` | Responde **403 sin token**: hay que registrar una app. Plan B: un actor de Apify |
 | **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela probablemente no sirve: probar un actor de Apify |
 
@@ -19,7 +19,7 @@ Cada fuente es un archivo en `apps/api/app/lib/sources/` que cumple el contrato 
 - **Sin precio no hay inventos.** Si la publicación no tiene precio, `price` va en `None`.
 - **Una fuente que falla no tumba la búsqueda.** `search_offers` ya la deja fuera y la anota en `failedSources`.
 - **Async de verdad.** `search` es `async`: usa clientes asíncronos (`httpx.AsyncClient`) para no bloquear a las demás fuentes.
-- **Guarda los datos del comercio** (seguidores, comentarios), porque los usa el puntaje de confianza. Para Instagram, las señales, los pesos y los actores de Apify (`instagram-profile-scraper` e `instagram-comment-scraper`) están en [resources/ig-trust-score.ts](../resources/ig-trust-score.ts). Es un borrador en TypeScript: pórtalo a Python en `prices.py` y confirma los campos del actor antes de usarlos.
+- **Guarda los datos del comercio** (seguidores, comentarios), porque los usa el puntaje de confianza. Para Instagram, las señales, los pesos y los actores de Apify (`instagram-profile-scraper` e `instagram-comment-scraper`) están en [resources/ig-trust-score.ts](../resources/ig-trust-score.ts). Para Facebook Marketplace, en [resources/fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts): ahí la reputación sale del historial del vendedor y de las fotos repetidas, porque en Venezuela casi nadie califica. Los dos son borradores en TypeScript: pórtalos a Python en `prices.py` y confirma los campos de cada actor antes de usarlos.
 
 ## Variables
 
