@@ -1,0 +1,38 @@
+# Mergea solo cada PR a main del repo de la org (pase a prod).
+# El auto-merge nativo de GitHub necesita admin en el repo, y no lo tenemos.
+name: Auto-merge a main
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  merge:
+    # Solo en el repo de la org, solo PRs listos y nunca desde forks (el repo es público).
+    if: >-
+      github.repository == 'platanus-hack/platanus-hack-26-ve-team-10' &&
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mergear el PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        # Merge commit, no squash: conserva los commits y autores de cada uno.
+        # Reintenta porque GitHub calcula la mergeabilidad unos segundos después de abrir el PR.
+        run: |
+          for attempt in 1 2 3; do
+            gh pr merge "$PR_URL" --merge && exit 0
+            sleep 10
+          done
+          exit 1
