@@ -30,7 +30,7 @@ ChatGPT / Claude ─────┘                                             
 | Webhook de WhatsApp | Hecho. El número de producción apunta al API en Cloud Run. Probado en el sandbox de Kapso |
 | MCP con `search_prices` | Hecho |
 | Catálogo SEO (`/ve/...`) | Hecho con datos de ejemplo: 147 modelos, 28 categorías. Se indexa solo cuando hay ofertas reales: ver [seo-geo.md](seo-geo.md) |
-| Confianza del comercio | Fórmula inicial en `apps/api/app/lib/prices.py`. El diseño por fuente (Instagram, Marketplace, TikTok, tiendas web, Mercado Libre, Amazon y Meta Ads) está en `resources/` y resumido en [sources.md](sources.md#puntaje-de-confianza-por-fuente) |
+| Confianza del comercio | Fórmula inicial en `apps/api/app/lib/prices.py`. Los borradores por fuente (Instagram, Marketplace, TikTok, tiendas web, Mercado Libre, Amazon y Meta Ads) están en `resources/`, resumidos en [sources.md](sources.md#puntaje-de-confianza-por-fuente) |
 | Fuentes reales | Faltan: Firecrawl, Apify, Mercado Libre, Meta Ads |
 | Deploy en GCP | Armado: `infra/` y `cloudbuild.*.yaml`. Cómo funciona, en [gcp.md](gcp.md) |
 

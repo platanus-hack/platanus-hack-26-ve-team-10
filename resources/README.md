@@ -8,7 +8,7 @@ Qué va aquí:
 - `keywords-ve.csv` / `keywords-ve.md`: búsquedas de Google en Venezuela con volumen e intención, y hallazgos para taxonomía y URLs.
 - `usaprais.com-agentic-architecture.pdf`: diagrama de la pizarra (fuentes, agentes y canales). El sistema que está construido es el de [agents/architecture.md](../agents/architecture.md).
 - `queries.md`: consultas de ejemplo para probar el agente, con la respuesta que esperamos.
-- `*-trust-score.ts` y `meta-ads-signals.ts`: diseño del puntaje de confianza de cada fuente, en TypeScript. La implementación va en Python en `apps/api/app/lib/prices.py`: estos archivos no se importan. El resumen por fuente está en [agents/sources.md](../agents/sources.md#puntaje-de-confianza-por-fuente).
+- `*-trust-score.ts` y `meta-ads-signals.ts`: borradores del puntaje de confianza de cada fuente, en TypeScript. La implementación va en Python en `apps/api/app/lib/prices.py`: estos archivos no se importan. El resumen por fuente está en [agents/sources.md](../agents/sources.md#puntaje-de-confianza-por-fuente).
 - `ig-trust-score.ts`: cuenta de Instagram con Apify: 11 señales con peso, banderas rojas, cobertura mínima y veredicto.
 - `fb-marketplace-trust-score.ts`: un anuncio y su vendedor en Facebook Marketplace: 8 señales con peso (antigüedad en Facebook, ubicación, historial de publicaciones, fotos originales, completitud, lenguaje de riesgo, precio y reportes), un bonus de hasta +10 por calificaciones e insignias, y banderas rojas.
 - `tiktok-trust-score.ts`: cuenta de TikTok: 11 señales con peso. Mide la proporción entre likes, vistas, compartidos y guardados en lugar de likes por seguidor, y saca la antigüedad de la cuenta del ID de usuario.

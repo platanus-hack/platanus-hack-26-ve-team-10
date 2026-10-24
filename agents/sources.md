@@ -23,9 +23,9 @@ Cada fuente es un archivo en `apps/api/app/lib/sources/` que cumple el contrato 
 
 ## Puntaje de confianza por fuente
 
-Cada fuente tiene su puntaje de confianza diseñado en `resources/`, en TypeScript. Ahí están las señales, los pesos, las banderas rojas y los actores o APIs que usa. La implementación va en Python en `apps/api/app/lib/prices.py`. Antes de portarlo, corre el actor con casos reales y confirma los nombres de sus campos.
+Cada fuente tiene un borrador de su puntaje de confianza en `resources/`, en TypeScript. Ahí están las señales, los pesos, las banderas rojas y los actores o APIs que usa. La implementación va en Python en `apps/api/app/lib/prices.py`. Antes de portarlo, corre el actor con casos reales y confirma los nombres de sus campos.
 
-| Fuente | Diseño | Qué pesa más |
+| Fuente | Borrador | Qué pesa más |
 |---|---|---|
 | Instagram | [ig-trust-score.ts](../resources/ig-trust-score.ts) | Antigüedad de la cuenta, interacción acorde a los seguidores y comentarios reales |
 | Facebook Marketplace | [fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts) | Historial del vendedor y fotos que no aparecen en anuncios de otros: en Venezuela casi nadie califica |
