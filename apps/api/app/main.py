@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.routes import catalogo, chat, whatsapp
+from app.routes import catalogo, chat, images, whatsapp
 from app.routes.mcp import mcp_app, mcp_server
 
 
@@ -31,4 +31,5 @@ async def health():
 app.include_router(chat.router)
 app.include_router(whatsapp.router)
 app.include_router(catalogo.router)
+app.include_router(images.router)
 app.mount("/", mcp_app)  # /mcp: va al final para que las rutas de arriba tengan prioridad

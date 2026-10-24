@@ -13,6 +13,7 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
 from app.agent import FALLBACK_REPLY, ask_prais
+from app.agents.listing import carousel_message, clamp_summary
 from app.lib.tasks import enqueue_whatsapp_event, queue_enabled
 
 router = APIRouter()
@@ -45,14 +46,40 @@ def _text_message(event: dict[str, Any]) -> tuple[str, str, str] | None:
     return phone_number_id, sender, text
 
 
-async def _send_text(phone_number_id: str, to: str, body: str) -> None:
+async def _post_message(phone_number_id: str, payload: dict[str, Any]) -> None:
     async with httpx.AsyncClient(timeout=15) as client:
         response = await client.post(
             KAPSO_MESSAGES_URL.format(phone_number_id=phone_number_id),
             headers={"X-API-Key": os.environ["KAPSO_API_KEY"]},
-            json={"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}},
+            json=payload,
         )
         response.raise_for_status()
+
+
+async def _send_text(phone_number_id: str, to: str, body: str) -> None:
+    await _post_message(
+        phone_number_id,
+        {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}},
+    )
+
+
+_GREETINGS = {
+    "hola",
+    "hello",
+    "hi",
+    "hey",
+    "buenas",
+    "buen dia",
+    "buenos dias",
+    "buenas tardes",
+    "buenas noches",
+}
+_GREETING_REPLY = "Hola. Dime qué producto quieres comparar."
+
+
+def _is_greeting(text: str) -> bool:
+    cleaned = "".join(char for char in text.lower() if char.isalnum() or char.isspace()).strip()
+    return cleaned in _GREETINGS
 
 
 async def _reply(event: dict[str, Any]) -> None:
@@ -60,8 +87,18 @@ async def _reply(event: dict[str, Any]) -> None:
     if not parsed:
         return
     phone_number_id, sender, text = parsed
+    if _is_greeting(text):
+        await _send_text(phone_number_id, sender, _GREETING_REPLY)
+        return
     answer = await ask_prais(f"whatsapp:{sender}", text)
-    await _send_text(phone_number_id, sender, answer)
+    carousel = await carousel_message(sender, answer.listings, answer.text)
+    if carousel is not None:
+        try:
+            await _post_message(phone_number_id, carousel)
+            return
+        except Exception:
+            log.exception("whatsapp carousel failed")
+    await _send_text(phone_number_id, sender, clamp_summary(answer.text))
 
 
 async def _reply_all(events: list[dict[str, Any]]) -> None:

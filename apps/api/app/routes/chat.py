@@ -19,7 +19,7 @@ class ChatBody(BaseModel):
 @router.post("/chat")
 async def chat(body: ChatBody):
     try:
-        return {"reply": await ask_prais(f"web:{body.sessionId}", body.message)}
+        return {"reply": (await ask_prais(f"web:{body.sessionId}", body.message)).text}
     except Exception:
         log.exception("chat failed")
         return JSONResponse({"reply": FALLBACK_REPLY}, status_code=502)

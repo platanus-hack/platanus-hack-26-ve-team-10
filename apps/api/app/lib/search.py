@@ -58,6 +58,10 @@ async def search_offers(query: SearchQuery) -> dict[str, Any]:
                     else None
                 ),
                 "seenAt": offer.seen_at,
+                "reviews": (
+                    f"{merchant.comments} comentarios recientes" if merchant.comments is not None else None
+                ),
+                "image_url": None,
                 "source": source_id,
                 "example": source_id == "ejemplo",
                 "merchant": {
