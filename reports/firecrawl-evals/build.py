@@ -53,7 +53,7 @@ credits = dict(
 )
 # USD per credit: not in the eval files -> ASSUMPTION from public Firecrawl pricing (accessed 2026-10-24)
 USD_PER_CREDIT = dict(standard_plan=99 / 100000, payg_standard=5 / 2000,
-    source='https://www.firecrawl.dev/pricing and https://docs.firecrawl.dev/billing (Standard: $99/mo for 100,000 credits; pay-as-you-go $5 per 2,000 credits). ASSUMPTION: the plan of the account used is not recorded in the eval files.')
+    source='https://www.firecrawl.dev/pricing y https://docs.firecrawl.dev/billing (plan Standard: $99/mes por 100,000 créditos; pago por uso: $5 por 2,000 créditos). SUPUESTO: los archivos de la prueba no dicen qué plan tenía la cuenta usada.')
 
 # ---- offers
 fc_off = [x for x in fcv['offers'] if x['run_id'] in final_ids]
@@ -96,7 +96,7 @@ for pid in P:
         amt = str((o['o'].get('price') or {}).get('amount', ''))
         others = [usd(x['o']) for x in V if x is not o]
         if PARSE_RE.match(amt) and others and usd(o['o']) < 0.1 * med(others):
-            o['flag'] = 'suspected parse error'
+            o['flag'] = 'posible error al leer el precio'
 def ok_price(o): return o['status'] == 'verified' and usd(o['o']) and not o['flag']
 parse_flagged = [dict(pid=o['pid'], arm=o['arm'], run=o['run'], amount=o['o']['price']['amount'], title=o['o'].get('title'), url=o['o'].get('url')) for o in offers if o['flag']]
 
@@ -117,10 +117,10 @@ def specs(t):
     return out
 def variant_check(a, b):
     pa, pb = usd(a['o']), usd(b['o']); why = []
-    if pa and pb and max(pa, pb) / min(pa, pb) >= VAR_RATIO and abs(pa - pb) >= VAR_MIN_USD: why.append(f'price ratio {max(pa, pb) / min(pa, pb):.2f} >= {VAR_RATIO}')
+    if pa and pb and max(pa, pb) / min(pa, pb) >= VAR_RATIO and abs(pa - pb) >= VAR_MIN_USD: why.append(f'un precio es {max(pa, pb) / min(pa, pb):.2f} veces el otro (límite {VAR_RATIO})')
     sa, sb = specs(a['o'].get('title')), specs(b['o'].get('title'))
     for u in sa.keys() & sb.keys():
-        if not (sa[u] & sb[u]): why.append(f'spec "{u}" differs: {sorted(sa[u])} vs {sorted(sb[u])}')
+        if not (sa[u] & sb[u]): why.append(f'la medida "{u}" no coincide: {sorted(sa[u])} vs {sorted(sb[u])}')
     return why
 
 # ---- per-product lowest verified USD per arm, and savings vs AI (parse-error offers excluded)
@@ -163,8 +163,8 @@ headline = dict(
     fc_only_products=[p for p, r in per_product.items() if r['FC-any']['min_usd'] is not None and r['ai_best_min_usd'] is None],
     ai_only_products=[p for p, r in per_product.items() if r['FC-any']['min_usd'] is None and r['ai_best_min_usd'] is not None],
     parse_flagged=parse_flagged,
-    rules=dict(parse_error='amount string matches ^\\d{1,3}\\.\\d{3}$ and value < 10% of median of the product\'s other verified USD prices',
-               variant=f'FC lowest vs best-Claude lowest: price ratio >= {VAR_RATIO} and gap >= ${VAR_MIN_USD:.0f}, or same-unit spec in both titles with no common value'),
+    rules=dict(parse_error='el monto tiene la forma ^\\d{1,3}\\.\\d{3}$ (ej. 1.921) y vale menos del 10% de la mediana de los demás precios verificados en USD del mismo producto',
+               variant=f'se compara la oferta más barata de Firecrawl con la más barata de Claude: se marca si un precio es al menos {VAR_RATIO} veces el otro y la diferencia es de ${VAR_MIN_USD:.0f} o más, o si ambos títulos dan una medida en la misma unidad sin ningún valor en común'),
 )
 for a in ARMS + ['gemini-3-flash-preview']:
     arm_summary[a]['products_with_verified_usd'] = len({o['pid'] for o in offers if in_arm(o, a) and ok_price(o)})
@@ -180,16 +180,16 @@ for m in METH:
                             credits_reported_sum=sum(cr), credits_balance_delta_full_log=credits['full_log_by_method'].get(m), credits_per_query_median=med(cr), credits_per_query_mean=sum(cr) / len(cr) if cr else None,
                             usd_per_query_mean_standard=(sum(cr) / len(cr)) * USD_PER_CREDIT['standard_plan'] if cr else None,
                             usd_per_query_mean_payg=(sum(cr) / len(cr)) * USD_PER_CREDIT['payg_standard'] if cr else None,
-                            note='t_first_valid uses the harness VE check at run time (harness.py), not validate.py')
+                            note='el tiempo a la primera oferta válida usa el chequeo venezolano de harness.py durante la corrida, no validate.py')
 for mdl in CLAUDE + ['gemini-3-flash-preview']:
     R = [r for r in base if r['model_id'] == mdl]
     lat = [r['latency_s'] for r in R if r['latency_s']]
     tfv = [r['latency_s'] for r in R if r['latency_s'] and any(isinstance(o, dict) and o['validation']['status'] == 'verified' for o in r['offers'])]
     cost = [(r['cost_usd'] or 0) + (r['extract_cost_usd'] or 0) for r in R]
     timing[mdl] = dict(runs=len(R), with_first_valid=len(tfv), first_valid_median_s=med(tfv), first_valid_p90_s=p90(tfv), total_median_s=med(lat), total_p90_s=p90(lat),
-                       usd_sum=sum(cost), usd_per_query_mean=sum(cost) / len(cost), note='single answer: time to first valid = full latency of calls that produced >=1 verified offer; cost is Claude Code reported equivalent (subscription)')
+                       usd_sum=sum(cost), usd_per_query_mean=sum(cost) / len(cost), note='una sola respuesta: tiempo a la primera válida = lo que tardaron las llamadas que dieron al menos 1 oferta verificada; el costo es el equivalente que reporta Claude Code (suscripción)')
 gapp = [r for r in browser if r['surface'] == 'gemini_app']
-timing['gemini_app'] = dict(runs=len(gapp), total_median_s=med([r['seconds'] for r in gapp if r['seconds']]), note='PARTIAL: only p01')
+timing['gemini_app'] = dict(runs=len(gapp), total_median_s=med([r['seconds'] for r in gapp if r['seconds']]), note='PARCIAL: solo p01')
 aio = [r for r in browser if r['surface'] == 'ai_overview']
 browser_summary = dict(ai_overview_rows=len(aio), ai_overview_shown=sum(1 for r in aio if r.get('model_label')), gemini_app_rows=len(gapp),
                        gemini_app_products=[r['product_id'] for r in gapp])
@@ -218,7 +218,7 @@ ai_prompts = {k: next(r['prompt'] for r in base if r['model_id'] == 'claude-opus
 prompts = dict(prompts_md=open(EV + 'prompts.md').read(), methods_md=open(EV + 'methods.md').read(), agent_params=agent_step['params'], scrape_params=scrape_step['params'],
                search_params=search_step['params'], escalation_params=esc_steps, ai_prompts_p01=ai_prompts,
                ai_access={m: next(r.get('access') for r in base if r['model_id'] == m) for m in CLAUDE + ['gemini-3-flash-preview']},
-               browser_prompt_p01=browser[0]['prompt'], extract_prompt_note='scrape params reference "extract_prompt"; full text is in prompts.md / harness.py')
+               browser_prompt_p01=browser[0]['prompt'], extract_prompt_note='los parámetros de scrape hacen referencia a "extract_prompt"; el texto completo está en prompts.md / harness.py')
 
 # daka
 daka = [dict(run=r['run_id'], n_results=r['n_results'], n_harness_ve=r['n_ve_pass'], n_validated=sum(1 for x in fcv['offers'] if x['run_id'] == r['run_id'] and x['validation']['status'] == 'verified'),
