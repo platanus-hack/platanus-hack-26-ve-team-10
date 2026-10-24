@@ -402,7 +402,7 @@
     "url": "https://www.iphonevenezuela.com/iphone-17-pro-max-precio/"
    },
    "variant_flag": [
-    "price ratio 1.28 >= 1.25"
+    "un precio es 1.28 veces el otro (límite 1.25)"
    ],
    "parse_flagged": []
   },
@@ -676,7 +676,7 @@
     "url": "https://www.cashea.app/productos/tv-damasco-32-smart-tv-android-certificado-google"
    },
    "variant_flag": [
-    "price ratio 1.41 >= 1.25"
+    "un precio es 1.41 veces el otro (límite 1.25)"
    ],
    "parse_flagged": []
   },
@@ -747,7 +747,7 @@
     "url": "https://tiendasdaka.com/ve/products/refrigerador-16-pies-ejecutivo-blanco-daewoo"
    },
    "variant_flag": [
-    "spec \"pies\" differs: [2.7] vs [1.6]"
+    "la medida \"pies\" no coincide: [2.7] vs [1.6]"
    ],
    "parse_flagged": []
   },
@@ -1025,7 +1025,7 @@
     "url": "https://ve.epaenlinea.com/generador-electrico-950w.html"
    },
    "variant_flag": [
-    "spec \"w\" differs: [750.0] vs [950.0]"
+    "la medida \"w\" no coincide: [750.0] vs [950.0]"
    ],
    "parse_flagged": [
     {
@@ -1105,7 +1105,7 @@
     "url": "https://panelsolarvenezuela.com/product/inversor-onda-pura-ipower-2v-350va-120vac/"
    },
    "variant_flag": [
-    "price ratio 2.01 >= 1.25"
+    "un precio es 2.01 veces el otro (límite 1.25)"
    ],
    "parse_flagged": []
   },
@@ -1241,7 +1241,7 @@
     "url": "https://prctint.online/productos/asiento-completo-bera-br150"
    },
    "variant_flag": [
-    "price ratio 6.98 >= 1.25"
+    "un precio es 6.98 veces el otro (límite 1.25)"
    ],
    "parse_flagged": []
   },
@@ -1576,8 +1576,8 @@
     "url": "https://www.farmadon.com.ve/producto/huggies-panal-triple-proteccion-talla-g-x-20-unidades/"
    },
    "variant_flag": [
-    "price ratio 1.77 >= 1.25",
-    "spec \"und\" differs: [30.0] vs [20.0]"
+    "un precio es 1.77 veces el otro (límite 1.25)",
+    "la medida \"und\" no coincide: [30.0] vs [20.0]"
    ],
    "parse_flagged": []
   },
@@ -1717,7 +1717,7 @@
     "url": "https://www.colvenca.com.ve/"
    },
    "variant_flag": [
-    "price ratio 2.14 >= 1.25"
+    "un precio es 2.14 veces el otro (límite 1.25)"
    ],
    "parse_flagged": []
   }
@@ -1765,8 +1765,8 @@
    }
   ],
   "rules": {
-   "parse_error": "amount string matches ^\\d{1,3}\\.\\d{3}$ and value < 10% of median of the product's other verified USD prices",
-   "variant": "FC lowest vs best-Claude lowest: price ratio >= 1.25 and gap >= $5, or same-unit spec in both titles with no common value"
+   "parse_error": "el monto tiene la forma ^\\d{1,3}\\.\\d{3}$ (ej. 1.921) y vale menos del 10% de la mediana de los demás precios verificados en USD del mismo producto",
+   "variant": "se compara la oferta más barata de Firecrawl con la más barata de Claude: se marca si un precio es al menos 1.25 veces el otro y la diferencia es de $5 o más, o si ambos títulos dan una medida en la misma unidad sin ningún valor en común"
   }
  },
  "credits": {
@@ -1829,7 +1829,7 @@
  "usd_per_credit": {
   "standard_plan": 0.00099,
   "payg_standard": 0.0025,
-  "source": "https://www.firecrawl.dev/pricing and https://docs.firecrawl.dev/billing (Standard: $99/mo for 100,000 credits; pay-as-you-go $5 per 2,000 credits). ASSUMPTION: the plan of the account used is not recorded in the eval files."
+  "source": "https://www.firecrawl.dev/pricing y https://docs.firecrawl.dev/billing (plan Standard: $99/mes por 100,000 créditos; pago por uso: $5 por 2,000 créditos). SUPUESTO: los archivos de la prueba no dicen qué plan tenía la cuenta usada."
  },
  "timing": {
   "FC-A": {
@@ -1845,7 +1845,7 @@
    "credits_per_query_mean": 48.75,
    "usd_per_query_mean_standard": 0.0482625,
    "usd_per_query_mean_payg": 0.121875,
-   "note": "t_first_valid uses the harness VE check at run time (harness.py), not validate.py"
+   "note": "el tiempo a la primera oferta válida usa el chequeo venezolano de harness.py durante la corrida, no validate.py"
   },
   "FC-B": {
    "runs": 20,
@@ -1860,7 +1860,7 @@
    "credits_per_query_mean": 32.5,
    "usd_per_query_mean_standard": 0.032175,
    "usd_per_query_mean_payg": 0.08125,
-   "note": "t_first_valid uses the harness VE check at run time (harness.py), not validate.py"
+   "note": "el tiempo a la primera oferta válida usa el chequeo venezolano de harness.py durante la corrida, no validate.py"
   },
   "FC-C": {
    "runs": 20,
@@ -1875,7 +1875,7 @@
    "credits_per_query_mean": 36.55,
    "usd_per_query_mean_standard": 0.036184499999999994,
    "usd_per_query_mean_payg": 0.091375,
-   "note": "t_first_valid uses the harness VE check at run time (harness.py), not validate.py"
+   "note": "el tiempo a la primera oferta válida usa el chequeo venezolano de harness.py durante la corrida, no validate.py"
   },
   "FC-D": {
    "runs": 20,
@@ -1890,7 +1890,7 @@
    "credits_per_query_mean": 5.0,
    "usd_per_query_mean_standard": 0.0049499999999999995,
    "usd_per_query_mean_payg": 0.0125,
-   "note": "t_first_valid uses the harness VE check at run time (harness.py), not validate.py"
+   "note": "el tiempo a la primera oferta válida usa el chequeo venezolano de harness.py durante la corrida, no validate.py"
   },
   "claude-opus-5-5": {
    "runs": 40,
@@ -1901,7 +1901,7 @@
    "total_p90_s": 106.4,
    "usd_sum": 13.801,
    "usd_per_query_mean": 0.345025,
-   "note": "single answer: time to first valid = full latency of calls that produced >=1 verified offer; cost is Claude Code reported equivalent (subscription)"
+   "note": "una sola respuesta: tiempo a la primera válida = lo que tardaron las llamadas que dieron al menos 1 oferta verificada; el costo es el equivalente que reporta Claude Code (suscripción)"
   },
   "claude-sonnet-5-5": {
    "runs": 40,
@@ -1912,7 +1912,7 @@
    "total_p90_s": 40.8,
    "usd_sum": 4.9782,
    "usd_per_query_mean": 0.12445500000000001,
-   "note": "single answer: time to first valid = full latency of calls that produced >=1 verified offer; cost is Claude Code reported equivalent (subscription)"
+   "note": "una sola respuesta: tiempo a la primera válida = lo que tardaron las llamadas que dieron al menos 1 oferta verificada; el costo es el equivalente que reporta Claude Code (suscripción)"
   },
   "claude-haiku-5-5": {
    "runs": 40,
@@ -1923,7 +1923,7 @@
    "total_p90_s": 72.3,
    "usd_sum": 2.5423,
    "usd_per_query_mean": 0.0635575,
-   "note": "single answer: time to first valid = full latency of calls that produced >=1 verified offer; cost is Claude Code reported equivalent (subscription)"
+   "note": "una sola respuesta: tiempo a la primera válida = lo que tardaron las llamadas que dieron al menos 1 oferta verificada; el costo es el equivalente que reporta Claude Code (suscripción)"
   },
   "gemini-3-flash-preview": {
    "runs": 40,
@@ -1934,12 +1934,12 @@
    "total_p90_s": 35.6,
    "usd_sum": 1.2275,
    "usd_per_query_mean": 0.0306875,
-   "note": "single answer: time to first valid = full latency of calls that produced >=1 verified offer; cost is Claude Code reported equivalent (subscription)"
+   "note": "una sola respuesta: tiempo a la primera válida = lo que tardaron las llamadas que dieron al menos 1 oferta verificada; el costo es el equivalente que reporta Claude Code (suscripción)"
   },
   "gemini_app": {
    "runs": 1,
    "total_median_s": 240.3,
-   "note": "PARTIAL: only p01"
+   "note": "PARCIAL: solo p01"
   }
  },
  "browser_summary": {
@@ -12237,7 +12237,7 @@
    "gemini-3-flash-preview": "Vertex AI global, googleSearch grounding"
   },
   "browser_prompt_p01": "¿Dónde puedo comprar iphone 17 precio en dolares en Venezuela y a qué precio? Dame vendedores con contacto y precio.",
-  "extract_prompt_note": "scrape params reference \"extract_prompt\"; full text is in prompts.md / harness.py"
+  "extract_prompt_note": "los parámetros de scrape hacen referencia a \"extract_prompt\"; el texto completo está en prompts.md / harness.py"
  },
  "daka": [
   {
@@ -48989,7 +48989,7 @@
    "source_type": null
   },
   {
-   "flag": "suspected parse error",
+   "flag": "posible error al leer el precio",
    "arm": "claude-sonnet-5-5",
    "pid": "p10",
    "run": "claude-sonnet-5-5/p10/plain",
