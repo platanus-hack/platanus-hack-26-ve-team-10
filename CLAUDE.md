@@ -9,3 +9,7 @@ Antes de cada `git commit`, si el commit cambia código o configuración (`src/`
 1. Revisa si el cambio afecta la arquitectura, una ruta, una variable de entorno, una dependencia o el deploy.
 2. Si la afecta, actualiza `AGENTS.md` y el doc de `agents/` que corresponda, agrégalos con `git add` y repite el commit. Docs y código van en el mismo commit.
 3. Si no hace falta tocar docs, repite el commit con `DOCS_REVIEWED=1` delante: `DOCS_REVIEWED=1 git commit -m "..."`.
+
+## main bloqueado
+
+Nunca hagas push a `main`. Trabaja en una rama (`git switch -c <tipo>/<tema>`), haz push de la rama y abre el PR con `gh pr create`; el PR se mergea solo. El hook `.claude/hooks/guard-main.mjs` frena cualquier push a `main`.

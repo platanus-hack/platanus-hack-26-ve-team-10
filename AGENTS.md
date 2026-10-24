@@ -28,7 +28,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 
 ## Reglas
 
-1. Todo cambio entra por PR a `main` del repo de la org, y el PR se mergea solo. No hagas push directo a `main`.
+1. `main` está bloqueado: todo cambio entra por PR a `main` del repo de la org, y el PR se mergea solo. Nunca hagas push a `main`.
 2. El agente nunca inventa un precio: cada precio sale de `searchOffers`.
 3. Todo precio que se muestra lleva su fuente y su fecha. Si se convirtió de moneda, también lleva la tasa usada.
 4. Los secretos van en variables de entorno. Están listados en `.env.example`.

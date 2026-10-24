@@ -6,6 +6,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-main.mjs\"",
+            "statusMessage": "Revisando que el push no vaya a main..."
+          },
+          {
+            "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-docs.mjs\"",
             "statusMessage": "Revisando si el commit necesita actualizar los docs..."
           }
