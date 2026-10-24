@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-docs.mjs\"",
+            "statusMessage": "Revisando si el commit necesita actualizar los docs..."
+          }
+        ]
+      }
+    ]
+  }
+}
