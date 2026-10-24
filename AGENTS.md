@@ -9,7 +9,6 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 | `src/app/` | Páginas y rutas de la API: `/api/chat` (web), `/api/whatsapp` (Kapso) y `/api/mcp` (MCP) |
 | `src/agent/` | El agente con ADK: instrucciones y tools |
 | `src/lib/` | Tipos, búsqueda, precios, confianza y datos de ejemplo |
-| `deploy/` | Deploy con Cloud Build: setup de GCP y pasos del build |
 | `agents/` | Cómo se construye cada parte, un doc por área |
 | `docs/` | Producto y decisiones |
 | `resources/` | Material de referencia: fuentes candidatas, consultas de ejemplo |
@@ -29,7 +28,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 
 ## Reglas
 
-1. Todo cambio entra por PR a `main` del repo de la org. El PR se mergea solo, y Cloud Build lo despliega si cambió la app. No hagas push directo a `main`.
+1. Todo cambio entra por PR a `main` del repo de la org, y el PR se mergea solo. No hagas push directo a `main`.
 2. El agente nunca inventa un precio: cada precio sale de `searchOffers`.
 3. Todo precio que se muestra lleva su fuente y su fecha. Si se convirtió de moneda, también lleva la tasa usada.
 4. Los secretos van en variables de entorno. Están listados en `.env.example`.
@@ -48,7 +47,7 @@ pnpm build && pnpm lint # antes de abrir el PR: no hay checks antes del auto-mer
 ## Antes de entregar
 
 - [ ] Reescribir `project-description.md` con lo que Prais hace de verdad: hoy es provisional. Alinear también `project-description-spanish` en el `jsonc`.
-- [ ] usaprais.com respondiendo, porque es la `deploy-url` que valida Platanus.
+- [ ] Deploy en GCP armado (dev a cargo de GCP, ver [agents/gcp.md](agents/gcp.md)) y usaprais.com respondiendo, porque es la `deploy-url` que valida Platanus.
 - [ ] `README.md` conciso, como pide Platanus.
 
 <!-- BEGIN:nextjs-agent-rules -->
