@@ -42,3 +42,6 @@ next-env.d.ts
 
 # env de ejemplo sí se sube
 !.env.example
+
+# configuración personal de Claude Code
+.claude/settings.local.json
