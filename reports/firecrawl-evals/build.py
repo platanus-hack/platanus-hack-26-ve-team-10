@@ -83,34 +83,91 @@ for a in ARMS + ['gemini-3-flash-preview']:
                           products_with_verified=len({o['pid'] for o in V}),
                           products_with_verified_usd=len({o['pid'] for o in V if usd(o['o'])}))
 
-# ---- per-product lowest verified USD per arm, and savings vs AI
+# ---- report-level flags (validate.py verdicts are NOT changed; these only gate the price comparisons)
+import re
+# (1) suspected thousands-separator parse error: amount string looks like "1.921" (1-3 digits, dot, exactly 3 digits)
+#     AND the value is < 10% of the median of the product's other verified USD prices (all arms).
+PARSE_RE = re.compile(r'^\d{1,3}\.\d{3}$')
+for o in offers:
+    o['flag'] = None
+for pid in P:
+    V = [o for o in offers if o['pid'] == pid and o['status'] == 'verified' and usd(o['o'])]
+    for o in V:
+        amt = str((o['o'].get('price') or {}).get('amount', ''))
+        others = [usd(x['o']) for x in V if x is not o]
+        if PARSE_RE.match(amt) and others and usd(o['o']) < 0.1 * med(others):
+            o['flag'] = 'suspected parse error'
+def ok_price(o): return o['status'] == 'verified' and usd(o['o']) and not o['flag']
+parse_flagged = [dict(pid=o['pid'], arm=o['arm'], run=o['run'], amount=o['o']['price']['amount'], title=o['o'].get('title'), url=o['o'].get('url')) for o in offers if o['flag']]
+
+# (2) possible variant mismatch between the two lowest offers (FC-any lowest vs best-Claude lowest):
+#     price ratio max/min >= 1.25, OR a spec with the same unit appears in both titles with no common value.
+VAR_RATIO = 1.25
+VAR_MIN_USD = 5.0  # ignore ratio on cheap staples (e.g. $0.94 vs $1.25 flour)
+UNIT = {'gb': 'gb', 'kg': 'kg', 'pies': 'pies', 'btu': 'btu', 'w': 'w', 'v': 'v', 'va': 'va', 'kva': 'kva', 'und': 'und', 'unidades': 'und', '"': 'in', '″': 'in', 'pulgadas': 'in'}
+SPEC_RE = re.compile(r'(\d+(?:[.,]\d+)*(?:/\d+(?:[.,]\d+)*)*)\s*(gb|kg|pies|btu|kva|va|w|v|und|unidades|pulgadas|"|″)(?![a-z])', re.I)
+def specs(t):
+    out = {}
+    for n, u in SPEC_RE.findall(t or ''):
+        u = UNIT[u.lower()]
+        for n in n.split('/'):
+            n = n.replace(',', '.')
+            if u in ('btu', 'und') or re.match(r'^\d{1,3}\.\d{3}$', n): n = n.replace('.', '')
+            out.setdefault(u, set()).add(float(n))
+    return out
+def variant_check(a, b):
+    pa, pb = usd(a['o']), usd(b['o']); why = []
+    if pa and pb and max(pa, pb) / min(pa, pb) >= VAR_RATIO and abs(pa - pb) >= VAR_MIN_USD: why.append(f'price ratio {max(pa, pb) / min(pa, pb):.2f} >= {VAR_RATIO}')
+    sa, sb = specs(a['o'].get('title')), specs(b['o'].get('title'))
+    for u in sa.keys() & sb.keys():
+        if not (sa[u] & sb[u]): why.append(f'spec "{u}" differs: {sorted(sa[u])} vs {sorted(sb[u])}')
+    return why
+
+# ---- per-product lowest verified USD per arm, and savings vs AI (parse-error offers excluded)
 per_product = {}
 for pid in P:
-    row = {}
+    row = {}; low = {}
     for a in ARMS:
-        V = [usd(o['o']) for o in offers if in_arm(o, a) and o['pid'] == pid and o['status'] == 'verified' and usd(o['o'])]
+        VO = [o for o in offers if in_arm(o, a) and o['pid'] == pid and ok_price(o)]
+        V = [usd(o['o']) for o in VO]
         n = sum(1 for o in offers if in_arm(o, a) and o['pid'] == pid and o['status'] == 'verified')
         row[a] = dict(min_usd=min(V) if V else None, median_usd=med(V), n_verified=n)
-    ai = [row[m]['min_usd'] for m in CLAUDE if row[m]['min_usd'] is not None]
-    row['ai_best_min_usd'] = min(ai) if ai else None
+        low[a] = min(VO, key=lambda o: usd(o['o'])) if VO else None
+    ai = [low[m] for m in CLAUDE if low[m]]
+    ai_low = min(ai, key=lambda o: usd(o['o'])) if ai else None
+    row['ai_best_min_usd'] = usd(ai_low['o']) if ai_low else None
     f = row['FC-any']['min_usd']
-    row['saving_vs_ai_best'] = (row['ai_best_min_usd'] - f) if (f is not None and ai) else None
+    row['saving_vs_ai_best'] = (row['ai_best_min_usd'] - f) if (f is not None and ai_low) else None
     for m in CLAUDE:
         row['saving_vs_' + m] = (row[m]['min_usd'] - f) if (f is not None and row[m]['min_usd'] is not None) else None
+    fl = low['FC-any']
+    row['fc_low'] = dict(arm=fl['arm'], title=fl['o'].get('title'), url=fl['o'].get('url')) if fl else None
+    row['ai_low'] = dict(arm=ai_low['arm'], title=ai_low['o'].get('title'), url=ai_low['o'].get('url')) if ai_low else None
+    row['variant_flag'] = variant_check(fl, ai_low) if (fl and ai_low) else []
+    row['parse_flagged'] = [x for x in parse_flagged if x['pid'] == pid]
     per_product[pid] = row
 both = [pid for pid, r in per_product.items() if r['saving_vs_ai_best'] is not None]
+clean = [p for p in both if not per_product[p]['variant_flag']]
 headline = dict(
     products=len(P),
     fc_verified=arm_summary['FC-any']['verified'],
     ai_verified={m: arm_summary[m]['verified'] for m in CLAUDE},
-    products_compared=len(both),
-    fc_cheaper=sum(1 for p in both if per_product[p]['saving_vs_ai_best'] > 0),
-    equal=sum(1 for p in both if per_product[p]['saving_vs_ai_best'] == 0),
-    ai_cheaper=sum(1 for p in both if per_product[p]['saving_vs_ai_best'] < 0),
-    median_saving_usd=med([per_product[p]['saving_vs_ai_best'] for p in both]),
+    products_with_both=len(both),
+    variant_flagged=[p for p in both if per_product[p]['variant_flag']],
+    products_compared=len(clean),
+    fc_cheaper=sum(1 for p in clean if per_product[p]['saving_vs_ai_best'] > 0),
+    equal=sum(1 for p in clean if per_product[p]['saving_vs_ai_best'] == 0),
+    ai_cheaper=sum(1 for p in clean if per_product[p]['saving_vs_ai_best'] < 0),
+    median_saving_usd=med([per_product[p]['saving_vs_ai_best'] for p in clean]),
+    median_saving_usd_incl_variant_flagged=med([per_product[p]['saving_vs_ai_best'] for p in both]),
     fc_only_products=[p for p, r in per_product.items() if r['FC-any']['min_usd'] is not None and r['ai_best_min_usd'] is None],
     ai_only_products=[p for p, r in per_product.items() if r['FC-any']['min_usd'] is None and r['ai_best_min_usd'] is not None],
+    parse_flagged=parse_flagged,
+    rules=dict(parse_error='amount string matches ^\\d{1,3}\\.\\d{3}$ and value < 10% of median of the product\'s other verified USD prices',
+               variant=f'FC lowest vs best-Claude lowest: price ratio >= {VAR_RATIO} and gap >= ${VAR_MIN_USD:.0f}, or same-unit spec in both titles with no common value'),
 )
+for a in ARMS + ['gemini-3-flash-preview']:
+    arm_summary[a]['products_with_verified_usd'] = len({o['pid'] for o in offers if in_arm(o, a) and ok_price(o)})
 
 # ---- time and cost
 timing = {}
@@ -172,7 +229,7 @@ daka = [dict(run=r['run_id'], n_results=r['n_results'], n_harness_ve=r['n_ve_pas
 drill = []
 for o in offers:
     oo = o['o']; m = oo.get('merchant') or {}; pr = oo.get('product') or {}
-    drill.append(dict(arm=o['arm'], pid=o['pid'], run=o['run'], status=o['status'], reason=o['reason'], ev=o['ev'], title=oo.get('title'), url=oo.get('url'), price=oo.get('price'), usd=usd(oo),
+    drill.append(dict(flag=o['flag'], arm=o['arm'], pid=o['pid'], run=o['run'], status=o['status'], reason=o['reason'], ev=o['ev'], title=oo.get('title'), url=oo.get('url'), price=oo.get('price'), usd=usd(oo),
                       seller=m.get('name'), phone=m.get('phone'), whatsapp=m.get('whatsapp'), instagram=m.get('instagram'), zone=m.get('zone') or m.get('city'), address=m.get('address'),
                       brand=pr.get('brand'), model=pr.get('model'), variant=pr.get('variant'), condition=pr.get('condition'), source_type=(oo.get('source') or {}).get('source_type')))
 
