@@ -1,5 +1,6 @@
 // Hook de Claude Code (PreToolUse, Bash): main está bloqueado, todo entra por PR.
 // Frena un `git push` que apunte a main, o un `git push` sin rama estando en main.
+// Hacia el mirror Pleo2/prais.com sí se permite: es lo que hace `pnpm sync`.
 import { execSync } from "node:child_process";
 
 let input = "";
@@ -19,6 +20,7 @@ try {
 
 const toMain = pushes.some((push) => {
   const args = push.split(/\s+/).slice(2).filter((arg) => !arg.startsWith("-"));
+  if (/^prais$|Pleo2\/prais\.com/.test(args[0] ?? "")) return false; // el mirror sí recibe main (pnpm sync)
   if (args.length <= 1) return current === "main"; // git push / git push origin
   return args
     .slice(1)
