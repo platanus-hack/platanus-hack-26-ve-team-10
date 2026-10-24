@@ -38,7 +38,7 @@ ChatGPT / Claude ─────┘                                             
 
 - Agente con ADK y Gemini, Kapso y MCP en el backend. Web en Next.js, solo interfaz.
 - Infraestructura en GCP, con Cloud Build para desplegar. Cloudflare solo maneja el DNS.
-- Un solo agente con tools. Los sub-agentes de la pizarra se agregan si un solo agente no alcanza.
+- Un solo agente con tools. Los sub-agentes de la pizarra ([resources/usaprais.com-agentic-architecture.pdf](../resources/usaprais.com-agentic-architecture.pdf)) se agregan si un solo agente no alcanza.
 - Las sesiones del agente viven en memoria. Si se pierden con un reinicio, no importa para la demo.
 
 > **Backend: de Fastify a Python (FastAPI).** El backend se reescribió en Python conservando los contratos: las mismas rutas (`/chat`, `/whatsapp`, `/mcp`, `/health`), las mismas formas de entrada y salida y las mismas reglas. Lo único que cambia son los nombres internos, por el lenguaje (`searchOffers` → `search_offers`, `askPrais` → `ask_prais`, `getRate` → `get_rate`, tipos en `snake_case`) y que una fuente ya no recibe un `AbortSignal`: la búsqueda la cancela a los 8 s. Lo decidió quien arma el backend y la infra. El detalle está en [contracts.md](contracts.md).
