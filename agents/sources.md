@@ -19,7 +19,7 @@ Cada fuente es un archivo en `apps/api/app/lib/sources/` que cumple el contrato 
 - **Sin precio no hay inventos.** Si la publicación no tiene precio, `price` va en `None`.
 - **Una fuente que falla no tumba la búsqueda.** `search_offers` ya la deja fuera y la anota en `failedSources`.
 - **Async de verdad.** `search` es `async`: usa clientes asíncronos (`httpx.AsyncClient`) para no bloquear a las demás fuentes.
-- **Guarda los datos del comercio** (seguidores, comentarios), porque los usa el puntaje de confianza.
+- **Guarda los datos del comercio** (seguidores, comentarios), porque los usa el puntaje de confianza. Para Instagram, las señales, los pesos y los actores de Apify (`instagram-profile-scraper` e `instagram-comment-scraper`) están en [resources/ig-trust-score.ts](../resources/ig-trust-score.ts). Es un borrador en TypeScript: pórtalo a Python en `prices.py` y confirma los campos del actor antes de usarlos.
 
 ## Variables
 
