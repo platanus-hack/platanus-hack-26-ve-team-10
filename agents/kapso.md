@@ -1,59 +1,32 @@
-# WhatsApp con Kapso: apps/whatsapp
+# WhatsApp con Kapso
 
-La gente le escribe a Prais por WhatsApp y recibe el mejor precio. [Kapso](https://docs.kapso.ai) nos da el número, nos avisa por webhook cuando llega un mensaje y nos deja responder por su API.
+El webhook está en `src/app/api/whatsapp/route.ts`, publicado en `https://usaprais.com/api/whatsapp`.
 
-## Flujo
+## Qué hace
 
-```
-Mensaje ─► Kapso ─► POST wa.usaprais.com/webhook (Cloud Run)
-                      1. Verifica la firma
-                      2. Encola una tarea en Cloud Tasks
-                      3. Responde 200
-Cloud Tasks ─► POST /process ─► agente /search ─► respuesta ─► Kapso ─► WhatsApp
-```
+1. Verifica la firma: un HMAC-SHA256 en hex del cuerpo crudo, con `KAPSO_WEBHOOK_SECRET`, que llega en el header `X-Webhook-Signature`. Si no coincide, responde 401.
+2. Ignora todo evento que no sea `whatsapp.message.received` (header `X-Webhook-Event`).
+3. Responde 200 de inmediato, porque Kapso exige respuesta en menos de 10 segundos.
+4. Con `after()`, le pasa el texto al agente y responde por la API de Kapso con `@kapso/whatsapp-cloud-api`.
 
-## Recibir
+Acepta mensajes sueltos y también lotes, si se activa el buffering en Kapso. Por ahora solo procesa mensajes de texto.
 
-- Kapso exige un 200 en menos de 10 segundos. No proceses dentro del webhook: encola en Cloud Tasks y responde. En Cloud Run, la CPU se reduce después de responder, así que tampoco sirve dejar trabajo corriendo en segundo plano.
-- Verifica la firma: es un HMAC-SHA256 del cuerpo, con el secreto del webhook, que llega en el header `x-kapso-signature`. Si no coincide, responde 401 y no proceses nada.
-- El evento llega en el header `X-Webhook-Event`. Por ahora solo nos importa `whatsapp.message.received`.
-- Usa la versión 2 del payload (header `X-Webhook-Payload-Version`).
-- Activa el buffering: junta los mensajes seguidos de una persona (5 segundos por defecto) y trátalos como una sola consulta.
-- No supongas que viene el teléfono. Los payloads nuevos pueden traer `business_scoped_user_id` en vez de `phone_number`.
-- Kapso puede reintentar un envío. Usa el id del mensaje como nombre de la tarea en Cloud Tasks: así una tarea repetida se rechaza sola.
+## Configurar en Kapso
 
-## Responder
+1. Crea un webhook de WhatsApp para el número, apuntando a `https://usaprais.com/api/whatsapp`, con el evento `whatsapp.message.received` y la versión 2 del payload.
+2. Copia el secreto del webhook a `KAPSO_WEBHOOK_SECRET` y la API key del proyecto a `KAPSO_API_KEY`.
+3. Opcional: activa el buffering (5 segundos), para que los mensajes seguidos de una persona lleguen juntos.
 
-Usa `@kapso/whatsapp-cloud-api` a través del proxy de Kapso:
+En Cloud Run hace falta `--no-cpu-throttling`, o el trabajo de `after()` se queda sin CPU (ver [gcp.md](gcp.md)).
 
-```ts
-import { WhatsAppClient } from "@kapso/whatsapp-cloud-api";
+## Pendiente
 
-const client = new WhatsAppClient({
-  baseUrl: "https://app.kapso.ai/api/meta/",
-  kapsoApiKey: process.env.KAPSO_API_KEY!,
-});
+- Si un mensaje no trae `from` (los payloads nuevos pueden traer solo `business_scoped_user_id`), hoy se ignora.
+- Kapso puede reintentar un envío. Si pasa en la demo, deduplica por `message.id`.
 
-await client.messages.sendText({ phoneNumberId: process.env.KAPSO_PHONE_NUMBER_ID!, to, body });
-```
-
-Cómo escribir la respuesta:
-
-- Si el agente devuelve `kind: "question"` (onboarding), manda solo la pregunta.
-- Si devuelve un resultado, primero va el mejor precio: dónde, cuánto, en qué moneda, de cuándo es y qué tan confiable es el comercio.
-- Después, como mucho otras dos opciones.
-- Al final, un enlace a `usaprais.com/p/<slug>` con la comparación completa. Eso también trae tráfico a la web.
-- Si el resultado quedó en revisión humana, dilo: "Estamos confirmando el precio con el comercio".
-- Mensajes cortos, con el formato de WhatsApp (`*negrita*`). Nada de tablas.
-
-## Variables
-
-`KAPSO_API_KEY`, `KAPSO_WEBHOOK_SECRET`, `KAPSO_PHONE_NUMBER_ID`, `AGENT_URL`, `TASKS_QUEUE`. En GCP van en Secret Manager.
-
-## Docs de Kapso
+## Docs
 
 - [Webhooks](https://docs.kapso.ai/docs/platform/webhooks/overview)
 - [Seguridad de los webhooks](https://docs.kapso.ai/docs/platform/webhooks/security.md)
-- [Entrega: buffering, orden y reintentos](https://docs.kapso.ai/docs/platform/webhooks/advanced)
+- [Eventos de mensajes](https://docs.kapso.ai/docs/platform/webhooks/message-events.md)
 - [SDK de TypeScript](https://docs.kapso.ai/docs/whatsapp/typescript-sdk/introduction.md)
-- [Índice completo para LLMs](https://docs.kapso.ai/llms.txt)

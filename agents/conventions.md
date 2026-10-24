@@ -10,11 +10,11 @@
 1. Crea la rama desde `main` actualizado, con el nombre `<tipo>/<tema-corto>`. Por ejemplo, `feat/whatsapp-webhook`.
 2. Abre el PR a `main` del repo de la org. `.github/workflows/auto-merge.yml` lo mergea solo, con merge commit y sin squash, para que se conserven los commits y autores de cada uno.
 3. Si el PR no está listo, ábrelo como borrador: los borradores no se mergean.
-4. Todavía no hay checks antes del merge. Corre `pnpm build && pnpm typecheck && pnpm lint` antes de abrir el PR.
+4. Todavía no hay checks antes del merge. Corre `pnpm build && pnpm lint` antes de abrir el PR.
 
 ## Mirror a prais.com
 
-Cloud Build despliega desde `Pleo2/prais.com`, y `.github/workflows/sync-from-org.yml` lo pone al día cada 5 minutos con `main` de la org. Para que eso funcione:
+Cloud Run despliega desde `Pleo2/prais.com`, y `.github/workflows/sync-from-org.yml` lo pone al día cada 5 minutos con `main` de la org. Para que eso funcione:
 
 - Nunca hagas commits directos en `prais.com`. Si tiene commits que no están en la org, el sync se detiene.
 - Configura tu clon con las dos URLs de push, como explica el `README.md`.
@@ -23,16 +23,15 @@ Cloud Build despliega desde `Pleo2/prais.com`, y `.github/workflows/sync-from-or
 
 ## Código
 
-- TypeScript en modo `strict` y módulos ESM.
-- Cada paquete se llama `@prais/<nombre>`. Las dependencias internas van con `workspace:*`.
-- Toda entrada externa se valida con zod: webhooks, query params, argumentos de tools y respuestas de las fuentes. Usa **zod 4** en todo el repo, la misma versión de la que depende `@google/adk`.
-- Cada app guarda sus secretos en `.env`, que nunca se sube, y documenta las variables en `.env.example`. En GCP, los secretos van en Secret Manager.
+- TypeScript en modo `strict`. Imports internos con `@/` (apunta a `src/`).
+- Toda entrada externa se valida con zod 4: bodies de las rutas, webhooks y argumentos de tools.
+- Los secretos van en `.env`, que nunca se sube, y se listan en `.env.example`. En GCP van en Secret Manager.
 - Fija versiones exactas de `@google/adk` y de los SDKs de las fuentes: cambian rápido.
-- Cada app escucha en `process.env.PORT`, porque Cloud Run lo asigna.
+- Lo simple primero: nada de paquetes, servicios o capas nuevas hasta que la demo los necesite.
 
 ## Docs
 
-- `agents/`: cómo se construye cada parte. Lo leen las personas y los agentes de código.
+- `agents/`: cómo se construye cada parte. Lo leen las personas y los agentes de código. Cortos, y solo sobre lo que existe.
 - `docs/`: producto y decisiones. Cada decisión con matices va en `docs/decisions/NNNN-titulo.md`.
 - `resources/`: material de referencia, no instrucciones.
 - Si un cambio contradice un doc de `agents/`, actualiza el doc en el mismo PR.
