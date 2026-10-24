@@ -16,7 +16,7 @@
 1. Crea la rama desde `main` actualizado, con el nombre `<tipo>/<tema-corto>`. Por ejemplo, `feat/whatsapp-webhook`.
 2. Abre el PR a `main` del repo de la org. `.github/workflows/auto-merge.yml` lo mergea solo, con merge commit y sin squash, para que se conserven los commits y autores de cada uno.
 3. Si el PR no está listo, ábrelo como borrador: los borradores no se mergean.
-4. Todavía no hay checks antes del merge. Corre `pnpm build && pnpm lint` antes de abrir el PR.
+4. Antes de abrir el PR, trae lo último de `main` a tu rama (`git pull origin main`), corre `pnpm install` si cambió el lockfile y vuelve a correr `pnpm build && pnpm lint`. No hay checks antes del auto-merge: lo que entra es lo que probaste.
 
 ## Deploy
 
