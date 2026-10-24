@@ -10,6 +10,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 | `apps/api/src/lib/` | Tipos, búsqueda, precios, confianza y datos de ejemplo. Es la única fuente de esa lógica |
 | `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
 | `agents/` | Cómo se construye cada parte, un doc por área |
+| `docs/design-system/` | Design system de usaprais: tokens y componentes para la web. Léelo antes de tocar la interfaz |
 | `docs/`, `resources/`, `design/brand/` | Decisiones, material de referencia y marca (`lib.pen`) |
 
 ## Qué doc leer
@@ -40,7 +41,8 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 pnpm install
 cp apps/api/.env.example apps/api/.env   # pon GOOGLE_GENAI_API_KEY
 pnpm dev                                 # api en :4000, web en :3000
-pnpm build && pnpm lint                  # antes del PR: no hay checks antes del auto-merge
+git pull origin main                     # antes del PR: trae lo último de main a tu rama
+pnpm build && pnpm lint                  # y vuelve a probar: no hay checks antes del auto-merge
 ```
 
 ## Antes de entregar
