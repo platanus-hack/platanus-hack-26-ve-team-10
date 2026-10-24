@@ -1,37 +1,39 @@
 # Arquitectura
 
-Una sola app de Next.js en un solo servicio de Cloud Run. El agente, el webhook de WhatsApp y el servidor MCP son rutas de esa misma app.
+Dos apps en un monorepo de pnpm: un backend en Fastify que hace todo el trabajo y una web en Next.js que solo muestra.
 
 ```
-Web (chat) ──────────► /api/chat ──────┐
-WhatsApp ─► Kapso ───► /api/whatsapp ──┼─► agente (ADK) ─► searchOffers ─► fuentes
-                                       │                    (src/lib)      hoy: datos de ejemplo
-ChatGPT / Claude ────► /api/mcp ───────┴──────────────────► searchOffers
+Web (Next.js) ── /api/* ──┐
+                          ▼
+WhatsApp ─► Kapso ─► apps/api (Fastify)
+                      ├─ POST /chat      ─► agente ADK ─┐
+                      ├─ POST /whatsapp  ─► agente ADK ─┼─► searchOffers ─► fuentes
+                      └─ /mcp            ───────────────┘   (src/lib)      hoy: datos de ejemplo
+ChatGPT / Claude ─────┘
 ```
 
-- **El agente** (`src/agent`) conversa: pregunta lo que falta (producto, zona, envío), busca con la tool `buscar_ofertas` y explica la mejor opción.
-- **`searchOffers`** (`src/lib/search.ts`) es el único punto que toca las fuentes. Devuelve las ofertas ordenadas por precio en USD, con la tasa usada y la confianza de cada comercio. Hoy lee datos de ejemplo. Conectar una fuente real es cambiar esta función: ver [sources.md](sources.md).
+- **`apps/api`**: Fastify con tres rutas y `/health`. Cada ruta es un plugin en `src/routes/`, registrado en `src/server.ts`.
+- **El agente** (`src/agent.ts`) conversa: pregunta lo que falta (producto, zona, envío), busca con la tool `buscar_ofertas` y explica la mejor opción.
+- **`searchOffers`** (`src/lib/search.ts`) es el único punto que toca las fuentes. Conectar una fuente real es cambiar esta función: ver [sources.md](sources.md).
 - **MCP** llama directo a `searchOffers`, sin el agente, porque quien pregunta ya es un asistente de IA.
+- **`apps/web`** reenvía `/api/*` al backend con un rewrite de Next. Así el navegador habla con un solo dominio y no hace falta CORS. Ojo: `API_URL` se lee al **construir** la web, no al arrancarla.
 
 ## Qué hay y qué falta
 
 | Pieza | Estado |
 |---|---|
-| Página con chat | Hecha |
+| Web con chat | Hecha |
 | Agente con una tool | Hecho. Falta probarlo con una API key |
 | Webhook de WhatsApp | Hecho. Falta configurarlo en Kapso |
 | MCP con `search_prices` | Hecho |
-| Confianza del comercio | Fórmula inicial en `src/lib/prices.ts` |
+| Confianza del comercio | Fórmula inicial en `apps/api/src/lib/prices.ts` |
 | Fuentes reales | Faltan: Firecrawl, Apify, Mercado Libre, Meta Ads |
-| Deploy en Cloud Run | Pendiente: lo arma el dev a cargo de GCP. Requisitos en [gcp.md](gcp.md) |
-| Directorio de comercios, admin, human loop | Cuando la demo los necesite |
+| Deploy en GCP | Pendiente: lo arma el dev a cargo. Requisitos en [gcp.md](gcp.md) |
 
 ## Decisiones tomadas (2026-10-24)
 
-- Una app de Next.js con TypeScript y pnpm, desplegada en Cloud Run (GCP). Cloudflare solo maneja el DNS.
-- El deploy lo hace Cloud Build, y solo construye si cambió la app. No usamos GitHub Actions para desplegar ni el mirror `Pleo2/prais.com`.
-- Agente con ADK para TypeScript y Gemini.
-- WhatsApp con Kapso, y MCP como ruta de la app.
+- Backend en Fastify con el agente (ADK para TypeScript y Gemini), Kapso y MCP. Web en Next.js, solo interfaz.
+- Infraestructura en GCP, con Cloud Build para desplegar. Cloudflare solo maneja el DNS.
 - Un solo agente con tools. Los sub-agentes de la pizarra se agregan si un solo agente no alcanza.
 - Las sesiones del agente viven en memoria. Si se pierden con un reinicio, no importa para la demo.
 

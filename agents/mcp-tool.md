@@ -1,6 +1,6 @@
 # MCP
 
-El servidor MCP está en `src/app/api/mcp/route.ts`, publicado en `https://usaprais.com/api/mcp` con transporte Streamable HTTP y sin sesiones.
+El servidor MCP es la ruta `/mcp` del backend (`apps/api/src/routes/mcp.ts`), con transporte Streamable HTTP y sin sesiones. Desde afuera queda en `https://usaprais.com/api/mcp`.
 
 ## Tools
 
@@ -16,5 +16,5 @@ Para agregar una tool, súmala con `server.registerTool` dentro de `createServer
 
 ```bash
 pnpm dev
-npx @modelcontextprotocol/inspector   # conectar a http://localhost:3000/api/mcp
+npx @modelcontextprotocol/inspector   # conectar a http://localhost:4000/mcp
 ```

@@ -24,7 +24,7 @@ Pendiente: lo arma el dev a cargo de GCP. Ver los requisitos en [gcp.md](gcp.md)
 
 ## Código
 
-- TypeScript en modo `strict`. Imports internos con `@/` (apunta a `src/`).
+- TypeScript en modo `strict`. En `apps/api` los imports internos llevan `.js` (ESM de Node); en `apps/web`, `@/` apunta a `src/`.
 - Toda entrada externa se valida con zod 4: bodies de las rutas, webhooks y argumentos de tools.
 - Los secretos van en `.env`, que nunca se sube, y se listan en `.env.example`. En GCP van en Secret Manager.
 - Fija versiones exactas de `@google/adk` y de los SDKs de las fuentes: cambian rápido.

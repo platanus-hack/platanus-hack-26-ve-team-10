@@ -1,4 +1,4 @@
-import type { ExchangeRate, Merchant, Money } from "./types";
+import type { ExchangeRate, Merchant, Money } from "./types.js";
 
 export function toUsd(price: Money, rate: ExchangeRate): number {
   const usd = price.currency === "USD" ? price.amount : price.amount / rate.usdToVes;

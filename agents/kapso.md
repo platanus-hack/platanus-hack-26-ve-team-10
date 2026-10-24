@@ -1,13 +1,13 @@
 # WhatsApp con Kapso
 
-El webhook está en `src/app/api/whatsapp/route.ts`, publicado en `https://usaprais.com/api/whatsapp`.
+El webhook es la ruta `POST /whatsapp` del backend (`apps/api/src/routes/whatsapp.ts`). Desde afuera queda en `https://usaprais.com/api/whatsapp`, o en la URL propia del backend si el deploy lo publica aparte.
 
 ## Qué hace
 
 1. Verifica la firma: un HMAC-SHA256 en hex del cuerpo crudo, con `KAPSO_WEBHOOK_SECRET`, que llega en el header `X-Webhook-Signature`. Si no coincide, responde 401.
 2. Ignora todo evento que no sea `whatsapp.message.received` (header `X-Webhook-Event`).
 3. Responde 200 de inmediato, porque Kapso exige respuesta en menos de 10 segundos.
-4. Con `after()`, le pasa el texto al agente y responde por la API de Kapso con `@kapso/whatsapp-cloud-api`.
+4. Después de responder, le pasa el texto al agente y contesta por la API de Kapso con `@kapso/whatsapp-cloud-api`.
 
 Acepta mensajes sueltos y también lotes, si se activa el buffering en Kapso. Por ahora solo procesa mensajes de texto.
 
@@ -17,7 +17,7 @@ Acepta mensajes sueltos y también lotes, si se activa el buffering en Kapso. Po
 2. Copia el secreto del webhook a `KAPSO_WEBHOOK_SECRET` y la API key del proyecto a `KAPSO_API_KEY`.
 3. Opcional: activa el buffering (5 segundos), para que los mensajes seguidos de una persona lleguen juntos.
 
-En Cloud Run hace falta `--no-cpu-throttling`, o el trabajo de `after()` se queda sin CPU (ver [gcp.md](gcp.md)).
+En Cloud Run hace falta `--no-cpu-throttling`, o el trabajo que sigue después del 200 se queda sin CPU (ver [gcp.md](gcp.md)).
 
 ## Pendiente
 

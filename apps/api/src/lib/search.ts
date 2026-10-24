@@ -1,5 +1,5 @@
-import { exampleRate, merchants, offers } from "./mock-data";
-import { formatMoney, toUsd, trustScore } from "./prices";
+import { exampleRate, merchants, offers } from "./mock-data.js";
+import { formatMoney, toUsd, trustScore } from "./prices.js";
 
 export type SearchOptions = { zone?: string; needsDelivery?: boolean };
 
