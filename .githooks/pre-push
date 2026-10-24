@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# main está bloqueado: todo entra por PR. Se activa una vez por clon con:
-#   git config core.hooksPath .githooks
+# main está bloqueado en el repo de Platanus: todo entra por PR.
+# Hacia Pleo2/prais.com sí se permite, porque `pnpm sync` copia ahí el main de Platanus.
+# Se activa una vez por clon con `pnpm setup:git`.
+[[ "$2" == *Pleo2/prais.com* ]] && exit 0
 while read -r _local_ref _local_sha remote_ref _remote_sha; do
   if [[ "$remote_ref" == "refs/heads/main" ]]; then
     echo "main está bloqueado: haz push de una rama y abre un PR." >&2
