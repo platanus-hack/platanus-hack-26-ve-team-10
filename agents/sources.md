@@ -19,11 +19,27 @@ Cada fuente es un archivo en `apps/api/app/lib/sources/` que cumple el contrato 
 - **Sin precio no hay inventos.** Si la publicación no tiene precio, `price` va en `None`.
 - **Una fuente que falla no tumba la búsqueda.** `search_offers` ya la deja fuera y la anota en `failedSources`.
 - **Async de verdad.** `search` es `async`: usa clientes asíncronos (`httpx.AsyncClient`) para no bloquear a las demás fuentes.
-- **Guarda los datos del comercio** (seguidores, comentarios), porque los usa el puntaje de confianza. Para Instagram, las señales, los pesos y los actores de Apify (`instagram-profile-scraper` e `instagram-comment-scraper`) están en [resources/ig-trust-score.ts](../resources/ig-trust-score.ts). Para Facebook Marketplace, en [resources/fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts): ahí la reputación sale del historial del vendedor y de las fotos repetidas, porque en Venezuela casi nadie califica. Para TikTok, en [resources/tiktok-trust-score.ts](../resources/tiktok-trust-score.ts): ahí se mide la proporción entre likes y vistas, no los likes por seguidor, porque las vistas las reparte el algoritmo. Encima de cualquiera de los tres se aplican los ajustes de Meta Ads de [resources/meta-ads-signals.ts](../resources/meta-ads-signals.ts): un vendedor que no anuncia no pierde nada. Para tiendas web, en [resources/website-trust-score.ts](../resources/website-trust-score.ts): pesan la antigüedad del dominio, el RIF y los datos de contacto publicados y las políticas de devolución. Para Mercado Libre, en [resources/mercadolibre-trust-score.ts](../resources/mercadolibre-trust-score.ts): ahí la reputación de la plataforma (termómetro, MercadoLíder y calificaciones) es la señal principal. Todos son borradores en TypeScript: pórtalos a Python en `prices.py` y confirma los campos de cada actor antes de usarlos.
+- **Guarda los datos del comercio** (seguidores, comentarios, reputación), porque los usa el puntaje de confianza: ver [Puntaje de confianza por fuente](#puntaje-de-confianza-por-fuente).
+
+## Puntaje de confianza por fuente
+
+Cada fuente tiene su puntaje de confianza diseñado en `resources/`, en TypeScript. Ahí están las señales, los pesos, las banderas rojas y los actores o APIs que usa. La implementación va en Python en `apps/api/app/lib/prices.py`. Antes de portarlo, corre el actor con casos reales y confirma los nombres de sus campos.
+
+| Fuente | Diseño | Qué pesa más |
+|---|---|---|
+| Instagram | [ig-trust-score.ts](../resources/ig-trust-score.ts) | Antigüedad de la cuenta, interacción acorde a los seguidores y comentarios reales |
+| Facebook Marketplace | [fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts) | Historial del vendedor y fotos que no aparecen en anuncios de otros: en Venezuela casi nadie califica |
+| TikTok | [tiktok-trust-score.ts](../resources/tiktok-trust-score.ts) | Proporción entre likes y vistas, no likes por seguidor: las vistas las reparte el algoritmo |
+| Tiendas web | [website-trust-score.ts](../resources/website-trust-score.ts) | Antigüedad del dominio, RIF y contacto publicados, políticas de devolución |
+| Mercado Libre | [mercadolibre-trust-score.ts](../resources/mercadolibre-trust-score.ts) | Reputación de la plataforma: termómetro, MercadoLíder y calificaciones |
+| Amazon | [amazon-trust-score.ts](../resources/amazon-trust-score.ts) | Quién envía (Amazon, FBA o el vendedor) y el feedback del vendedor externo. Detecta cuentas inactivas que reaparecen con precios bajos |
+| Meta Ads | [meta-ads-signals.ts](../resources/meta-ads-signals.ts) | No es un puntaje: ajusta el de Instagram, Marketplace o TikTok. Un vendedor que no anuncia no pierde nada |
+
+Todos comparten la misma salida: puntaje de 0 a 100, cobertura, veredicto (`confiable`, `precaucion`, `riesgosa` o `sin_datos`), banderas rojas y razones. Una bandera roja deja el puntaje en 0. Si hay menos de 40 % del peso medido, el veredicto es `sin_datos`.
 
 ## Variables
 
-`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Agrégalas a `apps/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
+`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa `APIFY_TOKEN`. Agrégalas a `apps/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
 
 ## Docs
 
