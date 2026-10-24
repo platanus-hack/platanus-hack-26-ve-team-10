@@ -58,6 +58,7 @@ async def search_offers(query: SearchQuery) -> dict[str, Any]:
                 ),
                 "seenAt": offer.seen_at,
                 "source": source_id,
+                "example": source_id == "ejemplo",
                 "merchant": {
                     "name": merchant.name,
                     "channel": merchant.channel,

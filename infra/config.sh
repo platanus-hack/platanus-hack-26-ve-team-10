@@ -38,7 +38,7 @@ MEMORY="${MEMORY:-512Mi}"
 # Vertex AI (Gemini): el backend usa la cuenta de servicio, sin API key.
 # Los Gemini vigentes solo están en "global" (en us-east1 no hay 3.x) y el alias -latest no existe en Vertex.
 VERTEX_LOCATION="${VERTEX_LOCATION:-global}"
-PRAIS_MODEL="${PRAIS_MODEL:-gemini-3.5-flash}"
+PRAIS_MODEL="${PRAIS_MODEL:-gemini-3.8-flash}"
 
 # Cola de Cloud Tasks de los mensajes de WhatsApp: el webhook encola y la cola llama a la API
 # (/internal/whatsapp-task) con reintentos. TASKS_MAX_ATTEMPTS debe coincidir con la cola.

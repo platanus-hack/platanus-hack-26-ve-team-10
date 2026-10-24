@@ -6,3 +6,4 @@ google-cloud-tasks==2.26.0
 mcp==2.3.0
 httpx==0.28.1
 requests==2.34.2
+firecrawl==4.54.0
