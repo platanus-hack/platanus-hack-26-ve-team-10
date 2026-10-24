@@ -22,7 +22,7 @@ if (/(^|\s)-a\b|--all\b|\bgit\s+add\b/.test(command)) {
   staged.push(...execSync(pending, { encoding: "utf8" }).split("\n").filter(Boolean));
 }
 
-const code = staged.filter((f) => /^(apps\/[^/]+\/(src\/|package\.json$|next\.config\.ts$|Dockerfile$|\.env\.example$)|package\.json$|pnpm-workspace\.yaml$|\.github\/)/.test(f));
+const code = staged.filter((f) => /^(apps\/[^/]+\/(src\/|app\/|requirements\.txt$|package\.json$|next\.config\.ts$|Dockerfile$|\.env\.example$)|package\.json$|pnpm-workspace\.yaml$|\.github\/|infra\/|cloudbuild\.[a-z]+\.yaml$)/.test(f));
 const docs = staged.filter((f) => /^(agents\/|AGENTS\.md$|docs\/)/.test(f));
 if (code.length === 0 || docs.length > 0) process.exit(0);
 

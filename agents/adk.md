@@ -1,12 +1,12 @@
 # Agente con ADK
 
-El agente vive en `apps/api/src/agent.ts` y usa [ADK para TypeScript](https://github.com/google/adk-js) (`@google/adk` 2.3.0).
+El agente vive en `apps/api/app/agent.py` y usa [ADK para Python](https://adk.dev) (`google-adk` 2.13.0).
 
 ## Cómo está armado
 
-- `praisAgent`: un `LlmAgent` con sus instrucciones y la tool `buscar_ofertas`.
-- `buscar_ofertas`: una `FunctionTool` con parámetros en zod 4 que llama a `searchOffers`.
-- `askPrais({ userId, message })`: corre el agente con un `Runner` y devuelve el texto de la respuesta. Cada `userId` tiene su propia conversación (`web:<id>`, `whatsapp:<número>`), así que el agente recuerda lo que ya preguntó.
+- `prais_agent`: un `LlmAgent` con sus instrucciones y la tool `buscar_ofertas`.
+- `buscar_ofertas`: una función `async` que llama a `search_offers`. ADK la convierte en tool: los tipos de los parámetros y el docstring (con su sección `Args`) son lo que lee el modelo.
+- `ask_prais(user_id, message)`: corre el agente con un `Runner` y devuelve el texto de la respuesta. Cada `user_id` tiene su propia conversación (`web:<id>`, `whatsapp:<número>`), así que el agente recuerda lo que ya preguntó.
 - Las sesiones están en memoria (`InMemorySessionService`).
 
 ## Reglas
@@ -14,37 +14,35 @@ El agente vive en `apps/api/src/agent.ts` y usa [ADK para TypeScript](https://gi
 1. **No inventa precios.** Todo precio sale de una tool. Si no hay resultados, lo dice.
 2. **Una pregunta a la vez** cuando le falta un dato.
 3. **Habla como Prais.** La voz y los límites del personaje están en `docs/design-system/prais.md`; las instrucciones del agente los resumen. Si cambia el personaje, cambian las dos cosas.
-4. **Las cuentas las hace el código**, no el modelo: conversión de moneda, orden y confianza están en `apps/api/src/lib`.
+4. **Las cuentas las hace el código**, no el modelo: conversión de moneda, orden y confianza están en `apps/api/app/lib`.
 
 ## Agregar una tool
 
-Crea otra `FunctionTool` en `apps/api/src/agent.ts` y súmala a `tools`. Si la tool toca una fuente o hace cálculos, la lógica va en `apps/api/src/lib` y la tool queda como una llamada fina.
+Escribe otra función en `apps/api/app/agent.py` y súmala a `tools`. Si la tool toca una fuente o hace cálculos, la lógica va en `apps/api/app/lib` y la tool queda como una llamada fina.
 
 ## Modelos
 
-El modelo se elige con `PRAIS_MODEL`, y por defecto es `gemini-flash-latest`. ADK 2.3 no trae una lista fija: acepta cualquier nombre que encaje con estos patrones.
+El modelo se elige con `PRAIS_MODEL`. En local el valor por defecto es `gemini-flash-latest` (AI Studio); en Cloud Run se fija `gemini-3.5-flash`. ADK acepta cualquier nombre que encaje con estos patrones.
 
 | Patrón | Qué es |
 |---|---|
-| `gemini-*` | Cualquier Gemini, por Google AI Studio o por Vertex AI. Por ejemplo, `gemini-2.5-flash` (el que ADK usa por defecto) o `gemini-flash-latest` |
+| `gemini-*` | Cualquier Gemini, por Google AI Studio o por Vertex AI. Por ejemplo, `gemini-3.5-flash` o `gemini-flash-latest` |
 | `projects/.../endpoints/...` | Un Gemini afinado, publicado en un endpoint de Vertex AI |
 | `projects/.../publishers/google/models/gemini...` | Un Gemini de Vertex con el nombre largo |
-| `apigee/...` | Gemini a través de un proxy de Apigee |
-| `chrome-on-device`, `chrome/...` | El modelo que trae Chrome. Solo corre en el navegador: no nos sirve |
 
-`RoutedLlm` permite repartir los pedidos entre varios modelos. La lista de los Gemini disponibles está en Google AI Studio o en el Model Garden de Vertex AI.
+**Ojo en Vertex.** El alias `gemini-flash-latest` no existe ahí, y los Gemini 2.5 ya no están disponibles para el proyecto (404). Los vigentes (3.x) viven en la ubicación `global`, no en `us-east1`. Cloud Run usa `GOOGLE_CLOUD_LOCATION=global` y `PRAIS_MODEL=gemini-3.5-flash`. Para ver qué responde: `curl -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "x-goog-user-project: prais-app" https://aiplatform.googleapis.com/v1beta1/publishers/google/models`.
 
-**Otros proveedores y modelos abiertos.** La versión de TypeScript no trae adaptadores para Claude, OpenAI ni modelos abiertos (Llama, Gemma, Qwen…). La de Python sí trae LiteLLM. En TypeScript hay que escribir una clase que extienda `BaseLlm`, registrarla en `LLMRegistry` y llamar a una API compatible con OpenAI: Ollama, vLLM en Cloud Run, Groq u OpenRouter. El trabajo está en traducir mensajes y tool calls. Gemma por la API de Gemini no está probado, y no sabemos si soporta tools. Decisión para la hackathon: Gemini.
+**Otros proveedores y modelos abiertos.** ADK para Python trae LiteLLM para Claude, OpenAI y modelos abiertos. Decisión para la hackathon: Gemini.
 
 ## Credenciales
 
-- **En local:** `GOOGLE_GENAI_API_KEY` en `apps/api/.env`, con una key de Google AI Studio.
-- **En Cloud Run:** `GOOGLE_GENAI_USE_VERTEXAI=true`, `GOOGLE_CLOUD_PROJECT` y `GOOGLE_CLOUD_LOCATION`. La autenticación la da la cuenta de servicio, sin key.
+- **En local:** `GOOGLE_GENAI_API_KEY` en `apps/api/.env`, con una key de Google AI Studio. `app/config.py` la copia a `GOOGLE_API_KEY`, que es la que lee la librería de Gemini.
+- **En Cloud Run:** `GOOGLE_GENAI_USE_VERTEXAI=true`, `GOOGLE_CLOUD_PROJECT` y `GOOGLE_CLOUD_LOCATION`. La autenticación la da la cuenta de servicio (rol `Vertex AI User`), sin key.
 
 ## Probar sin la web
 
 ```bash
-npx @google/adk-devtools web
+pnpm dev
+curl -X POST localhost:4000/chat -H 'content-type: application/json' \
+  -d '{"sessionId":"prueba","message":"harina pan 1 kg en Caracas"}'
 ```
-
-Siempre escribe el nombre completo del paquete en `npx`. Un `npx adk` a secas descarga un paquete que no tiene nada que ver.

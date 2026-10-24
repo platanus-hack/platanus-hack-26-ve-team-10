@@ -39,7 +39,7 @@ El precio "desde" es siempre el del producto **nuevo**. Si el modelo solo tiene 
    |---|---|---|---|---|---|---|---|
    | Daka | 92 | $1.299 | Bs 52.025 | 256 GB · Negro | Caracas · envío nacional | Zelle · Pago móvil · Cashea | Ir al comercio |
 
-   - Ordenadas por precio en USD, como devuelve `searchOffers`.
+   - Ordenadas por precio en USD, como devuelve `search_offers`.
    - Ofertas con `price: null` ("precio al DM") van al final, sin precio y con el enlace para consultarlo. No cuentan para el "desde".
    - La confianza se muestra como dato, sin enlace: por ahora no hay página de comercio.
    - Una oferta sale de la tabla si lleva más de 48 h sin aparecer en un rastreo; queda en el historial.
@@ -71,7 +71,7 @@ El precio "desde" es siempre el del producto **nuevo**. Si el modelo solo tiene 
 
 ## Qué datos necesita (cambios de contrato)
 
-Lo de abajo no existe todavía en `apps/api/src/lib/types.ts`. Cambiar un contrato se avisa al equipo antes de mergear ([agents/contracts.md](../agents/contracts.md)).
+Lo de abajo no existe todavía en `apps/api/app/lib/types.py`. Cambiar un contrato se avisa al equipo antes de mergear ([agents/contracts.md](../agents/contracts.md)).
 
 | Dato | Dónde | Para qué |
 |---|---|---|

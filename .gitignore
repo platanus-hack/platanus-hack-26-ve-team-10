@@ -46,3 +46,9 @@ next-env.d.ts
 
 # configuración personal de Claude Code
 .claude/settings.local.json
+
+# python (apps/api)
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
