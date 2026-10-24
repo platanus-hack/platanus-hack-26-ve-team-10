@@ -31,6 +31,7 @@ const jsonLd = [
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "usaprais",
+    alternateName: ["usa prais", "usaprice", "usaprices", "Prais"],
     legalName: empresa.razonSocial,
     url: empresa.sitio,
     email: empresa.correo,
