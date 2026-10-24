@@ -12,6 +12,7 @@ Hoy solo existe `/`. Las demás de la tabla son para cuando la demo las necesite
 | Blog `/blog/...` | Sí | Preguntas que la gente busca: "dónde comprar X más barato en Caracas" |
 | Producto `/ve/p/[slug]-[id]` | Sí | La comparación de precios de un producto. Es la página que más tráfico puede traer. Detalle en [docs/ficha-producto.md](../docs/ficha-producto.md) |
 | Categoría `/ve/[categoria]/`, `/ve/[categoria]/[marca]/` | Sí, con reglas | Listado de modelos por categoría, marca o faceta con demanda. Detalle en [docs/categoria.md](../docs/categoria.md) |
+| Marca `/ve/marca/[slug]/` y `/ve/marcas/` | Sí, si vende en 2+ categorías | Hub de la marca hacia sus categorías. Detalle en [docs/marca.md](../docs/marca.md) |
 | Comercio `/comercios/[slug]` | Sí | Perfil del comercio con su puntaje de confianza |
 | Dashboard y admin | No | Están bloqueados en `robots.ts` |
 
