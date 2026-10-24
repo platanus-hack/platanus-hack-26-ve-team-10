@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # Reglas de push del repo (se activan con `pnpm install`):
-# 1. Todo push por `origin` tiene que ir en paralelo a Platanus y a Pleo2/prais.com.
-# 2. main está bloqueado en Platanus: todo entra por PR. Hacia prais.com sí se permite (`pnpm sync`).
+# 1. Todo push por `origin` tiene que ir en paralelo a Platanus y a Pleo2/usaprais.com.
+# 2. main está bloqueado en Platanus: todo entra por PR. Hacia usaprais.com sí se permite (`pnpm sync`).
 remote="$1" url="$2"
 
 if [[ "$remote" == origin ]]; then
   pushurls="$(git config --get-all remote.origin.pushurl || true)"
-  if [[ "$pushurls" != *platanus-hack-26-ve-team-10* || "$pushurls" != *Pleo2/prais.com* ]]; then
-    echo "Este clon no sube en paralelo a Platanus y prais.com. Corre \`pnpm setup:git\` y vuelve a hacer el push." >&2
+  if [[ "$pushurls" != *platanus-hack-26-ve-team-10* || "$pushurls" != *Pleo2/usaprais.com* ]]; then
+    echo "Este clon no sube en paralelo a Platanus y usaprais.com. Corre \`pnpm setup:git\` y vuelve a hacer el push." >&2
     exit 1
   fi
 fi
 
-[[ "$url" == *Pleo2/prais.com* ]] && exit 0
+[[ "$url" == *Pleo2/usaprais.com* ]] && exit 0
 while read -r _local_ref _local_sha remote_ref _remote_sha; do
   if [[ "$remote_ref" == "refs/heads/main" ]]; then
     echo "main está bloqueado: haz push de una rama y abre un PR." >&2

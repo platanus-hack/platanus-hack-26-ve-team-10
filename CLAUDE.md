@@ -12,4 +12,4 @@ Antes de cada `git commit`, si el commit cambia código o configuración (el `sr
 
 ## main bloqueado
 
-Nunca hagas push a `main` del repo de Platanus. Trabaja en una rama (`git switch -c <tipo>/<tema>`), trae lo último con `git pull origin main`, haz push de la rama y abre el PR con `gh pr create`; el PR se mergea solo. Cuando se mergee, corre `pnpm sync` para copiar `main` a `Pleo2/prais.com`. El hook `.claude/hooks/guard-main.mjs` frena cualquier push a `main`, salvo el de `pnpm sync` hacia prais.com, y cualquier push si el clon no sube en paralelo a los dos repos (se arregla con `pnpm setup:git`).
+Nunca hagas push a `main` del repo de Platanus. Trabaja en una rama (`git switch -c <tipo>/<tema>`), trae lo último con `git pull origin main`, haz push de la rama y abre el PR con `gh pr create`; el PR se mergea solo. Cuando se mergee, corre `pnpm sync` para copiar `main` a `Pleo2/usaprais.com`. El hook `.claude/hooks/guard-main.mjs` frena cualquier push a `main`, salvo el de `pnpm sync` hacia usaprais.com, y cualquier push si el clon no sube en paralelo a los dos repos (se arregla con `pnpm setup:git`).
