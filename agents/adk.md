@@ -21,13 +21,19 @@ Crea otra `FunctionTool` en `src/agent/index.ts` y súmala a `tools`. Si la tool
 
 ## Modelos
 
-El modelo se elige con `PRAIS_MODEL`, y por defecto es `gemini-flash-latest`. ADK 2.3 reconoce por nombre:
+El modelo se elige con `PRAIS_MODEL`, y por defecto es `gemini-flash-latest`. ADK 2.3 no trae una lista fija: acepta cualquier nombre que encaje con estos patrones.
 
-- `gemini-*`: cualquier Gemini, por Google AI Studio o por Vertex AI.
-- Endpoints de Vertex AI con modelos de Gemini afinados (`projects/.../endpoints/...`).
-- `apigee/...`: Gemini a través de un proxy de Apigee.
+| Patrón | Qué es |
+|---|---|
+| `gemini-*` | Cualquier Gemini, por Google AI Studio o por Vertex AI. Por ejemplo, `gemini-2.5-flash` (el que ADK usa por defecto) o `gemini-flash-latest` |
+| `projects/.../endpoints/...` | Un Gemini afinado, publicado en un endpoint de Vertex AI |
+| `projects/.../publishers/google/models/gemini...` | Un Gemini de Vertex con el nombre largo |
+| `apigee/...` | Gemini a través de un proxy de Apigee |
+| `chrome-on-device`, `chrome/...` | El modelo que trae Chrome. Solo corre en el navegador: no nos sirve |
 
-Para usar otro proveedor (Claude, OpenAI...) hay que escribir una clase que extienda `BaseLlm` y registrarla en `LLMRegistry`. La versión de TypeScript no trae el adaptador LiteLLM que sí tiene la de Python.
+`RoutedLlm` permite repartir los pedidos entre varios modelos. La lista de los Gemini disponibles está en Google AI Studio o en el Model Garden de Vertex AI.
+
+**Otros proveedores y modelos abiertos.** La versión de TypeScript no trae adaptadores para Claude, OpenAI ni modelos abiertos (Llama, Gemma, Qwen…). La de Python sí trae LiteLLM. En TypeScript hay que escribir una clase que extienda `BaseLlm`, registrarla en `LLMRegistry` y llamar a una API compatible con OpenAI: Ollama, vLLM en Cloud Run, Groq u OpenRouter. El trabajo está en traducir mensajes y tool calls. Gemma por la API de Gemini no está probado, y no sabemos si soporta tools. Decisión para la hackathon: Gemini.
 
 ## Credenciales
 
