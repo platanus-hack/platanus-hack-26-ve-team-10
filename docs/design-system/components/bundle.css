@@ -1,0 +1,282 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400..900&family=Bungee&family=Space+Mono:wght@400;700&display=swap");
+
+/* usaprais — componentes. Todo valor sale de tokens.css.
+   Dos capas: PRODUCTO (sobrio: búsqueda, resultados, ficha) y MARCA (cartel: logo, stickers, slides, campañas). */
+
+.up-root { font-family: var(--font-sans); color: var(--tinta); background: var(--papel); font-size: 16px; line-height: 24px; -webkit-font-smoothing: antialiased; }
+.up-root *, .up-root *::before, .up-root *::after { box-sizing: border-box; }
+
+/* Foco: anillo sólido de 2px en `foco` con 2px de separación */
+.up-btn:focus-visible, .up-offer-btn:focus-visible, .up-bar-btn:focus-visible, .up-ficha-mejor:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+
+.up-icon { flex: none; display: inline-block; vertical-align: middle; }
+
+/* =================================== MARCA =================================== */
+
+/* Wordmark */
+.up-wordmark { display: inline-flex; align-items: center; font-family: var(--font-sans); font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: var(--tinta); white-space: nowrap; }
+.up-wordmark-sm { font-size: 18px; } .up-wordmark-md { font-size: 26px; } .up-wordmark-lg { font-size: 44px; } .up-wordmark-xl { font-size: 72px; }
+.up-wordmark-tag {
+  position: relative; display: inline-block; margin-left: 0.1em; padding: 0.06em 0.2em 0.12em 0.46em;
+  background: var(--sol); color: var(--on-sol); border: 0.07em solid var(--prais-linea);
+  border-radius: 0.34em 0.16em 0.16em 0.34em; transform: rotate(-4deg);
+  box-shadow: 0.06em 0.06em 0 0 var(--prais-linea);
+}
+.up-wordmark-tag::before {
+  content: ""; position: absolute; left: 0.15em; top: 50%; width: 0.16em; height: 0.16em; margin-top: -0.08em;
+  border-radius: 50%; background: var(--papel); box-shadow: 0 0 0 0.05em var(--prais-linea);
+}
+.up-wordmark-com { color: var(--tinta-suave); font-weight: 700; margin-left: 0.04em; }
+
+/* Sticker (solo marca) */
+.up-sticker {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 13px; line-height: 16px;
+  letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 10px 5px; white-space: nowrap;
+  border: var(--grosor-cartel) solid var(--prais-linea); border-radius: var(--radius-sm); box-shadow: var(--sombra-sticker);
+}
+.up-sticker-sol { background: var(--sol); color: var(--on-sol); }
+.up-sticker-barato { background: var(--ahorro); color: var(--on-ahorro); }
+.up-sticker-normal { background: #fffaf1; color: #1f1a14; border-color: #1f1a14; }
+.up-sticker-caro { background: var(--caro); color: var(--on-caro); }
+.up-sticker-ojo { background: #fffaf1; color: #c9351f; border-color: #c9351f; }
+
+/* Botón de campaña */
+.up-btn-cartel { background: var(--sol); color: var(--on-sol); border: var(--grosor-cartel) solid var(--prais-linea); box-shadow: var(--sombra-sticker); }
+.up-btn-cartel:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 0 var(--prais-linea); }
+.up-btn-cartel:active { transform: translate(3px, 3px); box-shadow: none; }
+
+/* Prais */
+.up-avatar { display: inline-block; flex: none; line-height: 0; }
+.up-avatar-ground { border-radius: 50%; background: var(--prais-fondo); }
+.up-avatar svg { display: block; overflow: visible; }
+
+/* ================================== PRODUCTO ================================== */
+
+/* Botón */
+.up-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  font-family: var(--font-sans); font-weight: 500; font-size: 15px; line-height: 20px;
+  border: var(--grosor-fino) solid transparent; border-radius: var(--radius-md);
+  padding: 10px 16px; min-height: 44px; cursor: pointer; white-space: nowrap;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.up-btn-lg { font-size: 16px; padding: 14px 20px; min-height: 52px; }
+.up-btn-primario { background: var(--accion); color: var(--on-accion); }
+.up-btn-primario:hover { background: var(--accion-hover); }
+.up-btn-secundario { background: var(--papel-alto); color: var(--tinta); border-color: var(--borde); }
+.up-btn-secundario:hover { background: var(--papel-bajo); }
+.up-btn-fantasma { background: transparent; color: var(--tinta); padding-left: 10px; padding-right: 10px; }
+.up-btn-fantasma:hover { background: var(--papel-bajo); }
+.up-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Badge */
+.up-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 500; padding: 3px 8px; border-radius: var(--radius-sm); white-space: nowrap; }
+.up-badge-destacado { background: var(--sol); color: var(--on-sol); }
+.up-badge-barato { background: var(--ahorro-tinte); color: var(--ahorro); }
+.up-badge-neutro { background: var(--papel-bajo); color: var(--tinta-suave); }
+.up-badge-caro { background: var(--caro-tinte); color: var(--caro-texto); }
+
+/* Chip */
+.up-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 16px; font-weight: 500; padding: 5px 10px; border-radius: var(--radius-pill); background: var(--papel-bajo); color: var(--tinta-suave); }
+
+/* Precio */
+.up-price { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; font-variant-numeric: tabular-nums; }
+.up-price-left { align-items: flex-start; text-align: left; }
+.up-price-label { font-size: 12px; line-height: 16px; color: var(--tinta-suave); }
+.up-price-usd { font-family: var(--font-sans); font-weight: 600; color: var(--tinta); letter-spacing: -0.01em; }
+.up-price-bs { font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+.up-price-antes { font-size: 13px; color: var(--tinta-suave); }
+.up-price-sm .up-price-usd { font-size: 16px; line-height: 20px; }
+.up-price-md .up-price-usd { font-size: 20px; line-height: 24px; }
+.up-price-lg .up-price-usd { font-size: 32px; line-height: 36px; letter-spacing: -0.02em; }
+.up-price-xl .up-price-usd { font-size: 44px; line-height: 48px; letter-spacing: -0.025em; }
+.up-price-marca .up-price-usd { font-family: var(--font-display); font-weight: 400; letter-spacing: 0; }
+
+/* Prais dice */
+.up-says { display: flex; align-items: center; gap: var(--space-3); max-width: 640px; }
+.up-says-text { margin: 0; font-size: 15px; line-height: 22px; color: var(--tinta); }
+.up-says-text b, .up-says-text strong { font-weight: 600; }
+
+/* Búsqueda */
+.up-search { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; max-width: 640px; container-type: inline-size; }
+.up-search-label { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--tinta-suave); }
+.up-search-row { display: flex; align-items: center; gap: var(--space-2); background: var(--papel-alto); border: var(--grosor-fino) solid var(--borde); border-radius: var(--radius-md); padding: 4px 4px 4px 12px; }
+.up-search-row:focus-within { outline: 2px solid var(--foco); outline-offset: 2px; }
+.up-search-icon { color: var(--tinta-suave); display: inline-flex; }
+.up-search-input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--tinta); font-family: var(--font-sans); font-size: 16px; line-height: 24px; padding: 8px 4px; outline: none; }
+.up-search-input::placeholder { color: var(--tinta-suave); }
+.up-search-hint { margin: 0; font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+@container (max-width: 480px) {
+  .up-search-row { flex-wrap: wrap; padding: 4px; }
+  .up-search-icon { display: none; }
+  .up-search-input { padding: 10px 8px; }
+  .up-search-row .up-btn { width: 100%; }
+}
+
+/* Rango de precios */
+.up-range { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; max-width: 560px; }
+.up-range-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.up-range-title { font-weight: 500; font-size: 15px; line-height: 20px; }
+.up-range-track-wrap { position: relative; padding: 28px 0 6px; margin: 0 8px; }
+.up-range-track { position: relative; height: 8px; border-radius: var(--radius-pill); overflow: hidden; background: var(--papel-bajo); }
+.up-range-zone { position: absolute; top: 0; bottom: 0; }
+.up-range-zone-barato { background: var(--ahorro); }
+.up-range-zone-normal { background: var(--papel-bajo); }
+.up-range-zone-caro { background: var(--caro); }
+.up-range-avg { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--tinta-suave); }
+.up-range-pin-label { position: absolute; top: 0; font-size: 13px; line-height: 18px; color: var(--tinta-suave); white-space: nowrap; }
+.up-range-pin-label b { color: var(--tinta); font-weight: 600; }
+.up-range-center { transform: translateX(-50%); }
+.up-range-start { transform: translateX(-8px); }
+.up-range-end { transform: translateX(calc(-100% + 8px)); }
+.up-range-pin-dot { position: absolute; top: 24px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--tinta); border: 3px solid var(--papel-alto); }
+.up-range-ends { display: flex; justify-content: space-between; gap: var(--space-2); font-size: 12px; line-height: 16px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
+.up-range-ends b { color: var(--tinta); font-weight: 500; }
+
+/* Confianza */
+.up-trust { display: inline-flex; align-items: center; gap: var(--space-2); font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+.up-trust-dots { display: inline-flex; gap: 3px; }
+.up-trust-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--linea); }
+.up-trust-dot.on { background: var(--tinta-suave); }
+.up-trust-baja .up-trust-dot.on, .up-trust-baja .up-trust-label { color: var(--caro-texto); }
+.up-trust-baja .up-trust-dot.on { background: var(--caro-texto); }
+
+/* Oferta */
+.up-offer-c { container-type: inline-size; }
+.up-offer {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: start; gap: 2px var(--space-3); width: 100%;
+  padding: var(--space-4); background: transparent; border: 0; text-align: left; font: inherit; color: inherit;
+}
+.up-offer-btn { cursor: pointer; grid-template-columns: 20px 1fr auto 18px; border-radius: 0; }
+.up-offer-btn:hover { background: var(--papel-bajo); }
+.up-offer-top { background: var(--sol-tinte); }
+.up-offer-top.up-offer-btn:hover { background: var(--sol-tinte); filter: brightness(0.98); }
+.up-offer-rank { font-weight: 500; font-size: 14px; line-height: 24px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
+.up-offer-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.up-offer-flag { align-self: flex-start; margin-bottom: 4px; }
+.up-offer-store { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: var(--space-2); }
+.up-offer-name { font-size: 16px; line-height: 24px; font-weight: 500; }
+.up-offer-canal { font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+.up-offer-meta { font-size: 14px; line-height: 20px; color: var(--tinta-suave); }
+.up-offer-trust { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+.up-offer-trust.baja { color: var(--caro-texto); }
+.up-offer-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.up-offer-top .up-offer-side { padding-top: 24px; }
+.up-offer-diff { font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap; }
+.up-offer-diff.menos { color: var(--ahorro); }
+.up-offer-diff.mas { color: var(--tinta-suave); font-weight: 500; }
+.up-offer-chev { color: var(--tinta-suave); margin-top: 3px; }
+@container (max-width: 420px) {
+  .up-offer, .up-offer-btn { grid-template-columns: 16px 1fr auto; padding: var(--space-3) var(--space-4); column-gap: var(--space-2); }
+  .up-offer-chev { display: none; }
+  .up-offer-store { flex-direction: column; }
+  .up-offer-meta { font-size: 13px; line-height: 18px; }
+}
+
+/* Lista de resultados */
+.up-list { display: flex; flex-direction: column; gap: var(--space-3); width: 100%; max-width: 720px; }
+.up-list-head { display: flex; flex-direction: column; gap: 2px; }
+.up-list-title { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em; }
+.up-list-meta { margin: 0; font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+.up-list-items { list-style: none; margin: 0; padding: 0; background: var(--papel-alto); border: var(--grosor-fino) solid var(--linea); border-radius: var(--radius-md); overflow: hidden; }
+.up-list-items > li + li { border-top: var(--grosor-fino) solid var(--linea); }
+.up-list-foot { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+
+/* Mensaje de canal */
+.up-msg { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); max-width: 420px; }
+.up-msg-head { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; line-height: 16px; }
+.up-msg-who { font-weight: 500; }
+.up-msg-channel { margin-left: auto; font-size: 12px; color: var(--tinta-suave); }
+.up-msg-bubble { white-space: pre-wrap; background: var(--papel-alto); color: var(--tinta); border: var(--grosor-fino) solid var(--linea); border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg); padding: var(--space-3) var(--space-4); font-size: 15px; line-height: 22px; }
+.up-msg-x .up-msg-bubble { border-radius: var(--radius-md); }
+.up-msg-count { align-self: flex-end; font-size: 12px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
+.up-msg-count.over { color: var(--caro-texto); }
+
+/* Barra superior */
+.up-bar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: var(--space-2); min-height: 56px; padding: 8px var(--space-3); background: var(--papel); border-bottom: var(--grosor-fino) solid var(--linea); }
+.up-bar-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--tinta); cursor: pointer; flex: none; }
+.up-bar-btn:hover { background: var(--papel-bajo); }
+.up-bar-title { flex: 1; min-width: 0; font-weight: 500; font-size: 16px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.up-bar-aux { font-size: 13px; line-height: 18px; color: var(--tinta-suave); padding-right: 6px; font-variant-numeric: tabular-nums; }
+
+/* Ficha de oferta */
+.up-ficha { position: relative; display: flex; flex-direction: column; width: 100%; max-width: 480px; background: var(--papel); color: var(--tinta); font-family: var(--font-sans); }
+.up-ficha-foto { position: relative; aspect-ratio: 4 / 3; background: var(--papel-bajo); overflow: hidden; }
+.up-ficha-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.up-ficha-foto-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--tinta-suave); opacity: .7; }
+.up-ficha-body { display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-4) var(--space-4) var(--space-5); }
+.up-ficha-head { display: flex; flex-direction: column; gap: 6px; }
+.up-ficha-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.up-ficha-fecha { font-size: 12px; line-height: 16px; color: var(--tinta-suave); margin-left: 2px; }
+.up-ficha-store { margin: 0; font-size: 18px; line-height: 24px; font-weight: 500; }
+.up-ficha-meta { margin: 0; font-size: 14px; line-height: 20px; color: var(--tinta-suave); }
+.up-ficha-diff { margin: 0; font-size: 14px; line-height: 20px; font-weight: 500; }
+.up-ficha-diff.menos { color: var(--ahorro); }
+.up-ficha-diff.mas { color: var(--caro-texto); }
+.up-ficha-sec { display: flex; flex-direction: column; gap: var(--space-3); }
+.up-ficha-h { margin: 0; display: flex; align-items: center; gap: var(--space-2); font-size: 15px; line-height: 20px; font-weight: 500; }
+.up-ficha-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.up-ficha-check { display: flex; align-items: flex-start; gap: var(--space-2); font-size: 14px; line-height: 20px; }
+.up-ficha-check .up-icon { margin-top: 1px; }
+.up-ficha-check.ok .up-icon { color: var(--ahorro); }
+.up-ficha-check.ojo .up-icon { color: var(--caro-texto); }
+.up-ficha-consejo { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--papel-bajo); font-size: 14px; line-height: 20px; }
+.up-ficha-seller { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+.up-ficha-seller-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-pill); background: var(--papel-bajo); color: var(--tinta-suave); flex: none; }
+.up-ficha-seller-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; line-height: 18px; color: var(--tinta-suave); }
+.up-ficha-seller-txt b { font-size: 15px; line-height: 20px; font-weight: 500; color: var(--tinta); }
+.up-ficha-seller .up-trust { width: 100%; padding-left: 52px; }
+.up-ficha-mejor { display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left; cursor: pointer; font-family: var(--font-sans); color: var(--tinta); background: var(--sol-tinte); border: 0; border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); }
+.up-ficha-mejor .up-icon { color: var(--tinta-suave); }
+.up-ficha-legal { margin: 0; font-size: 12px; line-height: 17px; color: var(--tinta-suave); }
+.up-ficha-cta { position: sticky; bottom: 0; z-index: 2; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4); background: var(--papel); border-top: var(--grosor-fino) solid var(--linea); }
+.up-ficha-ir { flex: 1; }
+
+/* Estados con Prais (vacío, carga, error): el lugar de la ilustración dentro del producto */
+.up-estado { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2); padding: var(--space-6) var(--space-4); max-width: 360px; margin: 0 auto; }
+.up-estado .up-avatar { margin-bottom: var(--space-2); }
+.up-estado-titulo { margin: 0; font-size: 18px; line-height: 24px; font-weight: 500; }
+.up-estado-texto { margin: 0 0 var(--space-2); font-size: 14px; line-height: 20px; color: var(--tinta-suave); }
+.up-estado-barra { display: block; width: 120px; height: 4px; border-radius: var(--radius-pill); background: var(--papel-bajo); overflow: hidden; }
+.up-estado-barra span { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--sol); animation: up-carga 1.2s ease-in-out infinite; }
+@keyframes up-carga { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+@media (prefers-reduced-motion: reduce) { .up-estado-barra span { animation: none; width: 100%; } }
+
+/* ---------- Slide de Instagram (1080 × 1350, siempre en tema papel) ---------- */
+.up-ig-frame { position: relative; overflow: hidden; border-radius: 6px; flex: none; }
+.up-ig {
+  --tinta: #1f1a14; --tinta-suave: #5e5246; --papel: #fbf3e4; --papel-alto: #fffaf1; --papel-bajo: #f1e4cc; --trazo: #1f1a14; --linea: #d9c7a6;
+  --sol: #ffc829; --on-sol: #1f1a14; --ahorro: #0f6b3e; --on-ahorro: #ffffff; --tomate: #e8402a; --prais-fondo: #bfe3f2; --cielo: #bfe3f2;
+  --sombra-sticker: 3px 3px 0 0 #1f1a14;
+  position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; transform-origin: 0 0; overflow: hidden;
+  font-family: var(--font-sans); color: var(--tinta); background: var(--papel);
+}
+.up-ig .up-sticker { font-size: 34px; line-height: 40px; padding: 14px 24px 12px; border-width: 5px; box-shadow: 8px 8px 0 0 #1f1a14; border-radius: 12px; }
+.up-ig-portada { background: var(--sol); }
+.up-ig-portada .up-wordmark-tag { background: var(--papel-alto); }
+.up-ig-wm { position: absolute; left: 80px; top: 80px; }
+.up-ig-kicker { position: absolute; left: 80px; top: 270px; margin: 0; font-size: 48px; line-height: 56px; font-weight: 700; }
+.up-ig-title { position: absolute; left: 80px; right: 80px; top: 320px; margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 108px; line-height: 108px; text-transform: uppercase; }
+.up-ig-stk { position: absolute; left: 80px; top: 820px; }
+.up-ig-avatar { position: absolute; right: -10px; bottom: -6px; }
+.up-ig-next { position: absolute; left: 80px; bottom: 80px; margin: 0; display: flex; align-items: center; gap: 16px; font-size: 44px; font-weight: 800; }
+
+.up-ig-oferta { background: var(--papel); border: 24px solid var(--sol); }
+.up-ig-rank { position: absolute; left: 56px; top: 30px; font-family: var(--font-display); font-size: 300px; line-height: 300px; color: var(--tomate); }
+.up-ig-flag { position: absolute; right: 72px; top: 96px; }
+.up-ig-store { position: absolute; left: 56px; right: 56px; top: 400px; margin: 0; font-size: 84px; line-height: 92px; font-weight: 800; letter-spacing: -0.02em; }
+.up-ig-canal { position: absolute; left: 56px; top: 510px; margin: 0; font-size: 40px; line-height: 48px; font-weight: 600; color: var(--tinta-suave); }
+.up-ig-price { position: absolute; left: 56px; top: 620px; font-family: var(--font-display); font-size: 190px; line-height: 190px; }
+.up-ig-bs { position: absolute; left: 60px; top: 830px; font-family: var(--font-mono); font-weight: 700; font-size: 44px; color: var(--tinta-suave); }
+.up-ig-meta { position: absolute; left: 56px; right: 56px; top: 900px; margin: 0; font-family: var(--font-mono); font-size: 34px; line-height: 46px; color: var(--tinta-suave); }
+.up-ig-ahorro { position: absolute; left: 56px; top: 1020px; }
+.up-ig-foot { position: absolute; left: 56px; right: 56px; bottom: 50px; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 32px; font-weight: 700; color: var(--tinta-suave); }
+
+.up-ig-cierre { background: var(--tomate); }
+.up-ig-close { position: absolute; left: 80px; right: 80px; top: 100px; margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 112px; line-height: 112px; text-transform: uppercase; color: var(--tinta); }
+.up-ig-close-sub { position: absolute; left: 80px; right: 220px; top: 470px; margin: 0; font-size: 50px; line-height: 62px; font-weight: 600; color: var(--tinta); }
+.up-ig-close-avatar { position: absolute; right: 80px; bottom: 260px; }
+.up-ig-close-wm { position: absolute; left: 80px; bottom: 90px; }
+.up-ig-cierre .up-wordmark-usa, .up-ig-cierre .up-wordmark-com { color: var(--tinta); }
+.up-ig .up-wordmark-xl { font-size: 104px; }
+.up-ig-foot .up-wordmark { font-size: 44px; }
