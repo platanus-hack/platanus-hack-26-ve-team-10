@@ -263,7 +263,7 @@ Parte de lo que ya está en `main`: el orquestador `root_agent` con seis especia
 | 2.1 | **Fuente Instagram:** lee el último dataset de un actor de Apify programado, no lo dispara en vivo | `lib/sources/apify_instagram.py` | Ofertas reales con seguidores y comentarios, en menos de 2 s | 0.2 |
 | 2.2 | **Fuentes TikTok y Marketplace** con el mismo molde. Decidir el actor de Marketplace (la pizarra y `sources.md` proponen distintos) | `lib/sources/apify_*.py` | Igual que 2.1 | 2.1 |
 | 2.3 | **Fuente Mercado Libre** con la API oficial | `lib/sources/mercadolibre.py` | Ofertas reales de MLV | 0.2 |
-| 2.4 | **Confianza por fuente:** portar un borrador de `resources/*-trust-score.ts` por PR, con la salida común (puntaje, cobertura, veredicto, banderas, razones) | `lib/prices.py` | El especialista reporta la confianza con su veredicto y sus razones | 2.1–2.3 |
+| 2.4 | **Confianza por fuente:** portar un borrador de `resources/*_trust_score.py` por PR, con la salida común (puntaje, cobertura, veredicto, banderas, razones) | `lib/prices.py` | El especialista reporta la confianza con su veredicto y sus razones | 2.1–2.3 |
 | 2.5 | **Proteger el catálogo** antes de apagar la fuente de ejemplo: el sitemap y las alternativas leen la cache y respetan un tope de búsquedas a la vez | `lib/catalogo.py` | Con `USE_MOCK_SOURCE=false`, el sitemap no dispara ~147 búsquedas de golpe | 1.3 |
 | 2.6 | **Meta Ads como ajuste de confianza**, no como fuente de ofertas | `lib/prices.py`, `agents/specialists.py` | El especialista de Meta Ad Library ajusta puntajes en vez de devolver 0 ofertas | 2.4 |
 

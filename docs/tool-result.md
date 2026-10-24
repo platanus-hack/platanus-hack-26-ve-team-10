@@ -41,7 +41,7 @@ Currency = Literal["USD", "VES"]
 Condition = Literal["nuevo", "usado", "reacondicionado", "desconocida"]
 ToolStatus = Literal["ok", "parcial", "fallo", "plazo_vencido"]
 JudgeVerdict = Literal["producto_ve", "listado_ve", "referencia", "social", "descartar"]  # resources/queries.md
-TrustVerdict = Literal["confiable", "precaucion", "riesgosa", "sin_datos"]  # resources/*-trust-score.ts
+TrustVerdict = Literal["confiable", "precaucion", "riesgosa", "sin_datos"]  # resources/*_trust_score.py
 LocationOrigin = Literal["persona", "publicacion", "comercio", "inferida"]
 Proximity = Literal["misma_zona", "misma_ciudad", "mismo_estado", "otro_estado", "desconocida"]
 

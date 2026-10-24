@@ -491,7 +491,7 @@ tool_context.state[<span class="s">f"resultado:{tool}"</span>] = (
       ["rif", "str | None", false, "tool", ""],
       ["trust", "TrustScore | None", false, "codigo", "lib/prices.py"]
     ]},
-    { name: "TrustScore", who: "codigo", role: "0–100, veredicto, banderas", desc: "La salida común de los borradores de resources/*-trust-score.ts.", fields: [
+    { name: "TrustScore", who: "codigo", role: "0–100, veredicto, banderas", desc: "La salida común de los borradores de resources/*_trust_score.py.", fields: [
       ["score", "int 0–100 | None", false, "codigo", "None si la cobertura no alcanza"],
       ["coverage", "float 0–1", true, "codigo", "menos de 0,4 → sin_datos"],
       ["verdict", "TrustVerdict", true, "codigo", ""],
@@ -615,7 +615,7 @@ tool_context.state[<span class="s">f"resultado:{tool}"</span>] = (
     ["Condition", ["nuevo", "usado", "reacondicionado", "desconocida"], "si la persona no dice nada, se asume nuevo"],
     ["ToolStatus", ["ok", "parcial", "fallo", "plazo_vencido"], "ver las reglas"],
     ["JudgeVerdict", ["producto_ve", "listado_ve", "referencia", "social", "descartar"], "los de resources/queries.md"],
-    ["TrustVerdict", ["confiable", "precaucion", "riesgosa", "sin_datos"], "los de resources/*-trust-score.ts"]
+    ["TrustVerdict", ["confiable", "precaucion", "riesgosa", "sin_datos"], "los de resources/*_trust_score.py"]
   ];
 
   var WHO_LABEL = { tool: "tool", codigo: "código", llm: "LLM", consulta: "consulta" };
