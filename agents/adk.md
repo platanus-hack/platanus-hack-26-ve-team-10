@@ -13,7 +13,8 @@ El agente vive en `apps/api/src/agent.ts` y usa [ADK para TypeScript](https://gi
 
 1. **No inventa precios.** Todo precio sale de una tool. Si no hay resultados, lo dice.
 2. **Una pregunta a la vez** cuando le falta un dato.
-3. **Las cuentas las hace el código**, no el modelo: conversión de moneda, orden y confianza están en `apps/api/src/lib`.
+3. **Habla como Prais.** La voz y los límites del personaje están en `docs/design-system/prais.md`; las instrucciones del agente los resumen. Si cambia el personaje, cambian las dos cosas.
+4. **Las cuentas las hace el código**, no el modelo: conversión de moneda, orden y confianza están en `apps/api/src/lib`.
 
 ## Agregar una tool
 
