@@ -20,7 +20,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 |---|---|
 | Cualquier cosa, la primera vez | [agents/architecture.md](agents/architecture.md), [agents/contracts.md](agents/contracts.md) y [agents/conventions.md](agents/conventions.md) |
 | Qué hace cada uno del equipo | [docs/plan.md](docs/plan.md) |
-| Usar una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, Fastify, Next, Gemini) | [agents/tools.md](agents/tools.md): su MCP o su `llms.txt` |
+| Usar una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, Fastify, Next, Gemini) | [agents/tools.md](agents/tools.md): su skill, su MCP o su `llms.txt` |
 | El agente o sus tools | [agents/adk.md](agents/adk.md) |
 | Conectar una fuente real | [agents/sources.md](agents/sources.md) |
 | WhatsApp | [agents/kapso.md](agents/kapso.md) |
@@ -34,7 +34,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 2. Todo se sube en paralelo a Platanus y a `Pleo2/prais.com`: `pnpm setup:git` una vez por clon y `pnpm sync` después de cada merge.
 3. **No te repitas.** La lógica de precios vive solo en `apps/api/src/lib`. La web no calcula nada: le pregunta al backend.
 4. **Sin boilerplate.** Antes de agregar un archivo, una capa o un paquete, piensa si la demo lo necesita hoy. Si no, no va.
-5. **No adivines APIs externas.** Antes de escribir contra una, consulta su MCP o su `llms.txt` ([agents/tools.md](agents/tools.md)).
+5. **No adivines APIs externas.** Antes de escribir contra una, consulta su skill, su MCP o su `llms.txt` ([agents/tools.md](agents/tools.md)).
 6. El agente nunca inventa un precio: cada precio sale de `searchOffers`.
 7. Todo precio que se muestra lleva su fuente y su fecha. Si se convirtió de moneda, también lleva la tasa usada.
 8. Los secretos van en variables de entorno, listadas en el `.env.example` de cada app.
