@@ -26,7 +26,7 @@ ChatGPT / Claude ─────┘                                             
 | Pieza | Estado |
 |---|---|
 | Web con chat | Hecha |
-| Orquestador y un especialista por fuente | Hecho y probado por WhatsApp. Las fuentes reales siguen sin conectar: cada especialista lee la búsqueda de ejemplo y filtra por su canal |
+| Orquestador y la web abierta | Hecho y probado por WhatsApp. Mercado Libre, Facebook, Instagram, TikTok y Meta Ads están apagados (`PAUSED_TOOLS`) hasta conectar cada fuente |
 | Webhook de WhatsApp | Hecho. El número de producción apunta al API en Cloud Run. Probado en el sandbox de Kapso |
 | MCP con `search_prices` | Hecho |
 | Catálogo SEO (`/ve/...`) | Hecho con datos de ejemplo: 147 modelos, 28 categorías. Se indexa solo cuando hay ofertas reales: ver [seo-geo.md](seo-geo.md) |
