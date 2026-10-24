@@ -15,8 +15,11 @@ try {
 } catch {
   process.exit(0); // fuera de un repo git: no opinamos
 }
-if (/(^|\s)-a\b|--all\b/.test(command)) {
-  staged.push(...execSync("git diff --name-only", { encoding: "utf8" }).split("\n").filter(Boolean));
+// `git commit -a` o un `git add` en el mismo comando: el hook corre antes, así que también
+// cuentan los cambios que todavía no están en stage.
+if (/(^|\s)-a\b|--all\b|\bgit\s+add\b/.test(command)) {
+  const pending = "git diff --name-only && git ls-files --others --exclude-standard";
+  staged.push(...execSync(pending, { encoding: "utf8" }).split("\n").filter(Boolean));
 }
 
 const code = staged.filter((f) => /^(src\/|package\.json$|next\.config\.ts$|Dockerfile$|\.env\.example$|\.github\/)/.test(f));
