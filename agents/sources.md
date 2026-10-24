@@ -1,6 +1,6 @@
 # Fuentes
 
-Las fuentes se conectan dentro de `searchOffers` (`src/lib/search.ts`). Hoy esa función lee `src/lib/mock-data.ts`. Para conectar una fuente real, agrega su llamada ahí y convierte lo que devuelva al formato de `Offer` y `Merchant` de `src/lib/types.ts`.
+Las fuentes se conectan dentro de `searchOffers` (`apps/api/src/lib/search.ts`). Hoy esa función lee `mock-data.ts`, en la misma carpeta. Para conectar una fuente real, agrega su llamada ahí y convierte lo que devuelva al formato de `Offer` y `Merchant` de `types.ts`.
 
 ## Qué hay que saber de cada una
 
@@ -22,7 +22,7 @@ Las fuentes se conectan dentro de `searchOffers` (`src/lib/search.ts`). Hoy esa 
 
 ## Variables
 
-`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. Agrégalas a `.env.example` cuando conectes la fuente.
+`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. Agrégalas a `apps/api/.env.example` cuando conectes la fuente.
 
 ## Docs
 

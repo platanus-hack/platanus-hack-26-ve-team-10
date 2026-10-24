@@ -7,7 +7,7 @@ import {
   stringifyContent,
 } from "@google/adk";
 import { z } from "zod";
-import { searchOffers } from "@/lib/search";
+import { searchOffers } from "./lib/search.js";
 
 const buscarOfertas = new FunctionTool({
   name: "buscar_ofertas",

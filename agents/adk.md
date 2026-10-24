@@ -1,6 +1,6 @@
 # Agente con ADK
 
-El agente vive en `src/agent/index.ts` y usa [ADK para TypeScript](https://github.com/google/adk-js) (`@google/adk` 2.3.0).
+El agente vive en `apps/api/src/agent.ts` y usa [ADK para TypeScript](https://github.com/google/adk-js) (`@google/adk` 2.3.0).
 
 ## Cómo está armado
 
@@ -13,11 +13,11 @@ El agente vive en `src/agent/index.ts` y usa [ADK para TypeScript](https://githu
 
 1. **No inventa precios.** Todo precio sale de una tool. Si no hay resultados, lo dice.
 2. **Una pregunta a la vez** cuando le falta un dato.
-3. **Las cuentas las hace el código**, no el modelo: conversión de moneda, orden y confianza están en `src/lib`.
+3. **Las cuentas las hace el código**, no el modelo: conversión de moneda, orden y confianza están en `apps/api/src/lib`.
 
 ## Agregar una tool
 
-Crea otra `FunctionTool` en `src/agent/index.ts` y súmala a `tools`. Si la tool toca una fuente o hace cálculos, ponle la lógica en `src/lib` y deja la tool como una llamada fina.
+Crea otra `FunctionTool` en `apps/api/src/agent.ts` y súmala a `tools`. Si la tool toca una fuente o hace cálculos, la lógica va en `apps/api/src/lib` y la tool queda como una llamada fina.
 
 ## Modelos
 
@@ -37,7 +37,7 @@ El modelo se elige con `PRAIS_MODEL`, y por defecto es `gemini-flash-latest`. AD
 
 ## Credenciales
 
-- **En local:** `GOOGLE_GENAI_API_KEY` con una key de Google AI Studio.
+- **En local:** `GOOGLE_GENAI_API_KEY` en `apps/api/.env`, con una key de Google AI Studio.
 - **En Cloud Run:** `GOOGLE_GENAI_USE_VERTEXAI=true`, `GOOGLE_CLOUD_PROJECT` y `GOOGLE_CLOUD_LOCATION`. La autenticación la da la cuenta de servicio, sin key.
 
 ## Probar sin la web

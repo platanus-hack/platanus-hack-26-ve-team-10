@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { searchOffers } from "@/lib/search";
+import { searchOffers } from "../lib/search.js";
 
 // Las tools llaman directo a la búsqueda, sin el agente: quien pregunta ya es un asistente de IA.
 function createServer() {
@@ -29,13 +30,19 @@ function createServer() {
   return server;
 }
 
-async function handle(request: Request) {
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // sin sesiones: cada request es independiente
-    enableJsonResponse: true,
+export async function mcpRoutes(app: FastifyInstance) {
+  app.all("/mcp", async (request, reply) => {
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined, // sin sesiones: cada request es independiente
+      enableJsonResponse: true,
+    });
+    const server = createServer();
+    reply.raw.on("close", () => {
+      void transport.close();
+      void server.close();
+    });
+    await server.connect(transport);
+    reply.hijack(); // la respuesta la escribe el transporte de MCP
+    await transport.handleRequest(request.raw, reply.raw, request.body);
   });
-  await createServer().connect(transport);
-  return transport.handleRequest(request);
 }
-
-export { handle as DELETE, handle as GET, handle as POST };

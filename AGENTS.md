@@ -1,18 +1,16 @@
 # Prais: guía para construir
 
-Prais compara el precio de un producto en los principales canales de venta de Venezuela, califica la confianza de cada comercio y dice dónde está el mejor precio. Es un proyecto de hackathon: **lo más simple que funcione**. Una sola app de Next.js, un solo deploy en Cloud Run.
+Prais compara el precio de un producto en los principales canales de venta de Venezuela, califica la confianza de cada comercio y dice dónde está el mejor precio. Es un proyecto de hackathon: **rápido, simple y claro**. Nada de boilerplate ni de capas que la demo no necesite.
 
 ## Mapa del repo
 
 | Ruta | Qué hay |
 |---|---|
-| `src/app/` | Páginas y rutas de la API: `/api/chat` (web), `/api/whatsapp` (Kapso) y `/api/mcp` (MCP) |
-| `src/agent/` | El agente con ADK: instrucciones y tools |
-| `src/lib/` | Tipos, búsqueda, precios, confianza y datos de ejemplo |
+| `apps/api/` | Backend en Fastify: el agente ADK, el webhook de Kapso y el servidor MCP |
+| `apps/api/src/lib/` | Tipos, búsqueda, precios, confianza y datos de ejemplo. Es la única fuente de esa lógica |
+| `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
 | `agents/` | Cómo se construye cada parte, un doc por área |
-| `docs/` | Producto y decisiones |
-| `resources/` | Material de referencia: fuentes candidatas, consultas de ejemplo |
-| `design/brand/` | Marca: `lib.pen` (Pencil), logos y colores |
+| `docs/`, `resources/`, `design/brand/` | Decisiones, material de referencia y marca (`lib.pen`) |
 
 ## Qué doc leer
 
@@ -29,19 +27,20 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 ## Reglas
 
 1. `main` está bloqueado: todo cambio entra por PR a `main` del repo de la org, y el PR se mergea solo. Nunca hagas push a `main`.
-2. El agente nunca inventa un precio: cada precio sale de `searchOffers`.
-3. Todo precio que se muestra lleva su fuente y su fecha. Si se convirtió de moneda, también lleva la tasa usada.
-4. Los secretos van en variables de entorno. Están listados en `.env.example`.
-5. No toques `README.md`, `platanus-hack-project.jsonc`, `project-description.md` ni `project-logo.png` sin que te lo pidan, porque son la entrega de la hackathon.
-6. No agregues servicios, paquetes ni capas hasta que una funcionalidad de la demo los necesite.
+2. **No te repitas.** La lógica de precios vive solo en `apps/api/src/lib`. La web no calcula nada: le pregunta al backend.
+3. **Sin boilerplate.** Antes de agregar un archivo, una capa o un paquete, piensa si la demo lo necesita hoy. Si no, no va.
+4. El agente nunca inventa un precio: cada precio sale de `searchOffers`.
+5. Todo precio que se muestra lleva su fuente y su fecha. Si se convirtió de moneda, también lleva la tasa usada.
+6. Los secretos van en variables de entorno, listadas en el `.env.example` de cada app.
+7. No toques `README.md`, `platanus-hack-project.jsonc`, `project-description.md` ni `project-logo.png` sin que te lo pidan, porque son la entrega de la hackathon.
 
 ## Comandos
 
 ```bash
 pnpm install
-cp .env.example .env    # y pon GOOGLE_GENAI_API_KEY
-pnpm dev                # http://localhost:3000
-pnpm build && pnpm lint # antes de abrir el PR: no hay checks antes del auto-merge
+cp apps/api/.env.example apps/api/.env   # pon GOOGLE_GENAI_API_KEY
+pnpm dev                                 # api en :4000, web en :3000
+pnpm build && pnpm lint                  # antes del PR: no hay checks antes del auto-merge
 ```
 
 ## Antes de entregar

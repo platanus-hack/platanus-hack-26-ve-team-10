@@ -1,4 +1,4 @@
-import type { ExchangeRate, Merchant, Offer } from "./types";
+import type { ExchangeRate, Merchant, Offer } from "./types.js";
 
 // Datos de ejemplo para probar el flujo completo mientras conectamos las fuentes reales.
 // Los comercios y los precios son inventados.

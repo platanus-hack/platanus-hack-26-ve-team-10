@@ -4,7 +4,7 @@
 
 Este repo trae un hook de Claude Code en `.claude/settings.json` (script en `.claude/hooks/check-docs.mjs`). Se activa solo en cualquier PC que abra el repo con Claude Code, sin configurar nada. Necesita Node.
 
-Antes de cada `git commit`, si el commit cambia código o configuración (`src/`, `package.json`, `next.config.ts`, `Dockerfile`, `.env.example`, `.github/`) y no toca los docs (`AGENTS.md`, `agents/`, `docs/`), el hook frena el commit. Entonces:
+Antes de cada `git commit`, si el commit cambia código o configuración (el `src/`, `package.json`, `next.config.ts`, `Dockerfile` o `.env.example` de cada app en `apps/`, el `package.json` o `pnpm-workspace.yaml` de la raíz, o `.github/`) y no toca los docs (`AGENTS.md`, `agents/`, `docs/`), el hook frena el commit. Entonces:
 
 1. Revisa si el cambio afecta la arquitectura, una ruta, una variable de entorno, una dependencia o el deploy.
 2. Si la afecta, actualiza `AGENTS.md` y el doc de `agents/` que corresponda, agrégalos con `git add` y repite el commit. Docs y código van en el mismo commit.
