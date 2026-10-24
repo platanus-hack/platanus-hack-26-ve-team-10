@@ -12,14 +12,9 @@
 3. Si el PR no está listo, ábrelo como borrador: los borradores no se mergean.
 4. Todavía no hay checks antes del merge. Corre `pnpm build && pnpm lint` antes de abrir el PR.
 
-## Mirror a prais.com
+## Deploy
 
-Cloud Run despliega desde `Pleo2/prais.com`, y `.github/workflows/sync-from-org.yml` lo pone al día cada 5 minutos con `main` de la org. Para que eso funcione:
-
-- Nunca hagas commits directos en `prais.com`. Si tiene commits que no están en la org, el sync se detiene.
-- Configura tu clon con las dos URLs de push, como explica el `README.md`.
-- Si cambias algo en `.github/workflows/`, el sync no puede copiarlo, porque GitHub no deja que el token de Actions suba workflows. Después del merge, alguien con el mirror tiene que correr `git pull && git push origin main`.
-- Para publicar sin esperar los 5 minutos, corre el workflow a mano: `gh workflow run sync-from-org.yml -R Pleo2/prais.com`.
+No hay nada que hacer después del merge. Cloud Build revisa `main` de la org cada 5 minutos y despliega solo si cambió la app: ver [gcp.md](gcp.md). No usamos GitHub Actions para desplegar. El único workflow es el auto-merge, que corre en el repo de la org; como es público, no gasta minutos.
 
 ## Código
 

@@ -1,0 +1,28 @@
+{
+  "steps": [
+    {
+      "id": "check",
+      "name": "gcr.io/google.com/cloudsdktool/cloud-sdk:alpine",
+      "entrypoint": "bash",
+      "args": ["-c", "git clone -q https://github.com/platanus-hack/platanus-hack-26-ve-team-10.git repo && bash repo/deploy/step.sh check"],
+      "env": ["REGION=__REGION__", "PROJECT_ID=__PROJECT_ID__"]
+    },
+    {
+      "id": "build",
+      "name": "gcr.io/cloud-builders/docker",
+      "entrypoint": "bash",
+      "args": ["repo/deploy/step.sh", "build"],
+      "env": ["REGION=__REGION__", "PROJECT_ID=__PROJECT_ID__"]
+    },
+    {
+      "id": "deploy",
+      "name": "gcr.io/google.com/cloudsdktool/cloud-sdk:alpine",
+      "entrypoint": "bash",
+      "args": ["repo/deploy/step.sh", "deploy"],
+      "env": ["REGION=__REGION__", "PROJECT_ID=__PROJECT_ID__"]
+    }
+  ],
+  "serviceAccount": "projects/__PROJECT_ID__/serviceAccounts/prais-deployer@__PROJECT_ID__.iam.gserviceaccount.com",
+  "options": { "logging": "CLOUD_LOGGING_ONLY" },
+  "timeout": "1200s"
+}

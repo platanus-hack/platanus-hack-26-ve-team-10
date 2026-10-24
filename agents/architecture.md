@@ -23,12 +23,13 @@ ChatGPT / Claude ────► /api/mcp ───────┴────�
 | MCP con `search_prices` | Hecho |
 | Confianza del comercio | Fórmula inicial en `src/lib/prices.ts` |
 | Fuentes reales | Faltan: Firecrawl, Apify, Mercado Libre, Meta Ads |
-| Deploy en Cloud Run | Falta: ver [gcp.md](gcp.md) |
+| Deploy en Cloud Run | Scripts listos en `deploy/`. Falta correr el setup: ver [gcp.md](gcp.md) |
 | Directorio de comercios, admin, human loop | Cuando la demo los necesite |
 
 ## Decisiones tomadas (2026-10-24)
 
 - Una app de Next.js con TypeScript y pnpm, desplegada en Cloud Run (GCP). Cloudflare solo maneja el DNS.
+- El deploy lo hace Cloud Build, que lee el repo público de la org cada 5 minutos y solo construye si cambió la app. No usamos GitHub Actions para desplegar, ni el mirror `Pleo2/prais.com`.
 - Agente con ADK para TypeScript y Gemini.
 - WhatsApp con Kapso, y MCP como ruta de la app.
 - Un solo agente con tools. Los sub-agentes de la pizarra se agregan si un solo agente no alcanza.
