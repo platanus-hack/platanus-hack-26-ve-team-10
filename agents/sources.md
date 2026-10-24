@@ -6,12 +6,12 @@ Cada fuente es un archivo en `apps/api/app/lib/sources/` que cumple el contrato 
 
 | Fuente | Cómo se consulta | Ojo |
 |---|---|---|
-| **Firecrawl** | La tool `open_web` busca `{producto} precio Venezuela` (`location` Caracas, `country` VE, 8 resultados) y lee el precio del formato `product` de hasta 8 páginas, para quedarse con 5 que sí traigan precio (`app/lib/sources/firecrawl.py`). No entra en `search_offers`: pasa de 8 s y cobra por uso | Cobra por uso. El vendedor es el sitio, no la marca del producto. El puntaje de confianza de tiendas web todavía no se calcula (borrador en [resources/website-trust-score.ts](../resources/website-trust-score.ts)) |
+| **Firecrawl** | `search_open_web` busca `{producto} precio Venezuela` (`location` Caracas, `country` VE, 8 resultados) y lee el precio del formato `product` de hasta 8 páginas, para quedarse con 5 que sí traigan precio (`app/lib/sources/firecrawl.py`). La usan la tool de la web abierta (45 s) y `search_prices` del MCP (25 s, vía `search_all`). No entra en `search_offers`: pasa de 8 s y cobra por uso. Guarda cada producto 1 h en memoria (10 min si no hubo ofertas; un fallo no se guarda) | Cobra por uso. El vendedor es el sitio, no la marca del producto. El puntaje de confianza de tiendas web todavía no se calcula (borrador en [resources/website_trust_score.py](../resources/website_trust_score.py)) |
 | **Apify: Instagram** | Cliente de Python de Apify + actor `apify/instagram-scraper` | Tarda de segundos a minutos. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
-| **Apify: TikTok** | Cliente de Python de Apify + actor `clockworks/tiktok-scraper` | Igual que Instagram. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok-trust-score.ts](../resources/tiktok-trust-score.ts)) |
-| **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts)) |
-| **Mercado Libre** | API oficial, sitio `MLV` | Responde **403 sin token**: hay que registrar una app. Plan B: un actor de Apify. El puntaje de confianza usa `/items` y `/users` (ver [resources/mercadolibre-trust-score.ts](../resources/mercadolibre-trust-score.ts)) |
-| **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta-ads-signals.ts](../resources/meta-ads-signals.ts)) |
+| **Apify: TikTok** | Cliente de Python de Apify + actor `clockworks/tiktok-scraper` | Igual que Instagram. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
+| **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
+| **Mercado Libre** | API oficial, sitio `MLV` | Responde **403 sin token**: hay que registrar una app. Plan B: un actor de Apify. El puntaje de confianza usa `/items` y `/users` (ver [resources/mercadolibre_trust_score.py](../resources/mercadolibre_trust_score.py)) |
+| **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta_ads_signals.py](../resources/meta_ads_signals.py)) |
 
 ## Reglas
 
@@ -23,17 +23,17 @@ Cada fuente es un archivo en `apps/api/app/lib/sources/` que cumple el contrato 
 
 ## Puntaje de confianza por fuente
 
-Cada fuente tiene un borrador de su puntaje de confianza en `resources/`, en TypeScript. Ahí están las señales, los pesos, las banderas rojas y los actores o APIs que usa. La implementación va en Python en `apps/api/app/lib/prices.py`. Antes de portarlo, corre el actor con casos reales y confirma los nombres de sus campos.
+Cada fuente tiene un borrador de su puntaje de confianza en `resources/`, en Python. Ahí están las señales, los pesos, las banderas rojas y los actores o APIs que usa. La implementación va en `apps/api/app/lib/prices.py`: los borradores no se importan desde el backend. Antes de llevarlo, corre el actor con casos reales y confirma los nombres de sus campos.
 
 | Fuente | Borrador | Qué pesa más |
 |---|---|---|
-| Instagram | [ig-trust-score.ts](../resources/ig-trust-score.ts) | Antigüedad de la cuenta, interacción acorde a los seguidores y comentarios reales |
-| Facebook Marketplace | [fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts) | Historial del vendedor y fotos que no aparecen en anuncios de otros: en Venezuela casi nadie califica |
-| TikTok | [tiktok-trust-score.ts](../resources/tiktok-trust-score.ts) | Proporción entre likes y vistas, no likes por seguidor: las vistas las reparte el algoritmo |
-| Tiendas web | [website-trust-score.ts](../resources/website-trust-score.ts) | Antigüedad del dominio, RIF y contacto publicados, políticas de devolución |
-| Mercado Libre | [mercadolibre-trust-score.ts](../resources/mercadolibre-trust-score.ts) | Reputación de la plataforma: termómetro, MercadoLíder y calificaciones |
-| Amazon | [amazon-trust-score.ts](../resources/amazon-trust-score.ts) | Quién envía (Amazon, FBA o el vendedor) y el feedback del vendedor externo. Detecta cuentas inactivas que reaparecen con precios bajos |
-| Meta Ads | [meta-ads-signals.ts](../resources/meta-ads-signals.ts) | No es un puntaje: ajusta el de Instagram, Marketplace o TikTok. Un vendedor que no anuncia no pierde nada |
+| Instagram | [ig_trust_score.py](../resources/ig_trust_score.py) | Antigüedad de la cuenta, interacción acorde a los seguidores y comentarios reales |
+| Facebook Marketplace | [fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py) | Historial del vendedor y fotos que no aparecen en anuncios de otros: en Venezuela casi nadie califica |
+| TikTok | [tiktok_trust_score.py](../resources/tiktok_trust_score.py) | Proporción entre likes y vistas, no likes por seguidor: las vistas las reparte el algoritmo |
+| Tiendas web | [website_trust_score.py](../resources/website_trust_score.py) | Antigüedad del dominio, RIF y contacto publicados, políticas de devolución |
+| Mercado Libre | [mercadolibre_trust_score.py](../resources/mercadolibre_trust_score.py) | Reputación de la plataforma: termómetro, MercadoLíder y calificaciones |
+| Amazon | [amazon_trust_score.py](../resources/amazon_trust_score.py) | Quién envía (Amazon, FBA o el vendedor) y el feedback del vendedor externo. Detecta cuentas inactivas que reaparecen con precios bajos |
+| Meta Ads | [meta_ads_signals.py](../resources/meta_ads_signals.py) | No es un puntaje: ajusta el de Instagram, Marketplace o TikTok. Un vendedor que no anuncia no pierde nada |
 
 Todos comparten la misma salida: puntaje de 0 a 100, cobertura, veredicto (`confiable`, `precaucion`, `riesgosa` o `sin_datos`), banderas rojas y razones. Una bandera roja deja el puntaje en 0. Si hay menos de 40 % del peso medido, el veredicto es `sin_datos`.
 

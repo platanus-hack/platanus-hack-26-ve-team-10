@@ -17,7 +17,7 @@ ChatGPT / Claude ─────┘                                             
 - **El orquestador** (`app/agents/orchestrator.py`, corrido desde `app/agent.py`) entiende qué producto o servicio comparar, pide el hallazgo a un especialista por fuente y resume. Los especialistas no hablan con la persona.
 - **`search_offers`** (`app/lib/search.py`) llama en paralelo a todas las fuentes de `app/lib/sources/`, convierte, filtra y ordena. Los contratos entre las piezas están en [contracts.md](contracts.md).
 - **WhatsApp** pasa por una cola de Cloud Tasks (`app/lib/tasks.py`): el webhook valida la firma, encola un mensaje por tarea y responde 200; la cola llama a `/internal/whatsapp-task`, que corre el agente y responde por Kapso. Así hay reintentos y no se procesa dos veces el mismo mensaje. Detalle en [kapso.md](kapso.md).
-- **MCP** llama directo a `search_offers`, sin el agente, porque quien pregunta ya es un asistente de IA.
+- **MCP** llama directo a `search_all` (las fuentes de `search_offers` más la web abierta con Firecrawl), sin el agente, porque quien pregunta ya es un asistente de IA. Devuelve salida estructurada. Detalle en [mcp-tool.md](mcp-tool.md).
 - **El catálogo** (`app/lib/catalogo.py`, rutas `GET /catalogo/*` en `app/routes/catalogo.py`) arma las páginas públicas `/ve/...`: los modelos salen de `catalogo.json` y los precios, de `search_offers`.
 - **`apps/web`** reenvía `/api/*` al backend con un rewrite de Next. Así el navegador habla con un solo dominio y no hace falta CORS. Ojo: `API_URL` se lee al **construir** la web, no al arrancarla.
 

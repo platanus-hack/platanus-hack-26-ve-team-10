@@ -24,6 +24,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 | Usar una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [agents/tools.md](agents/tools.md): su skill, su MCP o su `llms.txt` |
 | El agente o sus tools | [agents/adk.md](agents/adk.md) |
 | Conectar una fuente real | [agents/sources.md](agents/sources.md) |
+| El puntaje de confianza | [docs/contrato-confianza.md](docs/contrato-confianza.md) y los borradores de `resources/*_trust_score.py` |
 | WhatsApp | [agents/kapso.md](agents/kapso.md) |
 | MCP | [agents/mcp-tool.md](agents/mcp-tool.md) |
 | Páginas públicas | [agents/seo-geo.md](agents/seo-geo.md) |
