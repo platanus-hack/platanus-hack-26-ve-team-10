@@ -7,7 +7,8 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 | Ruta | Qué hay |
 |---|---|
 | `apps/api/` | Backend en Fastify: el agente ADK, el webhook de Kapso y el servidor MCP |
-| `apps/api/src/lib/` | Tipos, búsqueda, precios, confianza y datos de ejemplo. Es la única fuente de esa lógica |
+| `apps/api/src/lib/` | Tipos y contratos, búsqueda, precios, confianza y tasa. Es la única fuente de esa lógica |
+| `apps/api/src/lib/sources/` | Una fuente por archivo (hoy, la de ejemplo), registradas en `index.ts` |
 | `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
 | `agents/` | Cómo se construye cada parte, un doc por área |
 | `docs/design-system/` | Design system de usaprais: tokens y componentes para la web. Léelo antes de tocar la interfaz |
@@ -17,7 +18,8 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 
 | Si vas a tocar | Lee |
 |---|---|
-| Cualquier cosa, la primera vez | [agents/architecture.md](agents/architecture.md) y [agents/conventions.md](agents/conventions.md) |
+| Cualquier cosa, la primera vez | [agents/architecture.md](agents/architecture.md), [agents/contracts.md](agents/contracts.md) y [agents/conventions.md](agents/conventions.md) |
+| Qué hace cada uno del equipo | [docs/plan.md](docs/plan.md) |
 | El agente o sus tools | [agents/adk.md](agents/adk.md) |
 | Conectar una fuente real | [agents/sources.md](agents/sources.md) |
 | WhatsApp | [agents/kapso.md](agents/kapso.md) |

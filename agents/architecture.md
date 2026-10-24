@@ -14,7 +14,7 @@ ChatGPT / Claude ─────┘
 
 - **`apps/api`**: Fastify con tres rutas y `/health`. Cada ruta es un plugin en `src/routes/`, registrado en `src/server.ts`.
 - **El agente** (`src/agent.ts`) conversa: pregunta lo que falta (producto, zona, envío), busca con la tool `buscar_ofertas` y explica la mejor opción.
-- **`searchOffers`** (`src/lib/search.ts`) es el único punto que toca las fuentes. Conectar una fuente real es cambiar esta función: ver [sources.md](sources.md).
+- **`searchOffers`** (`src/lib/search.ts`) llama en paralelo a todas las fuentes de `src/lib/sources/`, convierte, filtra y ordena. Los contratos entre las piezas están en [contracts.md](contracts.md).
 - **MCP** llama directo a `searchOffers`, sin el agente, porque quien pregunta ya es un asistente de IA.
 - **`apps/web`** reenvía `/api/*` al backend con un rewrite de Next. Así el navegador habla con un solo dominio y no hace falta CORS. Ojo: `API_URL` se lee al **construir** la web, no al arrancarla.
 
