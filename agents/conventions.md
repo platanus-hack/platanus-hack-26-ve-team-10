@@ -13,7 +13,9 @@
 
 Todo se sube en paralelo al repo de Platanus y a `Pleo2/prais.com`:
 
-- **Una vez por clon:** `pnpm setup:git`. Activa los hooks y le pone a `origin` dos URLs de push, así cada `git push` de una rama llega a los dos repos.
+- **Automático:** `pnpm install` corre `pnpm setup:git`, que activa los hooks y le pone a `origin` dos URLs de push. Así cada `git push` de una rama llega a los dos repos.
+- **Obligatorio:** si un clon no sube a los dos repos, los hooks frenan el push y piden correr `pnpm setup:git`.
+- **Nunca mergees PRs en `prais.com`:** GitHub no deja proteger ese repo en el plan actual, así que la regla depende del equipo.
 - **Después de cada merge:** `pnpm sync`. Copia el `main` de Platanus a `prais.com`. Es el único push a `main` que permiten los hooks.
 
 1. Crea la rama desde `main` actualizado, con el nombre `<tipo>/<tema-corto>`. Por ejemplo, `feat/whatsapp-webhook`.
