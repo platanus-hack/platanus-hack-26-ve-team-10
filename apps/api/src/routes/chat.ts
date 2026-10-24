@@ -18,7 +18,7 @@ export async function chatRoutes(app: FastifyInstance) {
       return { reply: answer };
     } catch (error) {
       request.log.error(error, "chat failed");
-      return reply.code(502).send({ reply: "No pude responder ahora. Intenta de nuevo en un momento." });
+      return reply.code(502).send({ reply: "Algo falló de mi lado. Inténtalo otra vez en un momento." });
     }
   });
 }
