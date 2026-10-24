@@ -13,7 +13,7 @@ Hoy solo existe `/`. Las demás de la tabla son para cuando la demo las necesite
 | Producto `/ve/p/[slug]-[id]` | Sí | La comparación de precios de un producto. Es la página que más tráfico puede traer. Detalle en [docs/ficha-producto.md](../docs/ficha-producto.md) |
 | Categoría `/ve/[categoria]/`, `/ve/[categoria]/[marca]/` | Sí, con reglas | Listado de modelos por categoría, marca o faceta con demanda. Detalle en [docs/categoria.md](../docs/categoria.md) |
 | Marca `/ve/marca/[slug]/` y `/ve/marcas/` | Sí, si vende en 2+ categorías | Hub de la marca hacia sus categorías. Detalle en [docs/marca.md](../docs/marca.md) |
-| Comercio `/comercios/[slug]` | Sí | Perfil del comercio con su puntaje de confianza |
+| Comercio `/ve/comercios/[slug]` | Pospuesta | Perfil del comercio con su puntaje de confianza. Por ahora no se hace |
 | Dashboard y admin | No | Están bloqueados en `robots.ts` |
 
 ## Cada página pública
@@ -26,7 +26,7 @@ Hoy solo existe `/`. Las demás de la tabla son para cuando la demo las necesite
   - Producto: `Product` con `AggregateOffer` (`lowPrice`, `highPrice`, `priceCurrency`, `offerCount`).
   - Comercio: `LocalBusiness` u `Organization`, según tenga local físico o no.
   - Preguntas frecuentes: `FAQPage`.
-- Las páginas de producto y de comercio se generan estáticas o con revalidación, nunca solo en el cliente: un crawler tiene que ver los precios en el HTML.
+- Las páginas de producto, categoría y marca se generan estáticas o con revalidación, nunca solo en el cliente: un crawler tiene que ver los precios en el HTML.
 
 ## Para GEO
 
@@ -38,6 +38,6 @@ Hoy solo existe `/`. Las demás de la tabla son para cuando la demo las necesite
 
 ## Archivos
 
-- `app/sitemap.ts`: landing, posts del blog y todas las páginas de producto y de comercio.
+- `app/sitemap.ts`: landing, posts del blog y las páginas de producto, categoría y marca que estén abiertas para indexar.
 - `app/robots.ts`: reglas de arriba, más la URL del sitemap.
 - `public/llms.txt`: o una ruta, si se genera desde los datos.

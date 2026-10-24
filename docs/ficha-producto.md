@@ -41,7 +41,7 @@ El precio "desde" es siempre el del producto **nuevo**. Si el modelo solo tiene 
 
    - Ordenadas por precio en USD, como devuelve `searchOffers`.
    - Ofertas con `price: null` ("precio al DM") van al final, sin precio y con el enlace para consultarlo. No cuentan para el "desde".
-   - La confianza enlaza al perfil del comercio.
+   - La confianza se muestra como dato, sin enlace: por ahora no hay página de comercio.
    - Una oferta sale de la tabla si lleva más de 48 h sin aparecer en un rastreo; queda en el historial.
 4. **Historial de precio.** Gráfico del precio mínimo nuevo en USD. Se muestra con 14 días o más de datos; con 30 días o más agrega un veredicto: "Está 8% por debajo de su promedio de 30 días". Es el contenido que nadie puede copiar y crece solo.
 5. **Variantes.** Capacidades y colores, cada uno con su precio mínimo.
@@ -84,4 +84,4 @@ Lo de abajo no existe todavía en `apps/api/src/lib/types.ts`. Cambiar un contra
 ## Decisiones abiertas
 
 - **Tasa:** BCV, paralela o ambas está abierto en [agents/architecture.md](../agents/architecture.md). Este doc asume BCV para el precio en Bs, porque es lo que más se busca ("dolar bcv", 4,09 millones de búsquedas al mes).
-- **Perfil de comercio:** `agents/seo-geo.md` usa `/comercios/[slug]`. Con el prefijo de país quedaría `/ve/comercios/[slug]`.
+- **Perfil de comercio:** pospuesto. Si se hace, iría en `/ve/comercios/[slug]` y la confianza pasaría a enlazar ahí.

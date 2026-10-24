@@ -37,7 +37,7 @@ Las categorías del title son las dos con más modelos de la marca.
 1. **Resumen con datos.** "Samsung tiene 87 modelos en 6 categorías y 21 comercios de Venezuela, desde $29 (Bs 1.161). Lo más buscado: Galaxy A56 y neveras Samsung. Precios vistos el 24 de octubre."
 2. **Categorías de la marca.** Una tarjeta por categoría: "Teléfonos Samsung · 42 modelos · desde $129", que enlaza a `/ve/telefonos/samsung/`. Es el núcleo del hub. Si la categoría + marca todavía no tiene página abierta, la tarjeta enlaza a la categoría con el filtro de marca.
 3. **Modelos más buscados.** Los 8 a 12 modelos más populares de la marca (mismo puntaje que el orden de [categoria.md](categoria.md)), con la tarjeta de siempre: precio nuevo en USD + Bs y "en N comercios".
-4. **Comercios que la venden.** Los comercios con más ofertas de la marca, con su puntaje de confianza, enlazando a su perfil. No se dice "distribuidor oficial": ese dato no se tiene.
+4. **Comercios que la venden.** Los comercios con más ofertas de la marca, con su puntaje de confianza. Sin enlace a un perfil: por ahora no hay página de comercio. No se dice "distribuidor oficial": ese dato no se tiene.
 5. **Preguntas frecuentes con datos.** "¿Dónde comprar Samsung en Venezuela?", "¿Cuál es el Samsung más barato?", "¿Qué Samsung es el más buscado?". Las respuestas salen de los datos del momento.
 6. **Breadcrumbs.** Inicio › Marcas › Samsung.
 
