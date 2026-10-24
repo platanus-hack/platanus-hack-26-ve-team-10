@@ -1,8 +1,0 @@
-# Prais
-
-> Prais compara el precio de un producto en los principales canales de venta de Venezuela y dice dónde está el mejor precio, con la tasa de cambio usada y la confianza de cada comercio.
-
-- [Inicio](https://usaprais.com/): chat para buscar el mejor precio
-- [MCP](https://usaprais.com/api/mcp): servidor MCP con la tool `search_prices`
-- [Política de privacidad](https://usaprais.com/privacidad)
-- [Términos de uso](https://usaprais.com/terminos)

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bungee, Outfit } from "next/font/google";
 import Link from "next/link";
 import { empresa } from "@/lib/empresa";
+import { guias } from "@/lib/guias";
 import "./globals.css";
 
 const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         {children}
         <footer className="mt-auto border-t-[2.5px] border-trazo bg-kraft">
-          <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 text-[15px] sm:grid-cols-[1.2fr_1fr_1fr]">
+          <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 text-[15px] sm:grid-cols-2 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
             <div className="flex flex-col gap-3">
               <span className="wordmark" aria-label="usaprais">
                 usa<span>prais</span>
@@ -55,6 +56,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </a>
             </div>
             <div className="flex flex-col gap-2">
+              <strong>Guías</strong>
+              {guias.map((g) => (
+                <Link key={g.slug} href={`/${g.slug}`} className="underline underline-offset-2">
+                  {g.h1}
+                </Link>
+              ))}
+            </div>
+            <div className="flex flex-col gap-2">
               <strong>Legal</strong>
               <Link href="/privacidad" className="underline underline-offset-2">
                 Política de privacidad
@@ -63,7 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 Términos de uso
               </Link>
             </div>
-            <p className="border-t border-trazo pt-5 text-[13px] text-tinta-suave sm:col-span-3">
+            <p className="border-t border-trazo pt-5 text-[13px] text-tinta-suave sm:col-span-2 md:col-span-4">
               © 2026 {empresa.razonSocial}. usaprais es un servicio de {empresa.razonSocial}. No está afiliado a Meta,
               WhatsApp, Instagram ni Mercado Libre.
             </p>

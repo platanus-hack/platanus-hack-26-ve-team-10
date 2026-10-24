@@ -4,11 +4,12 @@ SEO es aparecer en buscadores. GEO es aparecer citado en las respuestas de los a
 
 ## Qué páginas compiten
 
-Hoy existen `/`, `/privacidad` y `/terminos`. Las demás de la tabla son para cuando la demo las necesite.
+Hoy existen `/`, las guías, `/privacidad` y `/terminos`. Las demás de la tabla son para cuando la demo las necesite.
 
 | Página | Indexable | Para qué |
 |---|---|---|
 | Landing `/` | Sí | Marca, propuesta y el chat |
+| Guías `/comparador-de-precios`, `/comparador-de-celulares`, `/que-es-usaprais` | Sí | Responder búsquedas del concepto ("comparar celulares" 1.000/mes, "comparador de teléfonos" 590) y que los asistentes de IA encuentren qué es usaprais, también como usaprice o usaprices. El contenido vive en `apps/web/src/lib/guias.ts`; para agregar una guía, súmala ahí y crea su carpeta con el `page.tsx` de 5 líneas |
 | Privacidad `/privacidad` y términos `/terminos` | Sí | Los pide Meta para verificar el negocio y el número de WhatsApp. Los datos legales y de contacto están en `apps/web/src/lib/empresa.ts` y tienen que coincidir con los documentos de la empresa |
 | Blog `/blog/...` | Sí | Preguntas que la gente busca: "dónde comprar X más barato en Caracas" |
 | Producto `/ve/p/[slug]-[id]` | Sí | La comparación de precios de un producto. Es la página que más tráfico puede traer. Detalle en [docs/ficha-producto.md](../docs/ficha-producto.md) |
@@ -39,6 +40,6 @@ Hoy existen `/`, `/privacidad` y `/terminos`. Las demás de la tabla son para cu
 
 ## Archivos
 
-- `app/sitemap.ts`: landing, posts del blog y las páginas de producto, categoría y marca que estén abiertas para indexar.
-- `app/robots.ts`: reglas de arriba, más la URL del sitemap.
-- `public/llms.txt`: o una ruta, si se genera desde los datos.
+- `app/sitemap.ts`: landing, guías, privacidad y términos. Las guías salen de `lib/guias.ts`. Cuando existan, suma el blog y las páginas de producto, categoría y marca abiertas para indexar.
+- `app/robots.ts`: deja pasar a todos, nombra a los crawlers de IA y apunta al sitemap. `/api/` queda fuera.
+- `app/llms.txt/route.ts` y `app/llms-full.txt/route.ts`: el índice y el contenido completo según [llmstxt.org](https://llmstxt.org), generados desde `lib/guias.ts` y `lib/empresa.ts`. Se prerenderizan en el build.
