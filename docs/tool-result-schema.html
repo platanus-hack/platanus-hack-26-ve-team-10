@@ -1,0 +1,718 @@
+<title>Schema de datos de Prais</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: referencia técnica. Diagrama arriba, fichas de modelo filtrables, después enums, reglas, store y ejemplo. Identidad usaprais: papel kraft, trazo negro, color por quién llena cada pieza. */
+:root {
+  --bg: #fbf3e4;
+  --surface: #ffffff;
+  --surface-2: #f6efe0;
+  --fg: #15171a;
+  --muted: #5b6270;
+  --line: #e4d8c2;
+  --trazo: #1f1a14;
+  --sol: #ffc829;
+  --on-sol: #1f1a14;
+  --sol-tinte: #fff6d6;
+  --ahorro: #0f6b3e;
+  --ahorro-tinte: #e3f1e8;
+  --anil: #2a4bd7;
+  --anil-tinte: #e8ecfd;
+  --gris-tinte: #eceae4;
+  --tomate: #c9351f;
+  --tomate-tinte: #fde6e0;
+  --sombra: 3px 3px 0 0 #1f1a14;
+  --font-display: "Bungee", "Arial Black", Impact, sans-serif;
+  --font-sans: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1012; --surface: #17191c; --surface-2: #1d1f23; --fg: #f2f3f5; --muted: #a3a9b4; --line: #2a2d33;
+    --trazo: #7a6a56; --sol: #ffc829; --on-sol: #1f1a14; --sol-tinte: #2b2410; --ahorro: #4fd690; --ahorro-tinte: #16301f;
+    --anil: #8fa3ff; --anil-tinte: #1b2140; --gris-tinte: #24262b; --tomate: #ff7a5e; --tomate-tinte: #3a1a14;
+    --sombra: 3px 3px 0 0 #000000; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1012; --surface: #17191c; --surface-2: #1d1f23; --fg: #f2f3f5; --muted: #a3a9b4; --line: #2a2d33;
+  --trazo: #7a6a56; --sol: #ffc829; --on-sol: #1f1a14; --sol-tinte: #2b2410; --ahorro: #4fd690; --ahorro-tinte: #16301f;
+  --anil: #8fa3ff; --anil-tinte: #1b2140; --gris-tinte: #24262b; --tomate: #ff7a5e; --tomate-tinte: #3a1a14;
+  --sombra: 3px 3px 0 0 #000000; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 16px/1.55 var(--font-sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h2 { font-size: 1.55rem; font-weight: 700; }
+p { margin: 0; }
+code { font-family: var(--font-mono); font-size: 0.86em; }
+section { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lead { max-width: 70ch; color: var(--muted); }
+.muted { color: var(--muted); }
+
+header.hero { display: flex; flex-direction: column; gap: 14px; }
+.hero h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5.5vw, 46px); line-height: 1.05; }
+.hero h1 span { background: var(--sol); color: var(--on-sol); padding: 0 .16em; }
+.hero .lead { color: var(--fg); font-size: 1.05rem; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.meta span { font-family: var(--font-mono); font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; border: 1.5px solid var(--trazo); }
+.f-consulta { background: var(--gris-tinte); }
+.f-tool { background: var(--sol); }
+.f-codigo { background: var(--ahorro); }
+.f-llm { background: var(--anil); }
+
+/* Diagrama */
+.diagram { overflow-x: auto; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px; }
+.diagram svg { display: block; min-width: 880px; width: 100%; height: auto; }
+.diagram .box { stroke: var(--trazo); stroke-width: 1.5; }
+.diagram .b-consulta { fill: var(--gris-tinte); }
+.diagram .b-tool { fill: var(--sol-tinte); }
+.diagram .b-main { fill: var(--sol); }
+.diagram .b-codigo { fill: var(--ahorro-tinte); }
+.diagram .b-llm { fill: var(--anil-tinte); }
+.diagram .stripe-tool { fill: var(--sol); }
+.diagram .stripe-codigo { fill: var(--ahorro); }
+.diagram .stripe-llm { fill: var(--anil); }
+.diagram .stripe-consulta { fill: var(--muted); }
+.diagram .name { fill: var(--fg); font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
+.diagram .main-name { fill: var(--on-sol); }
+.diagram .sub { fill: var(--muted); font-family: var(--font-sans); font-size: 11.5px; }
+.diagram .main-sub { fill: var(--on-sol); opacity: .8; }
+.diagram .edge { fill: none; stroke: var(--trazo); stroke-width: 1.5; }
+.diagram .edge.dash { stroke-dasharray: 5 4; stroke: var(--muted); }
+.diagram .lbl { fill: var(--muted); font-family: var(--font-mono); font-size: 10.5px; }
+.diagram .lbl-bg { fill: var(--surface); }
+.diagram .node { cursor: pointer; }
+.diagram .node:hover .box, .diagram .node:focus .box { stroke-width: 3; }
+.diagram .node:focus { outline: none; }
+
+/* Herramientas */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.toolbar label { font-size: 13px; color: var(--muted); }
+#q { flex: 1 1 220px; min-width: 0; font: inherit; font-size: 15px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--trazo); background: var(--surface); color: var(--fg); }
+#q:focus-visible, .seg button:focus-visible, .chipf:focus-visible, .copy:focus-visible { outline: 3px solid var(--anil); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1.5px solid var(--trazo); border-radius: 10px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 7px 12px; border: 0; background: var(--surface); color: var(--fg); cursor: pointer; font-family: var(--font-mono); }
+.seg button[aria-pressed="true"] { background: var(--trazo); color: var(--bg); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chipf { font: inherit; font-size: 12.5px; padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.chipf i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; border: 1px solid var(--trazo); }
+.chipf[aria-pressed="true"] { border-color: var(--trazo); background: var(--sol-tinte); }
+.count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+/* Fichas */
+.models { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 500px), 1fr)); gap: 16px; align-items: start; }
+.model { background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 0; scroll-margin-top: 80px; }
+.model.flash { box-shadow: 0 0 0 3px var(--anil); }
+.model.main { border: 2px solid var(--trazo); box-shadow: var(--sombra); }
+.mhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--line); border-left: 6px solid var(--k); }
+.mhead h3 { font-family: var(--font-mono); font-size: 16px; }
+.mhead span { font-size: 13px; color: var(--muted); }
+.mdesc { padding: 8px 14px 0; font-size: 14px; color: var(--muted); }
+.ftable { overflow-x: auto; padding: 6px 6px 10px; }
+.ftable table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 460px; }
+.ftable th { text-align: left; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 400; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.ftable td { padding: 7px 8px; border-bottom: 1px dashed var(--line); vertical-align: top; }
+.ftable tr:last-child td { border-bottom: 0; }
+.fname { font-family: var(--font-mono); font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+.req { color: var(--tomate); margin-left: 2px; }
+.ftype { font-family: var(--font-mono); font-size: 12px; color: var(--anil); overflow-wrap: anywhere; }
+.who { font-size: 11.5px; padding: 1px 7px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line); }
+.who.tool { background: var(--sol-tinte); }
+.who.codigo { background: var(--ahorro-tinte); color: var(--ahorro); }
+.who.llm { background: var(--anil-tinte); color: var(--anil); }
+.who.consulta { background: var(--gris-tinte); }
+.fnote { color: var(--muted); font-size: 12.5px; }
+mark { background: var(--sol); color: var(--on-sol); border-radius: 2px; }
+.empty { padding: 20px; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; }
+
+/* Enums, reglas, store */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card h3 { font-family: var(--font-mono); font-size: 14px; }
+.vals { display: flex; flex-wrap: wrap; gap: 4px; }
+.vals code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; font-size: 12px; }
+.card p { font-size: 13px; color: var(--muted); }
+.tbl { overflow-x: auto; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; }
+.tbl table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
+.tbl th { text-align: left; font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 400; background: var(--surface-2); padding: 10px 12px; }
+.tbl td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+.tree { margin: 0; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.8; }
+.tree .d { color: var(--anil); font-weight: 700; }
+.tree .c { color: var(--muted); }
+.coll { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px; }
+.coll .card h3 { color: var(--anil); }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 10px; font-size: 13px; }
+.kv dt { font-family: var(--font-mono); font-size: 12px; }
+.kv dd { margin: 0; color: var(--muted); }
+.ttl { align-self: flex-start; font-family: var(--font-mono); font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--tomate-tinte); color: var(--tomate); }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.codebox { position: relative; }
+.codebox pre { margin: 0; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; max-height: 560px; }
+.copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 1.5px solid var(--trazo); background: var(--sol); color: var(--on-sol); cursor: pointer; }
+.k { color: var(--anil); } .s { color: var(--ahorro); } .n { color: var(--tomate); } .c2 { color: var(--muted); }
+.warn { background: var(--tomate-tinte); border-radius: 10px; padding: 10px 14px; font-size: 14.5px; }
+.warn b { color: var(--tomate); }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+@media (max-width: 760px) { .split { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">usaprais · backend · propuesta para app/lib/contracts.py</span>
+    <h1>Schema de <span>ToolResult</span></h1>
+    <p class="lead">Lo que devuelve cada tool de búsqueda (Firecrawl, Mercado Libre, Instagram, TikTok, Marketplace), cómo se conectan sus piezas y cómo se guarda. Modelos de pydantic 2, validados contra un ejemplo real.</p>
+    <div class="meta"><span>pydantic 2.14</span><span>JSON en camelCase</span><span>Python en snake_case</span><span>extra = forbid</span><span>Store: Firestore</span></div>
+    <div class="legend">
+      <span><i class="f-consulta"></i>Consulta</span>
+      <span><i class="f-tool"></i>Lo llena la tool</span>
+      <span><i class="f-codigo"></i>Lo calcula el código</span>
+      <span><i class="f-llm"></i>Lo escribe un LLM</span>
+    </div>
+  </header>
+
+  <section id="diagrama">
+    <span class="eyebrow">Mapa</span>
+    <h2>Las piezas y cómo se conectan</h2>
+    <p class="lead">Toca una pieza para ir a su ficha. Las flechas sólidas son campos que contienen otra pieza; las punteadas son referencias por id.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 1100 520" role="img" aria-label="Diagrama de entidades: ToolRequest lleva una NormalizedQuery con un CanonicalProduct; ToolResult contiene ofertas, comercios, evidencia, métricas y errores; cada oferta apunta a su comercio y su evidencia, y lleva precio, tasa y veredicto del juez; cada comercio lleva su TrustScore. La consulta, el comercio y la oferta comparten el tipo Location, y Match compara la ubicación de la persona con la de cada oferta.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--trazo)"/></marker>
+          <marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+        </defs>
+
+        <!-- aristas -->
+        <path class="edge" d="M130,84 V138" marker-end="url(#ah)"/>
+        <path class="edge" d="M130,184 V238" marker-end="url(#ah)"/>
+        <path class="edge" d="M130,284 V338" marker-end="url(#ah)"/>
+        <path class="edge dash" d="M240,62 H268 V150 H298" marker-end="url(#ahd)"/>
+        <path class="edge" d="M520,162 H578" marker-end="url(#ah)"/>
+        <path class="edge" d="M360,140 V100 H930 V86" marker-end="url(#ah)"/>
+        <path class="edge" d="M470,140 V124 H1000 V138" marker-end="url(#ah)"/>
+        <path class="edge" d="M410,184 V258" marker-end="url(#ah)"/>
+        <path class="edge" d="M300,176 H282 V362 H298" marker-end="url(#ah)"/>
+        <path class="edge dash" d="M520,62 H548 V150 H578" marker-end="url(#ahd)"/>
+        <path class="edge dash" d="M800,172 H858" marker-end="url(#ahd)"/>
+        <path class="edge dash" d="M800,150 H830 V62 H858" marker-end="url(#ahd)"/>
+        <path class="edge" d="M690,140 V86" marker-end="url(#ah)"/>
+        <path class="edge" d="M690,184 V238" marker-end="url(#ah)"/>
+        <path class="edge" d="M580,178 H562 V362 H578" marker-end="url(#ah)"/>
+        <path class="edge" d="M970,184 V238" marker-end="url(#ah)"/>
+        <path class="edge" d="M970,284 V338" marker-end="url(#ah)"/>
+        <!-- ubicación compartida -->
+        <path class="edge" d="M20,170 H8 V420 H360 V438" marker-end="url(#ah)"/>
+        <path class="edge" d="M580,182 H556 V462 H522" marker-end="url(#ah)"/>
+        <path class="edge" d="M1080,170 H1094 V504 H410 V488" marker-end="url(#ah)"/>
+        <path class="edge dash" d="M240,474 H298" marker-end="url(#ahd)"/>
+
+        <!-- etiquetas -->
+        <g>
+          <text class="lbl" x="136" y="116">query</text>
+          <text class="lbl" x="136" y="216">product</text>
+          <text class="lbl" x="136" y="316">variant</text>
+          <text class="lbl" x="527" y="155">offers ≤50</text>
+          <text class="lbl" x="936" y="96">evidence</text>
+          <text class="lbl" x="1006" y="134">merchants</text>
+          <text class="lbl" x="416" y="226">metrics</text>
+          <text class="lbl" x="236" y="300" text-anchor="end">errors</text>
+          <text class="lbl" x="806" y="186">merchantId</text>
+          <text class="lbl" x="836" y="76">evidenceIds</text>
+          <text class="lbl" x="684" y="135" text-anchor="end">price</text>
+          <text class="lbl" x="696" y="216">rateUsed</text>
+          <text class="lbl" x="568" y="324" text-anchor="end">judge</text>
+          <text class="lbl" x="976" y="216">trust</text>
+          <text class="lbl" x="976" y="316">signals</text>
+          <text class="lbl" x="526" y="56">offerIds</text>
+          <text class="lbl" x="246" y="54">devuelve</text>
+          <text class="lbl" x="250" y="414">userLocation</text>
+          <text class="lbl" x="530" y="456">location</text>
+          <text class="lbl" x="1088" y="498" text-anchor="end">merchant.location</text>
+          <text class="lbl" x="246" y="490">compara</text>
+        </g>
+
+        <!-- nodos -->
+        <g class="node" tabindex="0" data-go="ToolRequest"><rect class="box b-consulta" x="20" y="40" width="220" height="44" rx="8"/><rect class="stripe-consulta" x="20" y="40" width="6" height="44" rx="2"/><text class="name" x="36" y="60">ToolRequest</text><text class="sub" x="36" y="76">lo arma el orquestador</text></g>
+        <g class="node" tabindex="0" data-go="NormalizedQuery"><rect class="box b-consulta" x="20" y="140" width="220" height="44" rx="8"/><rect class="stripe-consulta" x="20" y="140" width="6" height="44" rx="2"/><text class="name" x="36" y="160">NormalizedQuery</text><text class="sub" x="36" y="176">lo que pidió la persona</text></g>
+        <g class="node" tabindex="0" data-go="CanonicalProduct"><rect class="box b-consulta" x="20" y="240" width="220" height="44" rx="8"/><rect class="stripe-consulta" x="20" y="240" width="6" height="44" rx="2"/><text class="name" x="36" y="260">CanonicalProduct</text><text class="sub" x="36" y="276">clave de cache y dedup</text></g>
+        <g class="node" tabindex="0" data-go="Variant"><rect class="box b-consulta" x="20" y="340" width="220" height="44" rx="8"/><rect class="stripe-consulta" x="20" y="340" width="6" height="44" rx="2"/><text class="name" x="36" y="360">Variant</text><text class="sub" x="36" y="376">capacidad, tamaño, presentación</text></g>
+
+        <g class="node" tabindex="0" data-go="SpecialistReport"><rect class="box b-llm" x="300" y="40" width="220" height="44" rx="8"/><rect class="stripe-llm" x="300" y="40" width="6" height="44" rx="2"/><text class="name" x="316" y="60">SpecialistReport</text><text class="sub" x="316" y="76">lo único que escribe el LLM</text></g>
+        <g class="node" tabindex="0" data-go="ToolResult"><rect class="box b-main" x="300" y="140" width="220" height="44" rx="8"/><text class="name main-name" x="316" y="160">ToolResult</text><text class="sub main-sub" x="316" y="176">uno por tool y por consulta</text></g>
+        <g class="node" tabindex="0" data-go="ToolMetrics"><rect class="box b-tool" x="300" y="260" width="220" height="44" rx="8"/><rect class="stripe-tool" x="300" y="260" width="6" height="44" rx="2"/><text class="name" x="316" y="280">ToolMetrics</text><text class="sub" x="316" y="296">latencia, créditos, llamadas</text></g>
+        <g class="node" tabindex="0" data-go="ToolError"><rect class="box b-tool" x="300" y="340" width="220" height="44" rx="8"/><rect class="stripe-tool" x="300" y="340" width="6" height="44" rx="2"/><text class="name" x="316" y="360">ToolError</text><text class="sub" x="316" y="376">plazo, límite, auth, parseo…</text></g>
+
+        <g class="node" tabindex="0" data-go="Money"><rect class="box b-tool" x="580" y="40" width="220" height="44" rx="8"/><rect class="stripe-tool" x="580" y="40" width="6" height="44" rx="2"/><text class="name" x="596" y="60">Money</text><text class="sub" x="596" y="76">precio como se publica</text></g>
+        <g class="node" tabindex="0" data-go="Offer"><rect class="box b-tool" x="580" y="140" width="220" height="44" rx="8"/><rect class="stripe-tool" x="580" y="140" width="6" height="44" rx="2"/><text class="name" x="596" y="160">Offer</text><text class="sub" x="596" y="176">una publicación con precio</text></g>
+        <g class="node" tabindex="0" data-go="RateRef"><rect class="box b-codigo" x="580" y="240" width="220" height="44" rx="8"/><rect class="stripe-codigo" x="580" y="240" width="6" height="44" rx="2"/><text class="name" x="596" y="260">RateRef</text><text class="sub" x="596" y="276">tasa usada, solo si hubo Bs</text></g>
+        <g class="node" tabindex="0" data-go="Judgement"><rect class="box b-llm" x="580" y="340" width="220" height="44" rx="8"/><rect class="stripe-llm" x="580" y="340" width="6" height="44" rx="2"/><text class="name" x="596" y="360">Judgement</text><text class="sub" x="596" y="376">¿es el producto pedido?</text></g>
+
+        <g class="node" tabindex="0" data-go="Evidence"><rect class="box b-tool" x="860" y="40" width="220" height="44" rx="8"/><rect class="stripe-tool" x="860" y="40" width="6" height="44" rx="2"/><text class="name" x="876" y="60">Evidence</text><text class="sub" x="876" y="76">de dónde salió el precio</text></g>
+        <g class="node" tabindex="0" data-go="Merchant"><rect class="box b-tool" x="860" y="140" width="220" height="44" rx="8"/><rect class="stripe-tool" x="860" y="140" width="6" height="44" rx="2"/><text class="name" x="876" y="160">Merchant</text><text class="sub" x="876" y="176">el comercio, con prefijo</text></g>
+        <g class="node" tabindex="0" data-go="TrustScore"><rect class="box b-codigo" x="860" y="240" width="220" height="44" rx="8"/><rect class="stripe-codigo" x="860" y="240" width="6" height="44" rx="2"/><text class="name" x="876" y="260">TrustScore</text><text class="sub" x="876" y="276">0–100, veredicto, banderas</text></g>
+        <g class="node" tabindex="0" data-go="Match"><rect class="box b-codigo" x="20" y="440" width="220" height="44" rx="8"/><rect class="stripe-codigo" x="20" y="440" width="6" height="44" rx="2"/><text class="name" x="36" y="460">Match</text><text class="sub" x="36" y="476">cercanía por consulta · en el job</text></g>
+        <g class="node" tabindex="0" data-go="Location"><rect class="box b-tool" x="300" y="440" width="220" height="44" rx="8"/><rect class="stripe-tool" x="300" y="440" width="6" height="44" rx="2"/><text class="name" x="316" y="460">Location</text><text class="sub" x="316" y="476">persona, comercio y artículo</text></g>
+        <g class="node" tabindex="0" data-go="TrustSignal"><rect class="box b-codigo" x="860" y="340" width="220" height="44" rx="8"/><rect class="stripe-codigo" x="860" y="340" width="6" height="44" rx="2"/><text class="name" x="876" y="360">TrustSignal</text><text class="sub" x="876" y="376">una señal con su peso</text></g>
+      </svg>
+    </div>
+  </section>
+
+  <section id="modelos">
+    <span class="eyebrow">Fichas</span>
+    <h2>Cada modelo, campo por campo</h2>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Buscar un campo o un modelo: price, trust, evidence…" aria-label="Buscar un campo o un modelo">
+      <div class="seg" role="group" aria-label="Nombres de campo">
+        <button id="fmt-json" type="button" aria-pressed="true">JSON</button>
+        <button id="fmt-py" type="button" aria-pressed="false">Python</button>
+      </div>
+      <div class="chips" role="group" aria-label="Filtrar por quién llena el campo">
+        <button class="chipf" type="button" data-who="tool" aria-pressed="false"><i class="f-tool"></i>Tool</button>
+        <button class="chipf" type="button" data-who="codigo" aria-pressed="false"><i class="f-codigo"></i>Código</button>
+        <button class="chipf" type="button" data-who="llm" aria-pressed="false"><i class="f-llm"></i>LLM</button>
+        <button class="chipf" type="button" data-who="consulta" aria-pressed="false"><i class="f-consulta"></i>Consulta</button>
+      </div>
+      <span class="count" id="count"></span>
+    </div>
+    <p class="muted" style="font-size:13.5px"><span class="req">*</span> obligatorio. Lo demás es opcional o tiene valor por defecto.</p>
+    <div class="models" id="models"></div>
+  </section>
+
+  <section id="enums">
+    <span class="eyebrow">Valores cerrados</span>
+    <h2>Enums</h2>
+    <div class="grid" id="enum-grid"></div>
+  </section>
+
+  <section id="reglas">
+    <span class="eyebrow">Validación</span>
+    <h2>Reglas que revisa el código</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Regla</th><th>Si no se cumple</th></tr></thead>
+        <tbody>
+          <tr><td>Todo <code>offer.merchantId</code> está en <code>merchants</code></td><td>La oferta se descarta y se anota un error <code>parseo</code></td></tr>
+          <tr><td>Todo <code>evidenceIds</code> existe en <code>evidence</code></td><td>Igual</td></tr>
+          <tr><td><code>price</code> es <code>null</code> si y solo si <code>priceKind</code> es <code>al_dm</code></td><td>Igual</td></tr>
+          <tr><td><code>rateUsed</code> existe solo si <code>price.currency</code> es <code>VES</code></td><td>Error de programación: falla el test</td></tr>
+          <tr><td><code>origin</code>: <code>persona</code> solo en <code>userLocation</code>; <code>publicacion</code> solo si la fuente publicó dónde está el artículo (Marketplace, Mercado Libre)</td><td>Se marca <code>inferida</code></td></tr>
+          <tr><td><code>stateCode</code>, <code>cityKey</code> y <code>areaKey</code> los llena solo <code>lib/location.py</code></td><td>Se ignoran y se recalculan</td></tr>
+          <tr><td>Un <code>Match</code> por oferta y por consulta, guardado en el job</td><td>Nunca en <code>offers/{offerId}</code>: la misma oferta está cerca de una persona y lejos de otra</td></tr>
+          <tr><td><code>reachable</code> = <code>misma_zona</code> o <code>misma_ciudad</code>, o <code>merchant.delivers</code></td><td>Regla inicial. Cuando el comercio diga hasta dónde envía (local, estado, nacional), se usa eso</td></tr>
+          <tr><td><code>status</code> cuadra con lo que pasó</td><td><code>ok</code>: sin errores · <code>parcial</code>: ofertas y errores, o plazo vencido con ofertas · <code>fallo</code>: sin ofertas y con errores · <code>plazo_vencido</code>: sin ofertas y sin tiempo</td></tr>
+          <tr><td>Máximo 50 ofertas y extractos de 500 caracteres</td><td>Se recorta: el resultado cabe holgado en un documento de Firestore (límite de 1 MiB)</td></tr>
+          <tr><td>Los campos del juez y del código llegan en <code>null</code> desde la tool</td><td>Se ignoran y se recalculan: un LLM nunca escribe un precio</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn"><b>El LLM no copia precios.</b> La tool guarda el ToolResult en <code>state["resultado:&lt;tool&gt;"]</code>, el especialista responde solo un SpecialistReport con ids, y <code>AgentTool</code> le pasa ese estado al orquestador (ADK 2.13). El orquestador lee los precios del estado, nunca del texto.</div>
+  </section>
+
+  <section id="store">
+    <span class="eyebrow">Store</span>
+    <h2>Cómo se guarda en Firestore</h2>
+    <p class="lead">Entra después de la fase 1 del roadmap. Hasta entonces el ToolResult vive en la sesión de ADK y sus métricas van al log. Firestore es la recomendación; la decisión sigue abierta.</p>
+    <pre class="tree"><span class="d">jobs/{jobId}</span>                 <span class="c"># una consulta de una persona · vence a los 30 días</span>
+  <span class="d">results/{tool}</span>             <span class="c"># un ToolResult por tool: cada tool escribe el suyo</span>
+<span class="d">offers/{offerId}</span>             <span class="c"># última versión vista de cada oferta</span>
+  <span class="d">history/{yyyymmddHH}</span>       <span class="c"># precio por hora, para el historial del catálogo</span>
+<span class="d">merchants/{merchantId}</span>       <span class="c"># comercio y su último TrustScore</span>
+<span class="d">products/{productKey}</span>        <span class="c"># producto canónico, alias y mejor oferta</span>
+<span class="d">cache/{tool}__{queryHash}</span>    <span class="c"># puntero a un results/{tool} reciente, con vencimiento</span>
+<span class="d">rates/{yyyy-mm-dd}__{source}</span> <span class="c"># tasa del día</span></pre>
+    <div class="coll">
+      <div class="card"><h3>jobs/{jobId}</h3><p>Clave: <code>sha256(canal + message.id)[:32]</code>, el mismo hash que nombra la tarea de Cloud Tasks. Un reintento cae en el mismo job.</p>
+        <dl class="kv"><dt>channel</dt><dd>whatsapp · web · mcp</dd><dt>userRef</dt><dd>HMAC-SHA256 del número con USER_REF_SALT. Nunca el número en claro</dd><dt>query</dt><dd>NormalizedQuery. De userLocation se guardan ciudad, estado y claves; lat/lng no</dd><dt>status</dt><dd>recibido · acuse_enviado · buscando · esperando_datos · respondido · fallo</dd><dt>toolsPlanned / toolsDone</dt><dd>se cierra cuando son iguales o vence deadlineAt</dd><dt>replyMessageId</dt><dd>wamid de la respuesta. Si existe, no se reenvía</dd><dt>matches</dt><dd>Match[], uno por oferta para esta persona (máx. 200)</dd><dt>best</dt><dd>offerId, priceUsd, merchantId</dd><dt>totals</dt><dd>latencyMs, credits, offers</dd></dl>
+        <span class="ttl">vence: 30 días</span></div>
+      <div class="card"><h3>jobs/{jobId}/results/{tool}</h3><p>El ToolResult completo, ya enriquecido. Va en una subcolección para que las tools en paralelo escriban cada una en su documento y no compitan por el mismo.</p><span class="ttl">vence con su job</span></div>
+      <div class="card"><h3>offers/{offerId}</h3><p>Los campos de Offer, más:</p>
+        <dl class="kv"><dt>productKey</dt><dd>copia de product.key, para el índice</dd><dt>firstSeenAt / lastSeenAt</dt><dd>fechas</dd><dt>lastJobId</dt><dd>la última consulta que la vio</dd><dt>active</dt><dd>false si ya no apareció</dd></dl>
+        <p><code>history/{yyyymmddHH}</code>: priceUsd, priceVes, rateUsed, seenAt.</p></div>
+      <div class="card"><h3>merchants/{merchantId}</h3><p>El Merchant con su último trust. El id lleva el prefijo de la fuente (<code>ig:bodegon</code>). Firestore no acepta <code>/</code> en un id: <code>web:</code> usa el dominio.</p></div>
+      <div class="card"><h3>products/{productKey}</h3>
+        <dl class="kv"><dt>product</dt><dd>CanonicalProduct</dd><dt>aliases</dt><dd>cómo lo escribe la gente: "iphone 15 128"</dd><dt>catalogId</dt><dd>une con catalogo.json y /ve/p/…</dd><dt>best</dt><dd>mejor oferta nueva con veredicto producto_ve</dd></dl></div>
+      <div class="card"><h3>cache/{tool}__{queryHash}</h3><p><code>queryHash</code> = sha256 de product.key, condición y toolVersion, más <code>userLocation.cityKey</code> solo en las tools que buscan por zona (Marketplace). La cercanía se calcula después, así que personas de ciudades distintas reusan el mismo resultado. Guarda jobId, status y expireAt.</p>
+        <dl class="kv"><dt>Firecrawl</dt><dd>1 h</dd><dt>Mercado Libre</dt><dd>30 min</dd><dt>Apify</dt><dd>hasta que el actor vuelva a correr</dd><dt>ok sin ofertas</dt><dd>10 min</dd><dt>fallo o plazo</dt><dd>no se guarda</dd></dl>
+        <span class="ttl">valores iniciales</span></div>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Índice</th><th>Campos</th><th>Para qué</th></tr></thead>
+        <tbody>
+          <tr><td><b>offers</b></td><td><code>productKey ↑ · active ↑ · priceUsd ↑</code></td><td>Las más baratas de un producto: respuesta y fichas</td></tr>
+          <tr><td><b>offers</b></td><td><code>productKey ↑ · lastSeenAt ↓</code></td><td>Lo más reciente</td></tr>
+          <tr><td><b>offers</b></td><td><code>productKey ↑ · location.stateCode ↑ · priceUsd ↑</code></td><td>Las más baratas de un producto en un estado: "iphone 15 en Zulia"</td></tr>
+          <tr><td><b>jobs</b></td><td><code>userRef ↑ · createdAt ↓</code></td><td>Historial de una persona</td></tr>
+          <tr><td><b>merchants</b></td><td><code>channel ↑ · trust.score ↓</code></td><td>Ranking de comercios por canal</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size:14px">No se guardan el número en claro, el HTML o JSON crudo de las fuentes (solo el extracto de 500 caracteres) ni las sesiones de ADK, que siguen en memoria.</p>
+  </section>
+
+  <section id="ejemplo">
+    <span class="eyebrow">Ejemplo</span>
+    <h2>Un ToolResult de Firecrawl</h2>
+    <p class="lead">Pasa la validación de los modelos. El precio de 789 es el observado el 24 de octubre en resources/queries.md; las URLs se omiten.</p>
+    <div class="split">
+      <div class="codebox"><button class="copy" type="button" data-copy="json-ej">Copiar</button><pre id="json-ej">{
+  <span class="k">"jobId"</span>: <span class="s">"9f2c…"</span>,
+  <span class="k">"tool"</span>: <span class="s">"firecrawl"</span>,
+  <span class="k">"toolVersion"</span>: <span class="s">"firecrawl-c-1"</span>,
+  <span class="k">"status"</span>: <span class="s">"parcial"</span>,
+  <span class="k">"startedAt"</span>: <span class="s">"2026-10-24T20:10:02Z"</span>,
+  <span class="k">"finishedAt"</span>: <span class="s">"2026-10-24T20:10:16Z"</span>,
+  <span class="k">"offers"</span>: [{
+    <span class="k">"id"</span>: <span class="s">"a41e…"</span>,
+    <span class="k">"merchantId"</span>: <span class="s">"web:soytechno.com"</span>,
+    <span class="k">"product"</span>: { <span class="k">"key"</span>: <span class="s">"apple-iphone-15-128gb"</span>, <span class="k">"brand"</span>: <span class="s">"Apple"</span>,
+                 <span class="k">"model"</span>: <span class="s">"iPhone 15"</span>, <span class="k">"variant"</span>: { <span class="k">"capacity"</span>: <span class="s">"128 GB"</span> } },
+    <span class="k">"title"</span>: <span class="s">"iPhone 15 128GB Nuevo Sellado"</span>,
+    <span class="k">"condition"</span>: <span class="s">"nuevo"</span>,
+    <span class="k">"location"</span>: { <span class="k">"city"</span>: <span class="s">"Caracas"</span>, <span class="k">"state"</span>: <span class="s">"Distrito Capital"</span>,
+                  <span class="k">"country"</span>: <span class="s">"VE"</span>, <span class="k">"origin"</span>: <span class="s">"comercio"</span>,
+                  <span class="k">"stateCode"</span>: <span class="s">"VE-A"</span>, <span class="k">"cityKey"</span>: <span class="s">"caracas"</span> },
+    <span class="k">"price"</span>: { <span class="k">"amount"</span>: <span class="n">789</span>, <span class="k">"currency"</span>: <span class="s">"USD"</span> },
+    <span class="k">"priceKind"</span>: <span class="s">"publicado"</span>,
+    <span class="k">"seenAt"</span>: <span class="s">"2026-10-24T20:10:09Z"</span>,
+    <span class="k">"evidenceIds"</span>: [<span class="s">"e1"</span>],
+    <span class="k">"priceUsd"</span>: <span class="n">null</span>, <span class="k">"rateUsed"</span>: <span class="n">null</span>, <span class="k">"judge"</span>: <span class="n">null</span>
+  }],
+  <span class="k">"merchants"</span>: [{ <span class="k">"id"</span>: <span class="s">"web:soytechno.com"</span>, <span class="k">"name"</span>: <span class="s">"Soytechno"</span>,
+                  <span class="k">"channel"</span>: <span class="s">"web"</span>, <span class="k">"trust"</span>: <span class="n">null</span> }],
+  <span class="k">"evidence"</span>: [{ <span class="k">"id"</span>: <span class="s">"e1"</span>, <span class="k">"kind"</span>: <span class="s">"pagina"</span>,
+                 <span class="k">"excerpt"</span>: <span class="s">"iPhone 15 128GB … $789"</span> }],
+  <span class="k">"metrics"</span>: { <span class="k">"latencyMs"</span>: <span class="n">14100</span>, <span class="k">"firstOfferMs"</span>: <span class="n">3600</span>, <span class="k">"calls"</span>: <span class="n">6</span>,
+               <span class="k">"credits"</span>: <span class="n">37</span>, <span class="k">"candidates"</span>: <span class="n">18</span>, <span class="k">"kept"</span>: <span class="n">5</span> },
+  <span class="k">"errors"</span>: [{ <span class="k">"code"</span>: <span class="s">"plazo"</span>, <span class="k">"retryable"</span>: <span class="n">true</span>,
+               <span class="k">"message"</span>: <span class="s">"2 páginas no respondieron a tiempo"</span> }]
+}</pre></div>
+      <div class="codebox"><button class="copy" type="button" data-copy="py-ej">Copiar</button><pre id="py-ej"><span class="c2"># app/lib/contracts.py (extracto)</span>
+<span class="k">class</span> Model(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=<span class="k">True</span>,
+        extra=<span class="s">"forbid"</span>,
+    )
+
+<span class="k">class</span> ToolResult(Model):
+    job_id: str
+    tool: str
+    tool_version: str
+    status: ToolStatus
+    started_at: datetime
+    finished_at: datetime
+    offers: list[Offer] = Field(default=[], max_length=<span class="n">50</span>)
+    merchants: list[Merchant] = []
+    evidence: list[Evidence] = []
+    metrics: ToolMetrics
+    errors: list[ToolError] = []
+
+<span class="k">class</span> SpecialistReport(Model):
+    <span class="s">"""output_schema del especialista."""</span>
+    tool: str
+    status: ToolStatus
+    offer_ids: list[str]
+    note: str | <span class="k">None</span> = Field(default=<span class="k">None</span>, max_length=<span class="n">280</span>)
+
+<span class="c2"># La tool guarda el resultado; el LLM solo ve ids:</span>
+tool_context.state[<span class="s">f"resultado:{tool}"</span>] = (
+    result.model_dump(by_alias=<span class="k">True</span>, mode=<span class="s">"json"</span>)
+)</pre></div>
+    </div>
+  </section>
+
+  <footer>Fuente: <code>docs/tool-result.md</code> en el repo de Prais. Es una propuesta: cambia <code>app/lib/types.py</code>, así que se avisa al equipo antes de mergear.</footer>
+</div>
+
+<script>
+(function () {
+  // [campo en snake_case, tipo, obligatorio, quién lo llena, nota]
+  var MODELS = [
+    { name: "ToolResult", main: true, who: "tool", role: "uno por tool y por consulta", desc: "Lo que devuelve cada tool. Se guarda en el estado de la sesión y, más adelante, en jobs/{jobId}/results/{tool}.", fields: [
+      ["job_id", "str", true, "tool", "el mismo de la consulta"],
+      ["tool", "str", true, "tool", "firecrawl, mercadolibre, apify-instagram…"],
+      ["tool_version", "str", true, "tool", "sube si cambia el mapper o el plan: invalida la cache"],
+      ["status", "ToolStatus", true, "tool", "ver reglas"],
+      ["started_at", "datetime", true, "tool", ""],
+      ["finished_at", "datetime", true, "tool", ""],
+      ["offers", "list[Offer] ≤ 50", false, "tool", ""],
+      ["merchants", "list[Merchant]", false, "tool", "los comercios de esas ofertas"],
+      ["evidence", "list[Evidence]", false, "tool", ""],
+      ["metrics", "ToolMetrics", true, "tool", ""],
+      ["errors", "list[ToolError]", false, "tool", ""]
+    ]},
+    { name: "Offer", who: "tool", role: "una publicación con precio", desc: "La tool llena lo que vio. El precio en USD y Bs, la tasa y el veredicto los llena el código después.", fields: [
+      ["id", "str", true, "tool", "sha256(fuente + url canónica + variante)[:24]"],
+      ["merchant_id", "str", true, "tool", "tiene que estar en merchants"],
+      ["product", "CanonicalProduct", true, "tool", "el producto que la oferta dice ser, no el pedido"],
+      ["title", "str", true, "tool", "tal como lo publica la fuente"],
+      ["url", "str", true, "tool", ""],
+      ["image_url", "str | None", false, "tool", "hace falta para el carrusel y el Flow"],
+      ["location", "Location | None", false, "tool", "dónde está el artículo; si falta, vale merchant.location"],
+      ["condition", "Condition", false, "tool", "por defecto desconocida"],
+      ["price", "Money | None", false, "tool", "None = precio al DM"],
+      ["price_kind", "publicado | al_dm", false, "tool", "por defecto publicado"],
+      ["availability", "disponible | agotado | desconocida", false, "tool", ""],
+      ["seen_at", "datetime", true, "tool", ""],
+      ["evidence_ids", "list[str], mín. 1", true, "tool", "tienen que estar en evidence"],
+      ["price_usd", "float | None", false, "codigo", "lib/prices.py"],
+      ["price_ves", "float | None", false, "codigo", "lib/prices.py"],
+      ["rate_used", "RateRef | None", false, "codigo", "solo si hubo conversión"],
+      ["judge", "Judgement | None", false, "llm", "lib/judge.py"]
+    ]},
+    { name: "Merchant", who: "tool", role: "el comercio", desc: "Sus datos alimentan el puntaje de confianza.", fields: [
+      ["id", "str", true, "tool", "con prefijo: ig:bodegon, ml:12345, web:dominio"],
+      ["name", "str", true, "tool", ""],
+      ["channel", "Channel", true, "tool", ""],
+      ["url", "str", true, "tool", ""],
+      ["location", "Location | None", false, "tool", "dónde está el comercio; reemplaza a zone"],
+      ["delivers", "bool | None", false, "tool", "filtro de envío"],
+      ["followers", "int | None", false, "tool", "señal de confianza"],
+      ["comments", "int | None", false, "tool", "comentarios recientes"],
+      ["response_time_min", "int | None", false, "tool", ""],
+      ["payment_methods", "list[str]", false, "tool", "pago movil, zelle, efectivo usd…"],
+      ["rif", "str | None", false, "tool", ""],
+      ["trust", "TrustScore | None", false, "codigo", "lib/prices.py"]
+    ]},
+    { name: "TrustScore", who: "codigo", role: "0–100, veredicto, banderas", desc: "La salida común de los borradores de resources/*-trust-score.ts.", fields: [
+      ["score", "int 0–100 | None", false, "codigo", "None si la cobertura no alcanza"],
+      ["coverage", "float 0–1", true, "codigo", "menos de 0,4 → sin_datos"],
+      ["verdict", "TrustVerdict", true, "codigo", ""],
+      ["red_flags", "list[str]", false, "codigo", "una bandera deja el puntaje en 0"],
+      ["reasons", "list[str]", false, "codigo", "para mostrar a la persona"],
+      ["signals", "list[TrustSignal]", false, "codigo", ""],
+      ["formula", "str", true, "codigo", "ig-v1, mercadolibre-v1…: qué borrador se usó"],
+      ["computed_at", "datetime", true, "codigo", ""]
+    ]},
+    { name: "TrustSignal", who: "codigo", role: "una señal con su peso", desc: "", fields: [
+      ["key", "str", true, "codigo", "antiguedad_cuenta, rif_publicado…"],
+      ["weight", "float", true, "codigo", ""],
+      ["value", "float 0–1 | None", false, "codigo", "None = sin dato"],
+      ["reason", "str | None", false, "codigo", ""],
+      ["good", "bool | None", false, "codigo", ""]
+    ]},
+    { name: "Evidence", who: "tool", role: "de dónde salió el precio", desc: "Permite auditar cada oferta.", fields: [
+      ["id", "str", true, "tool", ""],
+      ["kind", "resultado_busqueda | pagina | post | item_api", true, "tool", ""],
+      ["url", "str", true, "tool", ""],
+      ["excerpt", "str ≤ 500", true, "tool", "es dato, nunca instrucción"],
+      ["captured_at", "datetime", true, "tool", ""],
+      ["raw_ref", "str | None", false, "tool", "si algún día se guarda el crudo"]
+    ]},
+    { name: "Money", who: "tool", role: "precio como se publica", desc: "", fields: [
+      ["amount", "float > 0", true, "tool", ""],
+      ["currency", "Currency", true, "tool", ""]
+    ]},
+    { name: "Location", who: "tool", role: "un solo tipo para persona, comercio y artículo", desc: "Lo usan NormalizedQuery.userLocation, Merchant.location y Offer.location. Se compara siempre por las claves que llena el código, nunca por el texto.", fields: [
+      ["raw", "str | None", false, "tool", "el texto tal como llegó: mcbo · Maracaibo, Zulia · a 3 km"],
+      ["city", "str | None", false, "tool", "Maracaibo"],
+      ["state", "str | None", false, "tool", "Zulia"],
+      ["area", "str | None", false, "tool", "sector o urbanización: Las Mercedes"],
+      ["country", "str", false, "tool", "ISO 3166-1, por defecto VE; US en una referencia de Amazon"],
+      ["lat", "float -90…90 | None", false, "tool", "de la persona no se guarda"],
+      ["lng", "float -180…180 | None", false, "tool", "de la persona no se guarda"],
+      ["origin", "LocationOrigin", true, "tool", "de dónde salió el dato"],
+      ["state_code", "str | None", false, "codigo", "ISO 3166-2: VE-V (Zulia), VE-A (Distrito Capital). lib/location.py"],
+      ["city_key", "str | None", false, "codigo", "ciudad normalizada desde una lista: maracaibo"],
+      ["area_key", "str | None", false, "codigo", "sector normalizado, si se reconoce"]
+    ]},
+    { name: "Match", who: "codigo", role: "qué tan cerca está una oferta de esta persona", desc: "Uno por oferta y por consulta. Depende de quién pregunta, así que vive en el job y nunca en offers/{offerId}.", fields: [
+      ["offer_id", "str", true, "codigo", ""],
+      ["proximity", "Proximity", true, "codigo", "se compara userLocation con offer.location (o merchant.location)"],
+      ["distance_km", "float | None", false, "codigo", "solo si los dos lados tienen lat/lng"],
+      ["reachable", "bool", true, "codigo", "misma zona o ciudad, o el comercio envía"],
+      ["basis", "LocationOrigin", true, "codigo", "de dónde salió la ubicación del artículo: qué tan seguro es"]
+    ]},
+    { name: "RateRef", who: "codigo", role: "tasa usada", desc: "Solo existe si el precio estaba en bolívares.", fields: [
+      ["source", "str", true, "codigo", "BCV, paralelo, tasa de ejemplo"],
+      ["usd_to_ves", "float > 0", true, "codigo", ""],
+      ["observed_at", "datetime", true, "codigo", ""]
+    ]},
+    { name: "Judgement", who: "llm", role: "¿es el producto pedido?", desc: "Lo escribe el juez (lib/judge.py) con salida estructurada.", fields: [
+      ["verdict", "JudgeVerdict", true, "llm", ""],
+      ["reason", "str", true, "llm", ""],
+      ["model", "str", true, "llm", "gemini-3.5-flash-lite"],
+      ["judged_at", "datetime", true, "llm", ""]
+    ]},
+    { name: "ToolMetrics", who: "tool", role: "latencia, créditos, llamadas", desc: "Va al log desde la fase 1 (tarea 1.9).", fields: [
+      ["latency_ms", "int", true, "tool", ""],
+      ["first_offer_ms", "int | None", false, "tool", ""],
+      ["calls", "int", false, "tool", "por defecto 0"],
+      ["credits", "float", false, "tool", "por defecto 0"],
+      ["candidates", "int", false, "tool", "lo que trajo la fuente"],
+      ["kept", "int", false, "tool", "lo que quedó después de mapear"],
+      ["cache_hit", "bool", false, "tool", "por defecto false"]
+    ]},
+    { name: "ToolError", who: "tool", role: "qué falló", desc: "", fields: [
+      ["code", "plazo | limite | auth | parseo | proveedor | otro", true, "tool", ""],
+      ["message", "str", true, "tool", ""],
+      ["retryable", "bool", true, "tool", ""]
+    ]},
+    { name: "SpecialistReport", who: "llm", role: "lo único que escribe el LLM", desc: "output_schema del especialista. Los precios no pasan por acá: están en el estado.", fields: [
+      ["tool", "str", true, "llm", ""],
+      ["status", "ToolStatus", true, "llm", ""],
+      ["offer_ids", "list[str]", true, "llm", "en el orden que recomienda"],
+      ["note", "str ≤ 280 | None", false, "llm", ""]
+    ]},
+    { name: "ToolRequest", who: "consulta", role: "lo arma el orquestador", desc: "Lo que recibe cada tool.", fields: [
+      ["job_id", "str", true, "consulta", ""],
+      ["tool", "str", true, "consulta", ""],
+      ["query", "NormalizedQuery", true, "consulta", ""],
+      ["planned_queries", "list[str]", true, "consulta", "consultas propias del proveedor"],
+      ["deadline_ms", "int", false, "consulta", "por defecto 8000"],
+      ["max_credits", "int | None", false, "consulta", ""],
+      ["attempt", "int", false, "consulta", "por defecto 1"]
+    ]},
+    { name: "NormalizedQuery", who: "consulta", role: "lo que pidió la persona", desc: "La arma el intérprete a partir de texto, link o imagen.", fields: [
+      ["raw_text", "str", true, "consulta", "lo que escribió"],
+      ["input_kind", "texto | link | imagen", false, "consulta", "por defecto texto"],
+      ["source_url", "str | None", false, "consulta", "el link que mandó"],
+      ["product", "CanonicalProduct", true, "consulta", ""],
+      ["condition", "Condition", false, "consulta", "si no dice nada, nuevo"],
+      ["user_location", "Location | None", false, "consulta", "dónde está la persona (origin persona); reemplaza a zone"],
+      ["needs_delivery", "bool | None", false, "consulta", ""],
+      ["missing", "list[producto | zona | envio]", false, "consulta", "si no está vacío, se pregunta antes de buscar"]
+    ]},
+    { name: "CanonicalProduct", who: "consulta", role: "clave de cache y dedup", desc: "También lo usa cada oferta para decir qué producto es.", fields: [
+      ["key", "str", true, "consulta", "apple-iphone-15-128gb"],
+      ["brand", "str | None", false, "consulta", ""],
+      ["model", "str", true, "consulta", ""],
+      ["variant", "Variant", false, "consulta", ""],
+      ["category", "str | None", false, "consulta", "slug de catalogo.json"],
+      ["unit_quantity", "int", false, "consulta", "20 en un bulto de 20 × 1 kg"],
+      ["catalog_id", "str | None", false, "consulta", "une con /ve/p/…"]
+    ]},
+    { name: "Variant", who: "consulta", role: "capacidad, tamaño, presentación", desc: "", fields: [
+      ["capacity", "str | None", false, "consulta", "128 GB"],
+      ["size", "str | None", false, "consulta", "32 pulgadas, 175/70 R13"],
+      ["presentation", "str | None", false, "consulta", "1 kg, 1 L"],
+      ["color", "str | None", false, "consulta", ""]
+    ]}
+  ];
+
+  var ENUMS = [
+    ["Channel", ["web", "mercadolibre", "instagram", "tiktok", "facebook", "amazon"], "amazon solo como referencia de precio"],
+    ["Currency", ["USD", "VES"], ""],
+    ["LocationOrigin", ["persona", "publicacion", "comercio", "inferida"], "persona: la dio quien pregunta · publicacion: la fuente publicó dónde está el artículo · comercio: se copió la del comercio · inferida: la dedujo el texto o un LLM"],
+    ["Proximity", ["misma_zona", "misma_ciudad", "mismo_estado", "otro_estado", "desconocida"], "por claves: area_key + city_key, city_key, state_code; desconocida si falta alguna"],
+    ["Condition", ["nuevo", "usado", "reacondicionado", "desconocida"], "si la persona no dice nada, se asume nuevo"],
+    ["ToolStatus", ["ok", "parcial", "fallo", "plazo_vencido"], "ver las reglas"],
+    ["JudgeVerdict", ["producto_ve", "listado_ve", "referencia", "social", "descartar"], "los de resources/queries.md"],
+    ["TrustVerdict", ["confiable", "precaucion", "riesgosa", "sin_datos"], "los de resources/*-trust-score.ts"]
+  ];
+
+  var WHO_LABEL = { tool: "tool", codigo: "código", llm: "LLM", consulta: "consulta" };
+  var KIND = { tool: "var(--sol)", codigo: "var(--ahorro)", llm: "var(--anil)", consulta: "var(--muted)" };
+  var state = { q: "", fmt: "json", who: {} };
+
+  function camel(s) { return s.replace(/_([a-z])/g, function (_, c) { return c.toUpperCase(); }); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function hi(text, q) {
+    var t = esc(text);
+    if (!q) return t;
+    var i = text.toLowerCase().indexOf(q);
+    if (i < 0) return t;
+    return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + q.length)) + "</mark>" + esc(text.slice(i + q.length));
+  }
+
+  function render() {
+    var box = document.getElementById("models");
+    var q = state.q.trim().toLowerCase();
+    var whoOn = Object.keys(state.who).filter(function (k) { return state.who[k]; });
+    var html = "", shown = 0, fieldsShown = 0;
+    MODELS.forEach(function (m) {
+      var modelHit = !q || m.name.toLowerCase().indexOf(q) >= 0;
+      var rows = m.fields.filter(function (f) {
+        var nm = state.fmt === "json" ? camel(f[0]) : f[0];
+        var textHit = !q || modelHit || nm.toLowerCase().indexOf(q) >= 0 || f[0].indexOf(q) >= 0 || f[1].toLowerCase().indexOf(q) >= 0 || f[4].toLowerCase().indexOf(q) >= 0;
+        var whoHit = !whoOn.length || whoOn.indexOf(f[3]) >= 0;
+        return textHit && whoHit;
+      });
+      if (!rows.length) return;
+      shown++; fieldsShown += rows.length;
+      html += '<article class="model' + (m.main ? " main" : "") + '" id="m-' + m.name + '">' +
+        '<div class="mhead" style="--k:' + KIND[m.who] + '"><h3>' + hi(m.name, modelHit && q ? q : "") + '</h3><span>' + esc(m.role) + '</span></div>' +
+        (m.desc ? '<p class="mdesc">' + esc(m.desc) + '</p>' : "") +
+        '<div class="ftable"><table><thead><tr><th>Campo</th><th>Tipo</th><th>Lo llena</th><th>Nota</th></tr></thead><tbody>' +
+        rows.map(function (f) {
+          var nm = state.fmt === "json" ? camel(f[0]) : f[0];
+          return '<tr><td class="fname">' + hi(nm, q) + (f[2] ? '<span class="req" title="obligatorio">*</span>' : "") + '</td>' +
+            '<td class="ftype">' + hi(f[1], q) + '</td>' +
+            '<td><span class="who ' + f[3] + '">' + WHO_LABEL[f[3]] + '</span></td>' +
+            '<td class="fnote">' + hi(f[4], q) + '</td></tr>';
+        }).join("") +
+        '</tbody></table></div></article>';
+    });
+    box.innerHTML = html || '<div class="empty">Ningún campo coincide con "' + esc(state.q) + '". Prueba con price, trust o evidence.</div>';
+    document.getElementById("count").textContent = shown + " modelos · " + fieldsShown + " campos";
+  }
+
+  function renderEnums() {
+    document.getElementById("enum-grid").innerHTML = ENUMS.map(function (e) {
+      return '<div class="card"><h3>' + e[0] + '</h3><div class="vals">' + e[1].map(function (v) { return "<code>" + v + "</code>"; }).join("") + '</div>' + (e[2] ? "<p>" + esc(e[2]) + "</p>" : "") + '</div>';
+    }).join("");
+  }
+
+  function goTo(name) {
+    state.q = ""; state.who = {};
+    document.getElementById("q").value = "";
+    document.querySelectorAll(".chipf").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+    render();
+    var el = document.getElementById("m-" + name);
+    if (!el) return;
+    el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    el.classList.add("flash");
+    setTimeout(function () { el.classList.remove("flash"); }, 1400);
+  }
+
+  document.getElementById("q").addEventListener("input", function (e) { state.q = e.target.value; render(); });
+  ["json", "py"].forEach(function (k) {
+    document.getElementById("fmt-" + k).addEventListener("click", function () {
+      state.fmt = k;
+      document.getElementById("fmt-json").setAttribute("aria-pressed", String(k === "json"));
+      document.getElementById("fmt-py").setAttribute("aria-pressed", String(k === "py"));
+      render();
+    });
+  });
+  document.querySelectorAll(".chipf").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var on = b.getAttribute("aria-pressed") !== "true";
+      b.setAttribute("aria-pressed", String(on));
+      state.who[b.dataset.who] = on;
+      render();
+    });
+  });
+  document.querySelectorAll(".node").forEach(function (n) {
+    n.addEventListener("click", function () { goTo(n.dataset.go); });
+    n.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goTo(n.dataset.go); } });
+  });
+  document.querySelectorAll(".copy").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var pre = document.getElementById(b.dataset.copy);
+      var done = function () { b.textContent = "Copiado"; setTimeout(function () { b.textContent = "Copiar"; }, 1500); };
+      var select = function () { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Seleccionado"; };
+      try { navigator.clipboard.writeText(pre.innerText).then(done, select); } catch (e) { select(); }
+    });
+  });
+
+  renderEnums();
+  render();
+})();
+</script>
