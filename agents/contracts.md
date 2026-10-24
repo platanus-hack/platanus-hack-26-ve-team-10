@@ -18,6 +18,7 @@ El backend es Python (FastAPI). Las rutas y las formas JSON son las del contrato
 | **Canal → agente** | `apps/api/app/agent.py` | `ask_prais(user_id, message)` → texto. `user_id` lleva el canal delante (`web:…`, `whatsapp:…`), y cada uno tiene su conversación |
 | **Agente / MCP → búsqueda** | `apps/api/app/lib/search.py` | `search_offers(SearchQuery(text, zone?, needs_delivery?))` → `{ query, offers, failedSources, notice? }`, ordenadas por precio en USD. Las claves del resultado van en camelCase, igual que antes |
 | **Búsqueda → fuente** | `apps/api/app/lib/types.py` (`Source`) | `await search(query)` → `SourceResult(offers, merchants)`. Tiene 8 s (`asyncio.wait_for`) y se cancela si tarda más; si falla o tarda, la búsqueda sigue sin ella |
+| **Web → catálogo** | `apps/api/app/routes/catalogo.py` | `GET /catalogo/rutas`, `/sitemap`, `/categorias`, `/marcas`, `/producto/{slug}-{id}`, `/categoria/{cat}`, `/categoria/{cat}/{marca o faceta}`, `/marca/{slug}`. JSON en camelCase; cada página trae `indexable` y `datosDeEjemplo`, o `{ redirect }`; 404 si no existe. La web lo llama al construir y al revalidar, desde el servidor (`apps/web/src/lib/catalogo.ts`) |
 | **Búsqueda → tasa** | `apps/api/app/lib/rate.py` | `get_rate()` → `ExchangeRate(source, usd_to_ves, observed_at)` |
 
 Cada oferta de `offers` lleva `title`, `url`, `price` (como la publica el comercio), `priceUsd`, `rate` (si hubo conversión), `seenAt`, `source` y `merchant { name, channel, zone, delivers, trust }`.

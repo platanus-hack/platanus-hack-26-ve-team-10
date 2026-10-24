@@ -1,0 +1,2515 @@
+{
+ "_doc": "Catálogo semilla de usaprais (Venezuela). Lo genera apps/api/scripts/catalogo_semilla.py desde resources/keywords-ve.csv. volumen = búsquedas/mes en Google Venezuela (DataForSEO, 2026-10-24). precioEjemplo lo lee SOLO la fuente de ejemplo (sources/mock.py); los precios reales salen de search_offers.",
+ "pais": "ve",
+ "categorias": [
+  {
+   "slug": "telefonos",
+   "nombre": "Teléfonos",
+   "singular": "teléfono",
+   "grupo": "Tecnología",
+   "sinonimos": [
+    "celulares",
+    "smartphones"
+   ],
+   "volumen": 27100
+  },
+  {
+   "slug": "tablets",
+   "nombre": "Tablets",
+   "singular": "tablet",
+   "grupo": "Tecnología",
+   "sinonimos": [],
+   "volumen": 4400
+  },
+  {
+   "slug": "laptops",
+   "nombre": "Laptops",
+   "singular": "laptop",
+   "grupo": "Tecnología",
+   "sinonimos": [
+    "portátiles",
+    "computadoras portátiles"
+   ],
+   "volumen": 12100
+  },
+  {
+   "slug": "televisores",
+   "nombre": "Televisores",
+   "singular": "televisor",
+   "grupo": "TV y audio",
+   "sinonimos": [
+    "tv",
+    "smart tv"
+   ],
+   "volumen": 3600
+  },
+  {
+   "slug": "consolas",
+   "nombre": "Consolas",
+   "singular": "consola",
+   "grupo": "Tecnología",
+   "sinonimos": [
+    "videojuegos"
+   ],
+   "volumen": 1600
+  },
+  {
+   "slug": "audifonos",
+   "nombre": "Audífonos",
+   "singular": "audífono",
+   "grupo": "TV y audio",
+   "sinonimos": [
+    "audifonos",
+    "cascos"
+   ],
+   "volumen": 6600
+  },
+  {
+   "slug": "cornetas",
+   "nombre": "Cornetas",
+   "singular": "corneta",
+   "grupo": "TV y audio",
+   "sinonimos": [
+    "parlantes",
+    "bocinas"
+   ],
+   "volumen": 2900
+  },
+  {
+   "slug": "impresoras",
+   "nombre": "Impresoras",
+   "singular": "impresora",
+   "grupo": "Tecnología",
+   "sinonimos": [],
+   "volumen": 3600
+  },
+  {
+   "slug": "power-bank",
+   "nombre": "Power bank",
+   "singular": "power bank",
+   "grupo": "Tecnología",
+   "sinonimos": [
+    "cargador portátil"
+   ],
+   "volumen": 12100
+  },
+  {
+   "slug": "mini-ups",
+   "nombre": "Mini UPS",
+   "singular": "mini UPS",
+   "grupo": "Electricidad y energía",
+   "sinonimos": [
+    "ups para router"
+   ],
+   "volumen": 8100
+  },
+  {
+   "slug": "neveras",
+   "nombre": "Neveras",
+   "singular": "nevera",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [
+    "refrigeradores"
+   ],
+   "volumen": 4400
+  },
+  {
+   "slug": "congeladores",
+   "nombre": "Congeladores",
+   "singular": "congelador",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [],
+   "volumen": 4400
+  },
+  {
+   "slug": "cocinas",
+   "nombre": "Cocinas",
+   "singular": "cocina",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [],
+   "volumen": 9900
+  },
+  {
+   "slug": "lavadoras",
+   "nombre": "Lavadoras",
+   "singular": "lavadora",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [],
+   "volumen": 720
+  },
+  {
+   "slug": "aires-acondicionados",
+   "nombre": "Aires acondicionados",
+   "singular": "aire acondicionado",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [
+    "aire acondicionado split"
+   ],
+   "volumen": 9900
+  },
+  {
+   "slug": "licuadoras",
+   "nombre": "Licuadoras",
+   "singular": "licuadora",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [],
+   "volumen": 2400
+  },
+  {
+   "slug": "freidoras-de-aire",
+   "nombre": "Freidoras de aire",
+   "singular": "freidora de aire",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [],
+   "volumen": 260
+  },
+  {
+   "slug": "cafeteras",
+   "nombre": "Cafeteras",
+   "singular": "cafetera",
+   "grupo": "Línea blanca y cocina",
+   "sinonimos": [],
+   "volumen": 2400
+  },
+  {
+   "slug": "tanques-de-agua",
+   "nombre": "Tanques de agua",
+   "singular": "tanque de agua",
+   "grupo": "Ferretería",
+   "sinonimos": [],
+   "volumen": 3600
+  },
+  {
+   "slug": "bombas-de-agua",
+   "nombre": "Bombas de agua",
+   "singular": "bomba de agua",
+   "grupo": "Ferretería",
+   "sinonimos": [],
+   "volumen": 5400
+  },
+  {
+   "slug": "motos",
+   "nombre": "Motos",
+   "singular": "moto",
+   "grupo": "Vehículos",
+   "sinonimos": [],
+   "volumen": 8100
+  },
+  {
+   "slug": "bicicletas",
+   "nombre": "Bicicletas",
+   "singular": "bicicleta",
+   "grupo": "Vehículos",
+   "sinonimos": [],
+   "volumen": 8100
+  },
+  {
+   "slug": "cauchos",
+   "nombre": "Cauchos",
+   "singular": "caucho",
+   "grupo": "Vehículos",
+   "sinonimos": [
+    "llantas",
+    "neumáticos"
+   ],
+   "volumen": 2900
+  },
+  {
+   "slug": "aceite-de-motor",
+   "nombre": "Aceite de motor",
+   "singular": "aceite de motor",
+   "grupo": "Vehículos",
+   "sinonimos": [],
+   "volumen": 590
+  },
+  {
+   "slug": "zapatos-deportivos",
+   "nombre": "Zapatos deportivos",
+   "singular": "zapato deportivo",
+   "grupo": "Calzado",
+   "sinonimos": [
+    "tenis",
+    "gomas",
+    "zapatillas"
+   ],
+   "volumen": 5400
+  },
+  {
+   "slug": "perfumes",
+   "nombre": "Perfumes",
+   "singular": "perfume",
+   "grupo": "Belleza y cuidado personal",
+   "sinonimos": [],
+   "volumen": 6600
+  },
+  {
+   "slug": "proteina",
+   "nombre": "Proteína",
+   "singular": "proteína",
+   "grupo": "Salud",
+   "sinonimos": [
+    "suplementos"
+   ],
+   "volumen": 12100
+  },
+  {
+   "slug": "memorias-usb",
+   "nombre": "Memorias USB",
+   "singular": "memoria USB",
+   "grupo": "Tecnología",
+   "sinonimos": [
+    "pendrive"
+   ],
+   "volumen": 4400
+  }
+ ],
+ "facetas": [
+  {
+   "categoria": "televisores",
+   "atributo": "pulgadas",
+   "valor": "32",
+   "slug": "32-pulgadas",
+   "nombre": "Televisores de 32 pulgadas",
+   "volumen": 2400
+  },
+  {
+   "categoria": "televisores",
+   "atributo": "pulgadas",
+   "valor": "43",
+   "slug": "43-pulgadas",
+   "nombre": "Televisores de 43 pulgadas",
+   "volumen": 1300
+  },
+  {
+   "categoria": "televisores",
+   "atributo": "pulgadas",
+   "valor": "50",
+   "slug": "50-pulgadas",
+   "nombre": "Televisores de 50 pulgadas",
+   "volumen": 880
+  },
+  {
+   "categoria": "televisores",
+   "atributo": "pulgadas",
+   "valor": "55",
+   "slug": "55-pulgadas",
+   "nombre": "Televisores de 55 pulgadas",
+   "volumen": 590
+  },
+  {
+   "categoria": "televisores",
+   "atributo": "pulgadas",
+   "valor": "65",
+   "slug": "65-pulgadas",
+   "nombre": "Televisores de 65 pulgadas",
+   "volumen": 320
+  },
+  {
+   "categoria": "zapatos-deportivos",
+   "atributo": "genero",
+   "valor": "dama",
+   "slug": "dama",
+   "nombre": "Zapatos deportivos de dama",
+   "volumen": 1600
+  },
+  {
+   "categoria": "zapatos-deportivos",
+   "atributo": "genero",
+   "valor": "hombre",
+   "slug": "hombre",
+   "nombre": "Zapatos deportivos de hombre",
+   "volumen": 720
+  },
+  {
+   "categoria": "bicicletas",
+   "atributo": "rin",
+   "valor": "20",
+   "slug": "rin-20",
+   "nombre": "Bicicletas rin 20",
+   "volumen": 1900
+  },
+  {
+   "categoria": "bicicletas",
+   "atributo": "rin",
+   "valor": "26",
+   "slug": "rin-26",
+   "nombre": "Bicicletas rin 26",
+   "volumen": 880
+  },
+  {
+   "categoria": "bicicletas",
+   "atributo": "rin",
+   "valor": "16",
+   "slug": "rin-16",
+   "nombre": "Bicicletas rin 16",
+   "volumen": 880
+  },
+  {
+   "categoria": "aires-acondicionados",
+   "atributo": "btu",
+   "valor": "12000",
+   "slug": "12000-btu",
+   "nombre": "Aires acondicionados de 12.000 BTU",
+   "volumen": 720
+  },
+  {
+   "categoria": "tanques-de-agua",
+   "atributo": "litros",
+   "valor": "1000",
+   "slug": "1000-litros",
+   "nombre": "Tanques de agua de 1.000 litros",
+   "volumen": 1900
+  },
+  {
+   "categoria": "tanques-de-agua",
+   "atributo": "litros",
+   "valor": "2000",
+   "slug": "2000-litros",
+   "nombre": "Tanques de agua de 2.000 litros",
+   "volumen": 590
+  }
+ ],
+ "marcas": [
+  {
+   "slug": "apple",
+   "nombre": "Apple",
+   "alias": [
+    "iphone",
+    "macbook",
+    "airpods"
+   ],
+   "volumen": 0
+  },
+  {
+   "slug": "xiaomi",
+   "nombre": "Xiaomi",
+   "alias": [
+    "redmi",
+    "poco"
+   ],
+   "volumen": 0
+  },
+  {
+   "slug": "samsung",
+   "nombre": "Samsung",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "tecno",
+   "nombre": "Tecno",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "infinix",
+   "nombre": "Infinix",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "honor",
+   "nombre": "Honor",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "amazon",
+   "nombre": "Amazon",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "lenovo",
+   "nombre": "Lenovo",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "hp",
+   "nombre": "HP",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "sony",
+   "nombre": "Sony",
+   "alias": [
+    "playstation"
+   ],
+   "volumen": 0
+  },
+  {
+   "slug": "nintendo",
+   "nombre": "Nintendo",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "microsoft",
+   "nombre": "Microsoft",
+   "alias": [
+    "xbox"
+   ],
+   "volumen": 0
+  },
+  {
+   "slug": "jbl",
+   "nombre": "JBL",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "epson",
+   "nombre": "Epson",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "tcl",
+   "nombre": "TCL",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "hisense",
+   "nombre": "Hisense",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "lg",
+   "nombre": "LG",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "hyundai",
+   "nombre": "Hyundai",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "haier",
+   "nombre": "Haier",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "mabe",
+   "nombre": "Mabe",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "whirlpool",
+   "nombre": "Whirlpool",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "oster",
+   "nombre": "Oster",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "ninja",
+   "nombre": "Ninja",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "rotoplas",
+   "nombre": "Rotoplas",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "pedrollo",
+   "nombre": "Pedrollo",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "bera",
+   "nombre": "Bera",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "empire",
+   "nombre": "Empire Keeway",
+   "alias": [
+    "keeway"
+   ],
+   "volumen": 0
+  },
+  {
+   "slug": "kawasaki",
+   "nombre": "Kawasaki",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "gw",
+   "nombre": "GW",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "goodyear",
+   "nombre": "Goodyear",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "motul",
+   "nombre": "Motul",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "ipone",
+   "nombre": "Ipone",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "shell",
+   "nombre": "Shell",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "nike",
+   "nombre": "Nike",
+   "alias": [
+    "jordan"
+   ],
+   "volumen": 0
+  },
+  {
+   "slug": "adidas",
+   "nombre": "Adidas",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "puma",
+   "nombre": "Puma",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "rs21",
+   "nombre": "RS21",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "carolina-herrera",
+   "nombre": "Carolina Herrera",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "afnan",
+   "nombre": "Afnan",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "perry-ellis",
+   "nombre": "Perry Ellis",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "le-labo",
+   "nombre": "Le Labo",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "optimum-nutrition",
+   "nombre": "Optimum Nutrition",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "dymatize",
+   "nombre": "Dymatize",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "kingston",
+   "nombre": "Kingston",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "sandisk",
+   "nombre": "SanDisk",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "anker",
+   "nombre": "Anker",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "dgk",
+   "nombre": "DGK",
+   "alias": [],
+   "volumen": 0
+  },
+  {
+   "slug": "olax",
+   "nombre": "Olax",
+   "alias": [],
+   "volumen": 0
+  }
+ ],
+ "productos": [
+  {
+   "id": "86g4",
+   "slug": "iphone-17",
+   "nombre": "iPhone 17",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 17",
+   "volumen": 40500,
+   "atributos": {},
+   "precioEjemplo": 899
+  },
+  {
+   "id": "nnrv",
+   "slug": "iphone-17-pro",
+   "nombre": "iPhone 17 Pro",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 17 Pro",
+   "volumen": 5400,
+   "atributos": {},
+   "precioEjemplo": 1149
+  },
+  {
+   "id": "e3u7",
+   "slug": "iphone-17-pro-max",
+   "nombre": "iPhone 17 Pro Max",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 17 Pro Max",
+   "volumen": 22200,
+   "atributos": {},
+   "precioEjemplo": 1299
+  },
+  {
+   "id": "k9d2",
+   "slug": "iphone-17e",
+   "nombre": "iPhone 17e",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 17e",
+   "volumen": 4400,
+   "atributos": {},
+   "precioEjemplo": 649
+  },
+  {
+   "id": "wgzn",
+   "slug": "iphone-16",
+   "nombre": "iPhone 16",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 16",
+   "volumen": 18100,
+   "atributos": {},
+   "precioEjemplo": 749
+  },
+  {
+   "id": "h6n3",
+   "slug": "iphone-16e",
+   "nombre": "iPhone 16e",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 16e",
+   "volumen": 5400,
+   "atributos": {},
+   "precioEjemplo": 579
+  },
+  {
+   "id": "kgpr",
+   "slug": "iphone-16-pro-max",
+   "nombre": "iPhone 16 Pro Max",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 16 Pro Max",
+   "volumen": 9900,
+   "atributos": {},
+   "precioEjemplo": 1049
+  },
+  {
+   "id": "rx2d",
+   "slug": "iphone-15",
+   "nombre": "iPhone 15",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 15",
+   "volumen": 18100,
+   "atributos": {},
+   "precioEjemplo": 629
+  },
+  {
+   "id": "qybg",
+   "slug": "iphone-15-pro-max",
+   "nombre": "iPhone 15 Pro Max",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 15 Pro Max",
+   "volumen": 9900,
+   "atributos": {},
+   "precioEjemplo": 899
+  },
+  {
+   "id": "dnzc",
+   "slug": "iphone-14",
+   "nombre": "iPhone 14",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 14",
+   "volumen": 14800,
+   "atributos": {},
+   "precioEjemplo": 499
+  },
+  {
+   "id": "6zg9",
+   "slug": "iphone-14-pro-max",
+   "nombre": "iPhone 14 Pro Max",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 14 Pro Max",
+   "volumen": 9900,
+   "atributos": {},
+   "precioEjemplo": 749
+  },
+  {
+   "id": "f8w4",
+   "slug": "iphone-13",
+   "nombre": "iPhone 13",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 13",
+   "volumen": 27100,
+   "atributos": {},
+   "precioEjemplo": 389
+  },
+  {
+   "id": "9uau",
+   "slug": "iphone-13-pro-max",
+   "nombre": "iPhone 13 Pro Max",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 13 Pro Max",
+   "volumen": 14800,
+   "atributos": {},
+   "precioEjemplo": 559
+  },
+  {
+   "id": "n62e",
+   "slug": "iphone-12",
+   "nombre": "iPhone 12",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 12",
+   "volumen": 14800,
+   "atributos": {},
+   "precioEjemplo": 319
+  },
+  {
+   "id": "qzab",
+   "slug": "iphone-11",
+   "nombre": "iPhone 11",
+   "marca": "apple",
+   "serie": "iPhone",
+   "categoria": "telefonos",
+   "busqueda": "iPhone 11",
+   "volumen": 14800,
+   "atributos": {},
+   "precioEjemplo": 259
+  },
+  {
+   "id": "2csd",
+   "slug": "redmi-15c",
+   "nombre": "Redmi 15C",
+   "marca": "xiaomi",
+   "serie": "Redmi",
+   "categoria": "telefonos",
+   "busqueda": "Redmi 15C",
+   "volumen": 22200,
+   "atributos": {},
+   "precioEjemplo": 139
+  },
+  {
+   "id": "qrb2",
+   "slug": "redmi-note-15",
+   "nombre": "Redmi Note 15",
+   "marca": "xiaomi",
+   "serie": "Redmi Note",
+   "categoria": "telefonos",
+   "busqueda": "Redmi Note 15",
+   "volumen": 22200,
+   "atributos": {},
+   "precioEjemplo": 229
+  },
+  {
+   "id": "grk5",
+   "slug": "redmi-note-15-pro",
+   "nombre": "Redmi Note 15 Pro",
+   "marca": "xiaomi",
+   "serie": "Redmi Note",
+   "categoria": "telefonos",
+   "busqueda": "Redmi Note 15 Pro",
+   "volumen": 12100,
+   "atributos": {},
+   "precioEjemplo": 319
+  },
+  {
+   "id": "6se8",
+   "slug": "redmi-15",
+   "nombre": "Redmi 15",
+   "marca": "xiaomi",
+   "serie": "Redmi",
+   "categoria": "telefonos",
+   "busqueda": "Redmi 15",
+   "volumen": 14800,
+   "atributos": {},
+   "precioEjemplo": 169
+  },
+  {
+   "id": "24sp",
+   "slug": "redmi-a5",
+   "nombre": "Redmi A5",
+   "marca": "xiaomi",
+   "serie": "Redmi",
+   "categoria": "telefonos",
+   "busqueda": "Redmi A5",
+   "volumen": 12100,
+   "atributos": {},
+   "precioEjemplo": 89
+  },
+  {
+   "id": "4bfd",
+   "slug": "redmi-note-14",
+   "nombre": "Redmi Note 14",
+   "marca": "xiaomi",
+   "serie": "Redmi Note",
+   "categoria": "telefonos",
+   "busqueda": "Redmi Note 14",
+   "volumen": 18100,
+   "atributos": {},
+   "precioEjemplo": 189
+  },
+  {
+   "id": "6wvn",
+   "slug": "redmi-note-14-pro",
+   "nombre": "Redmi Note 14 Pro",
+   "marca": "xiaomi",
+   "serie": "Redmi Note",
+   "categoria": "telefonos",
+   "busqueda": "Redmi Note 14 Pro",
+   "volumen": 9900,
+   "atributos": {},
+   "precioEjemplo": 259
+  },
+  {
+   "id": "ndjd",
+   "slug": "redmi-14c",
+   "nombre": "Redmi 14C",
+   "marca": "xiaomi",
+   "serie": "Redmi",
+   "categoria": "telefonos",
+   "busqueda": "Redmi 14C",
+   "volumen": 8100,
+   "atributos": {},
+   "precioEjemplo": 119
+  },
+  {
+   "id": "f648",
+   "slug": "redmi-note-13",
+   "nombre": "Redmi Note 13",
+   "marca": "xiaomi",
+   "serie": "Redmi Note",
+   "categoria": "telefonos",
+   "busqueda": "Redmi Note 13",
+   "volumen": 6600,
+   "atributos": {},
+   "precioEjemplo": 159
+  },
+  {
+   "id": "2zwr",
+   "slug": "redmi-a7-pro",
+   "nombre": "Redmi A7 Pro",
+   "marca": "xiaomi",
+   "serie": "Redmi",
+   "categoria": "telefonos",
+   "busqueda": "Redmi A7 Pro",
+   "volumen": 3600,
+   "atributos": {},
+   "precioEjemplo": 109
+  },
+  {
+   "id": "qbdh",
+   "slug": "poco-x7-pro",
+   "nombre": "Poco X7 Pro",
+   "marca": "xiaomi",
+   "serie": "Poco",
+   "categoria": "telefonos",
+   "busqueda": "Poco X7 Pro",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 299
+  },
+  {
+   "id": "bvft",
+   "slug": "galaxy-a16",
+   "nombre": "Galaxy A16",
+   "marca": "samsung",
+   "serie": "Galaxy A",
+   "categoria": "telefonos",
+   "busqueda": "Galaxy A16",
+   "volumen": 590,
+   "atributos": {},
+   "precioEjemplo": 169
+  },
+  {
+   "id": "zqev",
+   "slug": "galaxy-a17",
+   "nombre": "Galaxy A17",
+   "marca": "samsung",
+   "serie": "Galaxy A",
+   "categoria": "telefonos",
+   "busqueda": "Galaxy A17",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 199
+  },
+  {
+   "id": "ywvf",
+   "slug": "galaxy-a07",
+   "nombre": "Galaxy A07",
+   "marca": "samsung",
+   "serie": "Galaxy A",
+   "categoria": "telefonos",
+   "busqueda": "Galaxy A07",
+   "volumen": 20,
+   "atributos": {},
+   "precioEjemplo": 119
+  },
+  {
+   "id": "w95n",
+   "slug": "tecno-spark-40",
+   "nombre": "Tecno Spark 40",
+   "marca": "tecno",
+   "serie": "Spark",
+   "categoria": "telefonos",
+   "busqueda": "Tecno Spark 40",
+   "volumen": 590,
+   "atributos": {},
+   "precioEjemplo": 129
+  },
+  {
+   "id": "achk",
+   "slug": "infinix-hot-50-pro",
+   "nombre": "Infinix Hot 50 Pro",
+   "marca": "infinix",
+   "serie": "Hot",
+   "categoria": "telefonos",
+   "busqueda": "Infinix Hot 50 Pro",
+   "volumen": 50,
+   "atributos": {},
+   "precioEjemplo": 159
+  },
+  {
+   "id": "qkxz",
+   "slug": "honor-x8b",
+   "nombre": "Honor X8b",
+   "marca": "honor",
+   "serie": "X",
+   "categoria": "telefonos",
+   "busqueda": "Honor X8b",
+   "volumen": 10,
+   "atributos": {},
+   "precioEjemplo": 219
+  },
+  {
+   "id": "5qun",
+   "slug": "redmi-pad-2",
+   "nombre": "Redmi Pad 2",
+   "marca": "xiaomi",
+   "serie": "Redmi Pad",
+   "categoria": "tablets",
+   "busqueda": "Redmi Pad 2",
+   "volumen": 3600,
+   "atributos": {},
+   "precioEjemplo": 189
+  },
+  {
+   "id": "kwxk",
+   "slug": "fire-7",
+   "nombre": "Fire 7",
+   "marca": "amazon",
+   "serie": "Fire",
+   "categoria": "tablets",
+   "busqueda": "Fire 7",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 69
+  },
+  {
+   "id": "47pp",
+   "slug": "fire-hd-8",
+   "nombre": "Fire HD 8",
+   "marca": "amazon",
+   "serie": "Fire",
+   "categoria": "tablets",
+   "busqueda": "Fire HD 8",
+   "volumen": 320,
+   "atributos": {},
+   "precioEjemplo": 99
+  },
+  {
+   "id": "nz5b",
+   "slug": "fire-hd-10",
+   "nombre": "Fire HD 10",
+   "marca": "amazon",
+   "serie": "Fire",
+   "categoria": "tablets",
+   "busqueda": "Fire HD 10",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 149
+  },
+  {
+   "id": "mtyz",
+   "slug": "galaxy-tab-a9",
+   "nombre": "Galaxy Tab A9",
+   "marca": "samsung",
+   "serie": "Galaxy Tab",
+   "categoria": "tablets",
+   "busqueda": "Galaxy Tab A9",
+   "volumen": 70,
+   "atributos": {},
+   "precioEjemplo": 159
+  },
+  {
+   "id": "vgdd",
+   "slug": "macbook-air-m4",
+   "nombre": "MacBook Air M4",
+   "marca": "apple",
+   "serie": "MacBook Air",
+   "categoria": "laptops",
+   "busqueda": "MacBook Air M4",
+   "volumen": 390,
+   "atributos": {},
+   "precioEjemplo": 1099
+  },
+  {
+   "id": "9829",
+   "slug": "macbook-air-m5",
+   "nombre": "MacBook Air M5",
+   "marca": "apple",
+   "serie": "MacBook Air",
+   "categoria": "laptops",
+   "busqueda": "MacBook Air M5",
+   "volumen": 320,
+   "atributos": {},
+   "precioEjemplo": 1199
+  },
+  {
+   "id": "6fgq",
+   "slug": "macbook-pro-m5",
+   "nombre": "MacBook Pro M5",
+   "marca": "apple",
+   "serie": "MacBook Pro",
+   "categoria": "laptops",
+   "busqueda": "MacBook Pro M5",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 1799
+  },
+  {
+   "id": "ej3k",
+   "slug": "macbook-air-m1",
+   "nombre": "MacBook Air M1",
+   "marca": "apple",
+   "serie": "MacBook Air",
+   "categoria": "laptops",
+   "busqueda": "MacBook Air M1",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 649
+  },
+  {
+   "id": "ndup",
+   "slug": "thinkpad-e14",
+   "nombre": "ThinkPad E14",
+   "marca": "lenovo",
+   "serie": "ThinkPad",
+   "categoria": "laptops",
+   "busqueda": "ThinkPad E14",
+   "volumen": 1600,
+   "atributos": {},
+   "precioEjemplo": 749
+  },
+  {
+   "id": "9wsg",
+   "slug": "ideapad-slim-3",
+   "nombre": "IdeaPad Slim 3",
+   "marca": "lenovo",
+   "serie": "IdeaPad",
+   "categoria": "laptops",
+   "busqueda": "IdeaPad Slim 3",
+   "volumen": 140,
+   "atributos": {},
+   "precioEjemplo": 499
+  },
+  {
+   "id": "x2yj",
+   "slug": "hp-victus-15",
+   "nombre": "HP Victus 15",
+   "marca": "hp",
+   "serie": "Victus",
+   "categoria": "laptops",
+   "busqueda": "HP Victus 15",
+   "volumen": 110,
+   "atributos": {},
+   "precioEjemplo": 799
+  },
+  {
+   "id": "dz8q",
+   "slug": "hp-pavilion-15",
+   "nombre": "HP Pavilion 15",
+   "marca": "hp",
+   "serie": "Pavilion",
+   "categoria": "laptops",
+   "busqueda": "HP Pavilion 15",
+   "volumen": 110,
+   "atributos": {},
+   "precioEjemplo": 649
+  },
+  {
+   "id": "93m9",
+   "slug": "smart-tv-tcl-32-pulgadas",
+   "nombre": "Smart TV TCL 32 pulgadas",
+   "marca": "tcl",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV TCL 32 pulgadas",
+   "volumen": 2400,
+   "atributos": {
+    "pulgadas": "32"
+   },
+   "precioEjemplo": 159
+  },
+  {
+   "id": "h3dd",
+   "slug": "smart-tv-samsung-32-pulgadas",
+   "nombre": "Smart TV Samsung 32 pulgadas",
+   "marca": "samsung",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV Samsung 32 pulgadas",
+   "volumen": 0,
+   "atributos": {
+    "pulgadas": "32"
+   },
+   "precioEjemplo": 199
+  },
+  {
+   "id": "8kn4",
+   "slug": "smart-tv-hyundai-32-pulgadas",
+   "nombre": "Smart TV Hyundai 32 pulgadas",
+   "marca": "hyundai",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV Hyundai 32 pulgadas",
+   "volumen": 0,
+   "atributos": {
+    "pulgadas": "32"
+   },
+   "precioEjemplo": 139
+  },
+  {
+   "id": "6aqk",
+   "slug": "smart-tv-hisense-43-pulgadas",
+   "nombre": "Smart TV Hisense 43 pulgadas",
+   "marca": "hisense",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV Hisense 43 pulgadas",
+   "volumen": 0,
+   "atributos": {
+    "pulgadas": "43"
+   },
+   "precioEjemplo": 249
+  },
+  {
+   "id": "6xd3",
+   "slug": "smart-tv-samsung-43-pulgadas",
+   "nombre": "Smart TV Samsung 43 pulgadas",
+   "marca": "samsung",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV Samsung 43 pulgadas",
+   "volumen": 0,
+   "atributos": {
+    "pulgadas": "43"
+   },
+   "precioEjemplo": 299
+  },
+  {
+   "id": "x5ga",
+   "slug": "smart-tv-tcl-50-pulgadas",
+   "nombre": "Smart TV TCL 50 pulgadas",
+   "marca": "tcl",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV TCL 50 pulgadas",
+   "volumen": 880,
+   "atributos": {
+    "pulgadas": "50"
+   },
+   "precioEjemplo": 329
+  },
+  {
+   "id": "zfss",
+   "slug": "smart-tv-lg-50-pulgadas",
+   "nombre": "Smart TV LG 50 pulgadas",
+   "marca": "lg",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV LG 50 pulgadas",
+   "volumen": 0,
+   "atributos": {
+    "pulgadas": "50"
+   },
+   "precioEjemplo": 389
+  },
+  {
+   "id": "j36a",
+   "slug": "smart-tv-samsung-55-pulgadas",
+   "nombre": "Smart TV Samsung 55 pulgadas",
+   "marca": "samsung",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV Samsung 55 pulgadas",
+   "volumen": 0,
+   "atributos": {
+    "pulgadas": "55"
+   },
+   "precioEjemplo": 469
+  },
+  {
+   "id": "puqt",
+   "slug": "smart-tv-hisense-55-pulgadas",
+   "nombre": "Smart TV Hisense 55 pulgadas",
+   "marca": "hisense",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV Hisense 55 pulgadas",
+   "volumen": 0,
+   "atributos": {
+    "pulgadas": "55"
+   },
+   "precioEjemplo": 399
+  },
+  {
+   "id": "cytf",
+   "slug": "smart-tv-tcl-65-pulgadas",
+   "nombre": "Smart TV TCL 65 pulgadas",
+   "marca": "tcl",
+   "serie": "Smart TV",
+   "categoria": "televisores",
+   "busqueda": "Smart TV TCL 65 pulgadas",
+   "volumen": 320,
+   "atributos": {
+    "pulgadas": "65"
+   },
+   "precioEjemplo": 599
+  },
+  {
+   "id": "k5kc",
+   "slug": "playstation-5",
+   "nombre": "PlayStation 5",
+   "marca": "sony",
+   "serie": "PlayStation",
+   "categoria": "consolas",
+   "busqueda": "PlayStation 5",
+   "volumen": 6600,
+   "atributos": {},
+   "precioEjemplo": 549
+  },
+  {
+   "id": "5n34",
+   "slug": "playstation-5-pro",
+   "nombre": "PlayStation 5 Pro",
+   "marca": "sony",
+   "serie": "PlayStation",
+   "categoria": "consolas",
+   "busqueda": "PlayStation 5 Pro",
+   "volumen": 390,
+   "atributos": {},
+   "precioEjemplo": 799
+  },
+  {
+   "id": "87nq",
+   "slug": "playstation-5-slim",
+   "nombre": "PlayStation 5 Slim",
+   "marca": "sony",
+   "serie": "PlayStation",
+   "categoria": "consolas",
+   "busqueda": "PlayStation 5 Slim",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 499
+  },
+  {
+   "id": "k8gp",
+   "slug": "nintendo-switch-2",
+   "nombre": "Nintendo Switch 2",
+   "marca": "nintendo",
+   "serie": "Switch",
+   "categoria": "consolas",
+   "busqueda": "Nintendo Switch 2",
+   "volumen": 8100,
+   "atributos": {},
+   "precioEjemplo": 549
+  },
+  {
+   "id": "7bap",
+   "slug": "nintendo-switch",
+   "nombre": "Nintendo Switch",
+   "marca": "nintendo",
+   "serie": "Switch",
+   "categoria": "consolas",
+   "busqueda": "Nintendo Switch",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 329
+  },
+  {
+   "id": "8swg",
+   "slug": "xbox-360-slim",
+   "nombre": "Xbox 360 Slim",
+   "marca": "microsoft",
+   "serie": "Xbox",
+   "categoria": "consolas",
+   "busqueda": "Xbox 360 Slim",
+   "volumen": 2400,
+   "atributos": {},
+   "precioEjemplo": 149
+  },
+  {
+   "id": "gywt",
+   "slug": "airpods-pro-2",
+   "nombre": "AirPods Pro 2",
+   "marca": "apple",
+   "serie": "AirPods",
+   "categoria": "audifonos",
+   "busqueda": "AirPods Pro 2",
+   "volumen": 1900,
+   "atributos": {},
+   "precioEjemplo": 219
+  },
+  {
+   "id": "9z8b",
+   "slug": "airpods-pro-3",
+   "nombre": "AirPods Pro 3",
+   "marca": "apple",
+   "serie": "AirPods",
+   "categoria": "audifonos",
+   "busqueda": "AirPods Pro 3",
+   "volumen": 1600,
+   "atributos": {},
+   "precioEjemplo": 269
+  },
+  {
+   "id": "wb7q",
+   "slug": "airpods-4",
+   "nombre": "AirPods 4",
+   "marca": "apple",
+   "serie": "AirPods",
+   "categoria": "audifonos",
+   "busqueda": "AirPods 4",
+   "volumen": 1000,
+   "atributos": {},
+   "precioEjemplo": 149
+  },
+  {
+   "id": "fzkn",
+   "slug": "jbl-tune-520bt",
+   "nombre": "JBL Tune 520BT",
+   "marca": "jbl",
+   "serie": "Tune",
+   "categoria": "audifonos",
+   "busqueda": "JBL Tune 520BT",
+   "volumen": 390,
+   "atributos": {},
+   "precioEjemplo": 49
+  },
+  {
+   "id": "75sy",
+   "slug": "jbl-flip-6",
+   "nombre": "JBL Flip 6",
+   "marca": "jbl",
+   "serie": "Flip",
+   "categoria": "cornetas",
+   "busqueda": "JBL Flip 6",
+   "volumen": 1900,
+   "atributos": {},
+   "precioEjemplo": 119
+  },
+  {
+   "id": "rstm",
+   "slug": "jbl-charge-5",
+   "nombre": "JBL Charge 5",
+   "marca": "jbl",
+   "serie": "Charge",
+   "categoria": "cornetas",
+   "busqueda": "JBL Charge 5",
+   "volumen": 1900,
+   "atributos": {},
+   "precioEjemplo": 169
+  },
+  {
+   "id": "rmdd",
+   "slug": "jbl-go-4",
+   "nombre": "JBL Go 4",
+   "marca": "jbl",
+   "serie": "Go",
+   "categoria": "cornetas",
+   "busqueda": "JBL Go 4",
+   "volumen": 1900,
+   "atributos": {},
+   "precioEjemplo": 49
+  },
+  {
+   "id": "pqey",
+   "slug": "epson-l3250",
+   "nombre": "Epson L3250",
+   "marca": "epson",
+   "serie": "EcoTank",
+   "categoria": "impresoras",
+   "busqueda": "Epson L3250",
+   "volumen": 1900,
+   "atributos": {},
+   "precioEjemplo": 229
+  },
+  {
+   "id": "4s4b",
+   "slug": "epson-l1250",
+   "nombre": "Epson L1250",
+   "marca": "epson",
+   "serie": "EcoTank",
+   "categoria": "impresoras",
+   "busqueda": "Epson L1250",
+   "volumen": 880,
+   "atributos": {},
+   "precioEjemplo": 179
+  },
+  {
+   "id": "wqe5",
+   "slug": "epson-l3210",
+   "nombre": "Epson L3210",
+   "marca": "epson",
+   "serie": "EcoTank",
+   "categoria": "impresoras",
+   "busqueda": "Epson L3210",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 199
+  },
+  {
+   "id": "hhjp",
+   "slug": "hp-smart-tank-580",
+   "nombre": "HP Smart Tank 580",
+   "marca": "hp",
+   "serie": "Smart Tank",
+   "categoria": "impresoras",
+   "busqueda": "HP Smart Tank 580",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 219
+  },
+  {
+   "id": "y5wx",
+   "slug": "hp-laserjet-p1102w",
+   "nombre": "HP LaserJet P1102w",
+   "marca": "hp",
+   "serie": "LaserJet",
+   "categoria": "impresoras",
+   "busqueda": "HP LaserJet P1102w",
+   "volumen": 210,
+   "atributos": {},
+   "precioEjemplo": 189
+  },
+  {
+   "id": "wy8f",
+   "slug": "power-bank-anker-20-000-mah",
+   "nombre": "Power bank Anker 20.000 mAh",
+   "marca": "anker",
+   "serie": "PowerCore",
+   "categoria": "power-bank",
+   "busqueda": "Power bank Anker 20.000 mAh",
+   "volumen": 1000,
+   "atributos": {},
+   "precioEjemplo": 39
+  },
+  {
+   "id": "mcsw",
+   "slug": "power-bank-anker-10-000-mah",
+   "nombre": "Power bank Anker 10.000 mAh",
+   "marca": "anker",
+   "serie": "PowerCore",
+   "categoria": "power-bank",
+   "busqueda": "Power bank Anker 10.000 mAh",
+   "volumen": 390,
+   "atributos": {},
+   "precioEjemplo": 25
+  },
+  {
+   "id": "s9sf",
+   "slug": "mini-ups-dgk-20-000-mah",
+   "nombre": "Mini UPS DGK 20.000 mAh",
+   "marca": "dgk",
+   "serie": "Mini UPS",
+   "categoria": "mini-ups",
+   "busqueda": "Mini UPS DGK 20.000 mAh",
+   "volumen": 1000,
+   "atributos": {},
+   "precioEjemplo": 35
+  },
+  {
+   "id": "v278",
+   "slug": "mini-ups-olax-20-000-mah",
+   "nombre": "Mini UPS Olax 20.000 mAh",
+   "marca": "olax",
+   "serie": "Mini UPS",
+   "categoria": "mini-ups",
+   "busqueda": "Mini UPS Olax 20.000 mAh",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 32
+  },
+  {
+   "id": "f8va",
+   "slug": "nevera-samsung-2-puertas-14-pies",
+   "nombre": "Nevera Samsung 2 puertas 14 pies",
+   "marca": "samsung",
+   "serie": "Neveras",
+   "categoria": "neveras",
+   "busqueda": "Nevera Samsung 2 puertas 14 pies",
+   "volumen": 390,
+   "atributos": {},
+   "precioEjemplo": 649
+  },
+  {
+   "id": "gcx6",
+   "slug": "nevera-haier-19-pies",
+   "nombre": "Nevera Haier 19 pies",
+   "marca": "haier",
+   "serie": "Neveras",
+   "categoria": "neveras",
+   "busqueda": "Nevera Haier 19 pies",
+   "volumen": 170,
+   "atributos": {},
+   "precioEjemplo": 799
+  },
+  {
+   "id": "yhkx",
+   "slug": "nevera-haier-12-pies",
+   "nombre": "Nevera Haier 12 pies",
+   "marca": "haier",
+   "serie": "Neveras",
+   "categoria": "neveras",
+   "busqueda": "Nevera Haier 12 pies",
+   "volumen": 170,
+   "atributos": {},
+   "precioEjemplo": 449
+  },
+  {
+   "id": "qjk5",
+   "slug": "nevera-mabe-11-pies",
+   "nombre": "Nevera Mabe 11 pies",
+   "marca": "mabe",
+   "serie": "Neveras",
+   "categoria": "neveras",
+   "busqueda": "Nevera Mabe 11 pies",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 429
+  },
+  {
+   "id": "9wum",
+   "slug": "congelador-horizontal-100-litros",
+   "nombre": "Congelador horizontal 100 litros",
+   "marca": "haier",
+   "serie": "Congeladores",
+   "categoria": "congeladores",
+   "busqueda": "Congelador horizontal 100 litros",
+   "volumen": 1000,
+   "atributos": {},
+   "precioEjemplo": 229
+  },
+  {
+   "id": "u7r6",
+   "slug": "congelador-horizontal-150-litros",
+   "nombre": "Congelador horizontal 150 litros",
+   "marca": "haier",
+   "serie": "Congeladores",
+   "categoria": "congeladores",
+   "busqueda": "Congelador horizontal 150 litros",
+   "volumen": 210,
+   "atributos": {},
+   "precioEjemplo": 279
+  },
+  {
+   "id": "kvha",
+   "slug": "cocina-haier-4-hornillas",
+   "nombre": "Cocina Haier 4 hornillas",
+   "marca": "haier",
+   "serie": "Cocinas",
+   "categoria": "cocinas",
+   "busqueda": "Cocina Haier 4 hornillas",
+   "volumen": 210,
+   "atributos": {},
+   "precioEjemplo": 249
+  },
+  {
+   "id": "k6gp",
+   "slug": "cocina-haier-5-hornillas",
+   "nombre": "Cocina Haier 5 hornillas",
+   "marca": "haier",
+   "serie": "Cocinas",
+   "categoria": "cocinas",
+   "busqueda": "Cocina Haier 5 hornillas",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 329
+  },
+  {
+   "id": "yb3v",
+   "slug": "cocina-mabe-4-hornillas",
+   "nombre": "Cocina Mabe 4 hornillas",
+   "marca": "mabe",
+   "serie": "Cocinas",
+   "categoria": "cocinas",
+   "busqueda": "Cocina Mabe 4 hornillas",
+   "volumen": 170,
+   "atributos": {},
+   "precioEjemplo": 279
+  },
+  {
+   "id": "2zue",
+   "slug": "cocina-mabe-6-hornillas",
+   "nombre": "Cocina Mabe 6 hornillas",
+   "marca": "mabe",
+   "serie": "Cocinas",
+   "categoria": "cocinas",
+   "busqueda": "Cocina Mabe 6 hornillas",
+   "volumen": 170,
+   "atributos": {},
+   "precioEjemplo": 449
+  },
+  {
+   "id": "mg74",
+   "slug": "lavadora-whirlpool-7-kg",
+   "nombre": "Lavadora Whirlpool 7 kg",
+   "marca": "whirlpool",
+   "serie": "Lavadoras",
+   "categoria": "lavadoras",
+   "busqueda": "Lavadora Whirlpool 7 kg",
+   "volumen": 1600,
+   "atributos": {},
+   "precioEjemplo": 349
+  },
+  {
+   "id": "up9h",
+   "slug": "lavadora-samsung-11-kg",
+   "nombre": "Lavadora Samsung 11 kg",
+   "marca": "samsung",
+   "serie": "Lavadoras",
+   "categoria": "lavadoras",
+   "busqueda": "Lavadora Samsung 11 kg",
+   "volumen": 880,
+   "atributos": {},
+   "precioEjemplo": 499
+  },
+  {
+   "id": "eqj6",
+   "slug": "lavadora-lg-13-kg",
+   "nombre": "Lavadora LG 13 kg",
+   "marca": "lg",
+   "serie": "Lavadoras",
+   "categoria": "lavadoras",
+   "busqueda": "Lavadora LG 13 kg",
+   "volumen": 590,
+   "atributos": {},
+   "precioEjemplo": 579
+  },
+  {
+   "id": "sa58",
+   "slug": "aire-acondicionado-split-lg-12-000-btu",
+   "nombre": "Aire acondicionado split LG 12.000 BTU",
+   "marca": "lg",
+   "serie": "Split",
+   "categoria": "aires-acondicionados",
+   "busqueda": "Aire acondicionado split LG 12.000 BTU",
+   "volumen": 140,
+   "atributos": {
+    "btu": "12000"
+   },
+   "precioEjemplo": 399
+  },
+  {
+   "id": "43dv",
+   "slug": "aire-acondicionado-split-samsung-12-000-btu",
+   "nombre": "Aire acondicionado split Samsung 12.000 BTU",
+   "marca": "samsung",
+   "serie": "Split",
+   "categoria": "aires-acondicionados",
+   "busqueda": "Aire acondicionado split Samsung 12.000 BTU",
+   "volumen": 210,
+   "atributos": {
+    "btu": "12000"
+   },
+   "precioEjemplo": 429
+  },
+  {
+   "id": "rum2",
+   "slug": "aire-acondicionado-de-ventana-12-000-btu",
+   "nombre": "Aire acondicionado de ventana 12.000 BTU",
+   "marca": "haier",
+   "serie": "Ventana",
+   "categoria": "aires-acondicionados",
+   "busqueda": "Aire acondicionado de ventana 12.000 BTU",
+   "volumen": 320,
+   "atributos": {
+    "btu": "12000"
+   },
+   "precioEjemplo": 329
+  },
+  {
+   "id": "8heu",
+   "slug": "aire-acondicionado-split-haier-18-000-btu",
+   "nombre": "Aire acondicionado split Haier 18.000 BTU",
+   "marca": "haier",
+   "serie": "Split",
+   "categoria": "aires-acondicionados",
+   "busqueda": "Aire acondicionado split Haier 18.000 BTU",
+   "volumen": 170,
+   "atributos": {
+    "btu": "18000"
+   },
+   "precioEjemplo": 549
+  },
+  {
+   "id": "xrfc",
+   "slug": "licuadora-oster-pro-1200",
+   "nombre": "Licuadora Oster Pro 1200",
+   "marca": "oster",
+   "serie": "Pro",
+   "categoria": "licuadoras",
+   "busqueda": "Licuadora Oster Pro 1200",
+   "volumen": 2400,
+   "atributos": {},
+   "precioEjemplo": 89
+  },
+  {
+   "id": "6r3y",
+   "slug": "licuadora-oster-clasica-3-velocidades",
+   "nombre": "Licuadora Oster clásica 3 velocidades",
+   "marca": "oster",
+   "serie": "Clásica",
+   "categoria": "licuadoras",
+   "busqueda": "Licuadora Oster clásica 3 velocidades",
+   "volumen": 590,
+   "atributos": {},
+   "precioEjemplo": 49
+  },
+  {
+   "id": "ndv6",
+   "slug": "licuadora-ninja-professional",
+   "nombre": "Licuadora Ninja Professional",
+   "marca": "ninja",
+   "serie": "Professional",
+   "categoria": "licuadoras",
+   "busqueda": "Licuadora Ninja Professional",
+   "volumen": 5400,
+   "atributos": {},
+   "precioEjemplo": 109
+  },
+  {
+   "id": "rcz8",
+   "slug": "licuadora-ninja-nutri-ninja",
+   "nombre": "Licuadora Ninja Nutri Ninja",
+   "marca": "ninja",
+   "serie": "Nutri Ninja",
+   "categoria": "licuadoras",
+   "busqueda": "Licuadora Ninja Nutri Ninja",
+   "volumen": 110,
+   "atributos": {},
+   "precioEjemplo": 79
+  },
+  {
+   "id": "m54h",
+   "slug": "freidora-de-aire-ninja-5-5-l",
+   "nombre": "Freidora de aire Ninja 5,5 L",
+   "marca": "ninja",
+   "serie": "Air Fryer",
+   "categoria": "freidoras-de-aire",
+   "busqueda": "Freidora de aire Ninja 5,5 L",
+   "volumen": 320,
+   "atributos": {},
+   "precioEjemplo": 119
+  },
+  {
+   "id": "e7dy",
+   "slug": "freidora-de-aire-oster-4-l",
+   "nombre": "Freidora de aire Oster 4 L",
+   "marca": "oster",
+   "serie": "Air Fryer",
+   "categoria": "freidoras-de-aire",
+   "busqueda": "Freidora de aire Oster 4 L",
+   "volumen": 210,
+   "atributos": {},
+   "precioEjemplo": 69
+  },
+  {
+   "id": "ecde",
+   "slug": "cafetera-oster-12-tazas",
+   "nombre": "Cafetera Oster 12 tazas",
+   "marca": "oster",
+   "serie": "Cafeteras",
+   "categoria": "cafeteras",
+   "busqueda": "Cafetera Oster 12 tazas",
+   "volumen": 880,
+   "atributos": {},
+   "precioEjemplo": 39
+  },
+  {
+   "id": "ftr2",
+   "slug": "tanque-de-agua-rotoplas-500-litros",
+   "nombre": "Tanque de agua Rotoplas 500 litros",
+   "marca": "rotoplas",
+   "serie": "Tanques",
+   "categoria": "tanques-de-agua",
+   "busqueda": "Tanque de agua Rotoplas 500 litros",
+   "volumen": 320,
+   "atributos": {
+    "litros": "500"
+   },
+   "precioEjemplo": 89
+  },
+  {
+   "id": "fb3k",
+   "slug": "tanque-de-agua-rotoplas-1-000-litros",
+   "nombre": "Tanque de agua Rotoplas 1.000 litros",
+   "marca": "rotoplas",
+   "serie": "Tanques",
+   "categoria": "tanques-de-agua",
+   "busqueda": "Tanque de agua Rotoplas 1.000 litros",
+   "volumen": 1900,
+   "atributos": {
+    "litros": "1000"
+   },
+   "precioEjemplo": 139
+  },
+  {
+   "id": "rm2n",
+   "slug": "tanque-de-agua-rotoplas-1-500-litros",
+   "nombre": "Tanque de agua Rotoplas 1.500 litros",
+   "marca": "rotoplas",
+   "serie": "Tanques",
+   "categoria": "tanques-de-agua",
+   "busqueda": "Tanque de agua Rotoplas 1.500 litros",
+   "volumen": 170,
+   "atributos": {
+    "litros": "1500"
+   },
+   "precioEjemplo": 199
+  },
+  {
+   "id": "e4wq",
+   "slug": "tanque-de-agua-rotoplas-2-000-litros",
+   "nombre": "Tanque de agua Rotoplas 2.000 litros",
+   "marca": "rotoplas",
+   "serie": "Tanques",
+   "categoria": "tanques-de-agua",
+   "busqueda": "Tanque de agua Rotoplas 2.000 litros",
+   "volumen": 590,
+   "atributos": {
+    "litros": "2000"
+   },
+   "precioEjemplo": 249
+  },
+  {
+   "id": "webp",
+   "slug": "tanque-de-agua-rotoplas-5-000-litros",
+   "nombre": "Tanque de agua Rotoplas 5.000 litros",
+   "marca": "rotoplas",
+   "serie": "Tanques",
+   "categoria": "tanques-de-agua",
+   "busqueda": "Tanque de agua Rotoplas 5.000 litros",
+   "volumen": 170,
+   "atributos": {
+    "litros": "5000"
+   },
+   "precioEjemplo": 649
+  },
+  {
+   "id": "gx56",
+   "slug": "bomba-de-agua-pedrollo-1-2-hp",
+   "nombre": "Bomba de agua Pedrollo 1/2 HP",
+   "marca": "pedrollo",
+   "serie": "PKm",
+   "categoria": "bombas-de-agua",
+   "busqueda": "Bomba de agua Pedrollo 1/2 HP",
+   "volumen": 1600,
+   "atributos": {},
+   "precioEjemplo": 79
+  },
+  {
+   "id": "24x8",
+   "slug": "bomba-de-agua-pedrollo-1-hp",
+   "nombre": "Bomba de agua Pedrollo 1 HP",
+   "marca": "pedrollo",
+   "serie": "PKm",
+   "categoria": "bombas-de-agua",
+   "busqueda": "Bomba de agua Pedrollo 1 HP",
+   "volumen": 590,
+   "atributos": {},
+   "precioEjemplo": 119
+  },
+  {
+   "id": "ks56",
+   "slug": "bera-x1",
+   "nombre": "Bera X1",
+   "marca": "bera",
+   "serie": "Bera",
+   "categoria": "motos",
+   "busqueda": "Bera X1",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 1150
+  },
+  {
+   "id": "zvp6",
+   "slug": "bera-sbr",
+   "nombre": "Bera SBR",
+   "marca": "bera",
+   "serie": "Bera",
+   "categoria": "motos",
+   "busqueda": "Bera SBR",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 1290
+  },
+  {
+   "id": "zp7e",
+   "slug": "bera-arsen-ii",
+   "nombre": "Bera Arsen II",
+   "marca": "bera",
+   "serie": "Bera",
+   "categoria": "motos",
+   "busqueda": "Bera Arsen II",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 1590
+  },
+  {
+   "id": "79sm",
+   "slug": "bera-cobra",
+   "nombre": "Bera Cobra",
+   "marca": "bera",
+   "serie": "Bera",
+   "categoria": "motos",
+   "busqueda": "Bera Cobra",
+   "volumen": 720,
+   "atributos": {},
+   "precioEjemplo": 1390
+  },
+  {
+   "id": "rp2s",
+   "slug": "bera-bws",
+   "nombre": "Bera BWS",
+   "marca": "bera",
+   "serie": "Bera",
+   "categoria": "motos",
+   "busqueda": "Bera BWS",
+   "volumen": 720,
+   "atributos": {},
+   "precioEjemplo": 1490
+  },
+  {
+   "id": "kyz3",
+   "slug": "empire-keeway-horse-150",
+   "nombre": "Empire Keeway Horse 150",
+   "marca": "empire",
+   "serie": "Horse",
+   "categoria": "motos",
+   "busqueda": "Empire Keeway Horse 150",
+   "volumen": 720,
+   "atributos": {},
+   "precioEjemplo": 1250
+  },
+  {
+   "id": "pt5m",
+   "slug": "kawasaki-ninja-h2r",
+   "nombre": "Kawasaki Ninja H2R",
+   "marca": "kawasaki",
+   "serie": "Ninja",
+   "categoria": "motos",
+   "busqueda": "Kawasaki Ninja H2R",
+   "volumen": 3600,
+   "atributos": {},
+   "precioEjemplo": 55000
+  },
+  {
+   "id": "nv76",
+   "slug": "bicicleta-montanera-gw-rin-20",
+   "nombre": "Bicicleta montañera GW rin 20",
+   "marca": "gw",
+   "serie": "Montañera",
+   "categoria": "bicicletas",
+   "busqueda": "Bicicleta montañera GW rin 20",
+   "volumen": 1900,
+   "atributos": {
+    "rin": "20"
+   },
+   "precioEjemplo": 129
+  },
+  {
+   "id": "ssfc",
+   "slug": "bicicleta-montanera-gw-rin-26",
+   "nombre": "Bicicleta montañera GW rin 26",
+   "marca": "gw",
+   "serie": "Montañera",
+   "categoria": "bicicletas",
+   "busqueda": "Bicicleta montañera GW rin 26",
+   "volumen": 880,
+   "atributos": {
+    "rin": "26"
+   },
+   "precioEjemplo": 169
+  },
+  {
+   "id": "qwyc",
+   "slug": "bicicleta-montanera-gw-rin-16",
+   "nombre": "Bicicleta montañera GW rin 16",
+   "marca": "gw",
+   "serie": "Montañera",
+   "categoria": "bicicletas",
+   "busqueda": "Bicicleta montañera GW rin 16",
+   "volumen": 880,
+   "atributos": {
+    "rin": "16"
+   },
+   "precioEjemplo": 109
+  },
+  {
+   "id": "m8r8",
+   "slug": "bicicleta-montanera-gw-rin-29",
+   "nombre": "Bicicleta montañera GW rin 29",
+   "marca": "gw",
+   "serie": "Montañera",
+   "categoria": "bicicletas",
+   "busqueda": "Bicicleta montañera GW rin 29",
+   "volumen": 390,
+   "atributos": {
+    "rin": "29"
+   },
+   "precioEjemplo": 249
+  },
+  {
+   "id": "bynt",
+   "slug": "bicicleta-montanera-gw-rin-24",
+   "nombre": "Bicicleta montañera GW rin 24",
+   "marca": "gw",
+   "serie": "Montañera",
+   "categoria": "bicicletas",
+   "busqueda": "Bicicleta montañera GW rin 24",
+   "volumen": 390,
+   "atributos": {
+    "rin": "24"
+   },
+   "precioEjemplo": 159
+  },
+  {
+   "id": "xm7u",
+   "slug": "caucho-de-moto-90-90-18",
+   "nombre": "Caucho de moto 90/90-18",
+   "marca": "goodyear",
+   "serie": "Moto",
+   "categoria": "cauchos",
+   "busqueda": "Caucho de moto 90/90-18",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 39
+  },
+  {
+   "id": "mt8y",
+   "slug": "caucho-goodyear-235-75-r15",
+   "nombre": "Caucho Goodyear 235/75 R15",
+   "marca": "goodyear",
+   "serie": "Wrangler",
+   "categoria": "cauchos",
+   "busqueda": "Caucho Goodyear 235/75 R15",
+   "volumen": 170,
+   "atributos": {},
+   "precioEjemplo": 119
+  },
+  {
+   "id": "5tyh",
+   "slug": "aceite-motul-20w50",
+   "nombre": "Aceite Motul 20W50",
+   "marca": "motul",
+   "serie": "Motul",
+   "categoria": "aceite-de-motor",
+   "busqueda": "Aceite Motul 20W50",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 12
+  },
+  {
+   "id": "ukhm",
+   "slug": "aceite-ipone-20w50",
+   "nombre": "Aceite Ipone 20W50",
+   "marca": "ipone",
+   "serie": "Ipone",
+   "categoria": "aceite-de-motor",
+   "busqueda": "Aceite Ipone 20W50",
+   "volumen": 720,
+   "atributos": {},
+   "precioEjemplo": 11
+  },
+  {
+   "id": "9c3e",
+   "slug": "aceite-shell-20w50",
+   "nombre": "Aceite Shell 20W50",
+   "marca": "shell",
+   "serie": "Helix",
+   "categoria": "aceite-de-motor",
+   "busqueda": "Aceite Shell 20W50",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 9
+  },
+  {
+   "id": "tu6h",
+   "slug": "aceite-semisintetico-15w40",
+   "nombre": "Aceite semisintético 15W40",
+   "marca": "shell",
+   "serie": "Helix",
+   "categoria": "aceite-de-motor",
+   "busqueda": "Aceite semisintético 15W40",
+   "volumen": 590,
+   "atributos": {},
+   "precioEjemplo": 10
+  },
+  {
+   "id": "z8xe",
+   "slug": "nike-air-force-1-07",
+   "nombre": "Nike Air Force 1 '07",
+   "marca": "nike",
+   "serie": "Air Force 1",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Nike Air Force 1 '07",
+   "volumen": 880,
+   "atributos": {
+    "genero": "hombre"
+   },
+   "precioEjemplo": 95
+  },
+  {
+   "id": "zd4r",
+   "slug": "nike-air-force-1-07-dama",
+   "nombre": "Nike Air Force 1 '07 Dama",
+   "marca": "nike",
+   "serie": "Air Force 1",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Nike Air Force 1 '07 Dama",
+   "volumen": 1600,
+   "atributos": {
+    "genero": "dama"
+   },
+   "precioEjemplo": 95
+  },
+  {
+   "id": "msx7",
+   "slug": "air-jordan-4-retro",
+   "nombre": "Air Jordan 4 Retro",
+   "marca": "nike",
+   "serie": "Jordan",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Air Jordan 4 Retro",
+   "volumen": 2900,
+   "atributos": {
+    "genero": "hombre"
+   },
+   "precioEjemplo": 189
+  },
+  {
+   "id": "9ec3",
+   "slug": "nike-revolution-7",
+   "nombre": "Nike Revolution 7",
+   "marca": "nike",
+   "serie": "Revolution",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Nike Revolution 7",
+   "volumen": 9900,
+   "atributos": {
+    "genero": "dama"
+   },
+   "precioEjemplo": 59
+  },
+  {
+   "id": "6wmn",
+   "slug": "nike-court-vision-low",
+   "nombre": "Nike Court Vision Low",
+   "marca": "nike",
+   "serie": "Court Vision",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Nike Court Vision Low",
+   "volumen": 1300,
+   "atributos": {
+    "genero": "hombre"
+   },
+   "precioEjemplo": 69
+  },
+  {
+   "id": "zkhc",
+   "slug": "adidas-samba-og",
+   "nombre": "Adidas Samba OG",
+   "marca": "adidas",
+   "serie": "Samba",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Adidas Samba OG",
+   "volumen": 2900,
+   "atributos": {
+    "genero": "dama"
+   },
+   "precioEjemplo": 99
+  },
+  {
+   "id": "sbtc",
+   "slug": "adidas-campus-00s",
+   "nombre": "Adidas Campus 00s",
+   "marca": "adidas",
+   "serie": "Campus",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Adidas Campus 00s",
+   "volumen": 720,
+   "atributos": {
+    "genero": "hombre"
+   },
+   "precioEjemplo": 99
+  },
+  {
+   "id": "hxdr",
+   "slug": "adidas-grand-court",
+   "nombre": "Adidas Grand Court",
+   "marca": "adidas",
+   "serie": "Grand Court",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Adidas Grand Court",
+   "volumen": 1000,
+   "atributos": {
+    "genero": "dama"
+   },
+   "precioEjemplo": 55
+  },
+  {
+   "id": "q2bw",
+   "slug": "adidas-runfalcon-5",
+   "nombre": "Adidas Runfalcon 5",
+   "marca": "adidas",
+   "serie": "Runfalcon",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Adidas Runfalcon 5",
+   "volumen": 880,
+   "atributos": {
+    "genero": "dama"
+   },
+   "precioEjemplo": 49
+  },
+  {
+   "id": "cd77",
+   "slug": "puma-smash-3-0",
+   "nombre": "Puma Smash 3.0",
+   "marca": "puma",
+   "serie": "Smash",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Puma Smash 3.0",
+   "volumen": 1900,
+   "atributos": {
+    "genero": "dama"
+   },
+   "precioEjemplo": 45
+  },
+  {
+   "id": "uvgn",
+   "slug": "puma-caven-2-0",
+   "nombre": "Puma Caven 2.0",
+   "marca": "puma",
+   "serie": "Caven",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "Puma Caven 2.0",
+   "volumen": 320,
+   "atributos": {
+    "genero": "hombre"
+   },
+   "precioEjemplo": 55
+  },
+  {
+   "id": "vzqh",
+   "slug": "rs21-urban",
+   "nombre": "RS21 Urban",
+   "marca": "rs21",
+   "serie": "RS21",
+   "categoria": "zapatos-deportivos",
+   "busqueda": "RS21 Urban",
+   "volumen": 1600,
+   "atributos": {
+    "genero": "hombre"
+   },
+   "precioEjemplo": 35
+  },
+  {
+   "id": "y77j",
+   "slug": "212-vip-men",
+   "nombre": "212 VIP Men",
+   "marca": "carolina-herrera",
+   "serie": "212",
+   "categoria": "perfumes",
+   "busqueda": "212 VIP Men",
+   "volumen": 390,
+   "atributos": {},
+   "precioEjemplo": 79
+  },
+  {
+   "id": "fqnp",
+   "slug": "afnan-9-pm",
+   "nombre": "Afnan 9 PM",
+   "marca": "afnan",
+   "serie": "9 PM",
+   "categoria": "perfumes",
+   "busqueda": "Afnan 9 PM",
+   "volumen": 720,
+   "atributos": {},
+   "precioEjemplo": 39
+  },
+  {
+   "id": "4yc9",
+   "slug": "afnan-9-am",
+   "nombre": "Afnan 9 AM",
+   "marca": "afnan",
+   "serie": "9 AM",
+   "categoria": "perfumes",
+   "busqueda": "Afnan 9 AM",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 39
+  },
+  {
+   "id": "8g6e",
+   "slug": "360-perry-ellis",
+   "nombre": "360° Perry Ellis",
+   "marca": "perry-ellis",
+   "serie": "360°",
+   "categoria": "perfumes",
+   "busqueda": "360° Perry Ellis",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 29
+  },
+  {
+   "id": "uzac",
+   "slug": "santal-33",
+   "nombre": "Santal 33",
+   "marca": "le-labo",
+   "serie": "Santal",
+   "categoria": "perfumes",
+   "busqueda": "Santal 33",
+   "volumen": 260,
+   "atributos": {},
+   "precioEjemplo": 249
+  },
+  {
+   "id": "bhe5",
+   "slug": "iso-100-dymatize-5-lb",
+   "nombre": "ISO 100 Dymatize 5 lb",
+   "marca": "dymatize",
+   "serie": "ISO 100",
+   "categoria": "proteina",
+   "busqueda": "ISO 100 Dymatize 5 lb",
+   "volumen": 480,
+   "atributos": {},
+   "precioEjemplo": 89
+  },
+  {
+   "id": "2pse",
+   "slug": "gold-standard-100-whey-5-lb",
+   "nombre": "Gold Standard 100% Whey 5 lb",
+   "marca": "optimum-nutrition",
+   "serie": "Gold Standard",
+   "categoria": "proteina",
+   "busqueda": "Gold Standard 100% Whey 5 lb",
+   "volumen": 12100,
+   "atributos": {},
+   "precioEjemplo": 79
+  },
+  {
+   "id": "7kz8",
+   "slug": "pendrive-kingston-64-gb",
+   "nombre": "Pendrive Kingston 64 GB",
+   "marca": "kingston",
+   "serie": "DataTraveler",
+   "categoria": "memorias-usb",
+   "busqueda": "Pendrive Kingston 64 GB",
+   "volumen": 320,
+   "atributos": {},
+   "precioEjemplo": 8
+  },
+  {
+   "id": "dsbb",
+   "slug": "pendrive-sandisk-128-gb",
+   "nombre": "Pendrive SanDisk 128 GB",
+   "marca": "sandisk",
+   "serie": "Ultra",
+   "categoria": "memorias-usb",
+   "busqueda": "Pendrive SanDisk 128 GB",
+   "volumen": 210,
+   "atributos": {},
+   "precioEjemplo": 14
+  }
+ ]
+}

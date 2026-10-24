@@ -21,6 +21,10 @@
   --color-kraft: var(--kraft);
   --color-trazo: var(--trazo);
   --color-tomate-texto: var(--tomate-texto);
+  --color-ahorro: var(--ahorro);
+  --color-ahorro-tinte: var(--ahorro-tinte);
+  --color-caro-texto: var(--caro-texto);
+  --color-caro-tinte: var(--caro-tinte);
   --font-sans: var(--font-outfit), "Segoe UI", system-ui, sans-serif;
   --font-display: var(--font-bungee), "Arial Black", Impact, sans-serif;
 }

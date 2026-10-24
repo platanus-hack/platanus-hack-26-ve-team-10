@@ -18,6 +18,7 @@ ChatGPT / Claude ─────┘                                             
 - **`search_offers`** (`app/lib/search.py`) llama en paralelo a todas las fuentes de `app/lib/sources/`, convierte, filtra y ordena. Los contratos entre las piezas están en [contracts.md](contracts.md).
 - **WhatsApp** pasa por una cola de Cloud Tasks (`app/lib/tasks.py`): el webhook valida la firma, encola un mensaje por tarea y responde 200; la cola llama a `/internal/whatsapp-task`, que corre el agente y responde por Kapso. Así hay reintentos y no se procesa dos veces el mismo mensaje. Detalle en [kapso.md](kapso.md).
 - **MCP** llama directo a `search_offers`, sin el agente, porque quien pregunta ya es un asistente de IA.
+- **El catálogo** (`app/lib/catalogo.py`, rutas `GET /catalogo/*` en `app/routes/catalogo.py`) arma las páginas públicas `/ve/...`: los modelos salen de `catalogo.json` y los precios, de `search_offers`.
 - **`apps/web`** reenvía `/api/*` al backend con un rewrite de Next. Así el navegador habla con un solo dominio y no hace falta CORS. Ojo: `API_URL` se lee al **construir** la web, no al arrancarla.
 
 ## Qué hay y qué falta
@@ -28,6 +29,7 @@ ChatGPT / Claude ─────┘                                             
 | Agente con una tool | Hecho. Falta probarlo con credenciales de Gemini |
 | Webhook de WhatsApp | Hecho, con cola de Cloud Tasks (reintentos y deduplicación). Falta configurarlo en Kapso |
 | MCP con `search_prices` | Hecho |
+| Catálogo SEO (`/ve/...`) | Hecho con datos de ejemplo: 147 modelos, 28 categorías. Se indexa solo cuando hay ofertas reales: ver [seo-geo.md](seo-geo.md) |
 | Confianza del comercio | Fórmula inicial en `apps/api/app/lib/prices.py` |
 | Fuentes reales | Faltan: Firecrawl, Apify, Mercado Libre, Meta Ads |
 | Deploy en GCP | Armado: `infra/` y `cloudbuild.*.yaml`. Cómo funciona, en [gcp.md](gcp.md) |
