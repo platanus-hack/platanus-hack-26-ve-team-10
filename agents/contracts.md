@@ -1,6 +1,6 @@
 # Contratos
 
-Los puntos donde se conectan las piezas. Si respetas el contrato, puedes trabajar en tu parte sin tocar las demás. **Cambiar un contrato** es la única cosa que se avisa al equipo antes de mergear.
+Los puntos donde se conectan las piezas. Hay una vista visual para el equipo en el [Mapa de contratos de Prais](https://claude.ai/artifact/D8LWNtrGdgCUncfBmDKD2X); si no la puedes abrir, pide acceso en el canal. La fuente de verdad es este archivo. Si respetas el contrato, puedes trabajar en tu parte sin tocar las demás. **Cambiar un contrato** es la única cosa que se avisa al equipo antes de mergear.
 
 ```
 Web ──► POST /chat ─────┐
@@ -27,3 +27,9 @@ Asistentes ─► /mcp ─────┴─► tool search_prices ────�
 5. Tu fuente solo trae datos. No filtres por zona, no conviertas monedas ni ordenes: eso lo hace `searchOffers` para todas.
 
 Las particularidades de cada fuente están en [sources.md](sources.md).
+
+## Decisión pendiente: la forma de una oferta
+
+Los componentes del design system (`RankedList`, `FichaOferta`, `MensajeCanal`) esperan el tipo `Oferta` de `docs/design-system/components/index.d.ts`: `tienda`, `canal`, `usd`, `envio`, `confianza` de 0 a 5. La API devuelve `OfferResult`, con otros nombres y la confianza de 0 a 100, y `/chat` solo devuelve texto.
+
+La propuesta es que la API devuelva ofertas con la forma `Oferta` y que `/chat` responda `{ reply, producto, ofertas, tasa, actualizado }`. Así la web pinta `RankedList` sin traducir nada. La deciden los dueños de los frentes Agente y Web ([docs/plan.md](../docs/plan.md)).
