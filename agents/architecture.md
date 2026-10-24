@@ -30,7 +30,7 @@ ChatGPT / Claude ─────┘                                             
 | Webhook de WhatsApp | Hecho. El número de producción apunta al API en Cloud Run. Probado en el sandbox de Kapso |
 | MCP con `search_prices` | Hecho |
 | Catálogo SEO (`/ve/...`) | Hecho con datos de ejemplo: 147 modelos, 28 categorías. Se indexa solo cuando hay ofertas reales: ver [seo-geo.md](seo-geo.md) |
-| Confianza del comercio | Fórmula inicial en `apps/api/app/lib/prices.py`. Diseño para Instagram en [resources/ig-trust-score.ts](../resources/ig-trust-score.ts), Facebook Marketplace en [resources/fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts) y TikTok en [resources/tiktok-trust-score.ts](../resources/tiktok-trust-score.ts), con los ajustes de Meta Ads en [resources/meta-ads-signals.ts](../resources/meta-ads-signals.ts) |
+| Confianza del comercio | Fórmula inicial en `apps/api/app/lib/prices.py`. Diseño para Instagram en [resources/ig-trust-score.ts](../resources/ig-trust-score.ts), Facebook Marketplace en [resources/fb-marketplace-trust-score.ts](../resources/fb-marketplace-trust-score.ts), TikTok en [resources/tiktok-trust-score.ts](../resources/tiktok-trust-score.ts) y tiendas web en [resources/website-trust-score.ts](../resources/website-trust-score.ts), con los ajustes de Meta Ads en [resources/meta-ads-signals.ts](../resources/meta-ads-signals.ts) |
 | Fuentes reales | Faltan: Firecrawl, Apify, Mercado Libre, Meta Ads |
 | Deploy en GCP | Armado: `infra/` y `cloudbuild.*.yaml`. Cómo funciona, en [gcp.md](gcp.md) |
 
