@@ -174,13 +174,15 @@ def anomaly_from_deviation(deviation: float) -> tuple[float, str, bool]:
     return value, f"Precio {percent}% bajo el mercado", value == 1
 
 
-def age_curve(created: datetime, now: datetime, *, noun: str) -> tuple[float, str]:
-    """Antigüedad de una cuenta o un dominio: menos de 3 meses vale 0, tres años vale 1.
+def age_curve(created: datetime, now: datetime, *, noun: str, floor: float = 3, span: float = 12) -> tuple[float, str]:
+    """Antigüedad de una cuenta o un dominio: por debajo de `floor` meses vale 0, y sube en log.
 
-    La misma curva en TikTok y en una tienda web, como piden los dos borradores de resources/.
+    Los umbrales los pone cada borrador de resources/: TikTok y una tienda web arrancan a los 3
+    meses y llegan a 1 a los tres años; un perfil de Facebook arranca a los 6 y llega a los cinco.
+    La forma de la curva es la misma, así que vive en un solo sitio.
     """
     months = max((now - created).days, 0) / 30.44
-    value = 0.0 if months < 3 else clamp(math.log(months / 3) / math.log(12))
+    value = 0.0 if months < floor else clamp(math.log(months / floor) / math.log(span))
     if value >= 0.6:
         return value, f"{noun} en {created.year}"
     return value, f"{noun} hace poco ({round_half_up(months)} meses)"
