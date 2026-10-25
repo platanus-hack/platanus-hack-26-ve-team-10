@@ -1,88 +1,67 @@
-"""La llamada de confianza de una oferta de la web abierta.
+"""La confianza de una oferta de la web abierta, en el contrato de trust.py.
 
-Sigue las banderas rojas de resources/website_trust_score.py que se pueden ver
-en el listado que ya trajo la búsqueda: precio contra las demás ofertas,
-dominio que imita una marca, y un título que es un accesorio o una copia.
-No inventa el puntaje estricto (dominio, RIF, políticas, Safe Browsing).
+Antes esto devolvía un veredicto suyo (`riesgosa`, `precaucion`, `sin_datos`) calculado con tres
+heurísticas, fuera del contrato. Usaba las mismas palabras que el puntaje real pero no significaban
+lo mismo: su `sin_datos` quería decir "no saltó ninguna alarma", o sea que todo está bien, mientras
+que en el contrato quiere decir "no me alcanzó para saber". Y una tienda impecable nunca podía
+salir `confiable`, porque esa palabra no existía ahí.
+
+Ahora mide las señales de `web-v1` (ver sources/web_trust.py) y deja el puntaje en `parcial`, como
+cualquier otro especialista. Lo cierra el agregador con la mediana de todas las fuentes. Las dos
+banderas rojas que valía la pena conservar —dominio que imita una marca, anuncio que es un
+accesorio— siguen, ahora dentro del puntaje. La tercera, el precio muy por debajo del resto, no se
+repite: es `price_anomaly` y el agregador ya la aplica con el mismo umbral del 50 %.
 """
 
-import re
-import statistics
 from typing import Any
-from urllib.parse import urlparse
 
-_ACCESSORY = re.compile(
-    r"\b(fundas?|carcasas?|forros?|cases?|covers?|replicas?|réplicas?|clones?|copias?|imitaciones?|fakes?)\b",
-    re.IGNORECASE,
-)
-# Nombre que se dice, dominios de esa marca, y cómo aparece el nombre dentro de un dominio.
-_BRANDS = (
-    ("Apple", ("apple.com",), ("apple", "iphone")),
-    ("Samsung", ("samsung.com",), ("samsung", "galaxy")),
-    ("Xiaomi", ("xiaomi.com", "mi.com"), ("xiaomi", "redmi")),
-    ("Google", ("google.com",), ("google", "pixel")),
-    ("Motorola", ("motorola.com",), ("motorola",)),
-    ("Huawei", ("huawei.com",), ("huawei",)),
-)
+from app.lib import contract_build
+from app.lib.rate import get_rate
+from app.lib.sources.web_trust import Domain, host_of, look_up, web_trust
+from app.lib.types import Money
+
+_EMPTY = Domain()
 
 
-def _host(url: str) -> str:
-    return (urlparse(url).hostname or "").removeprefix("www.").lower()
-
-
-def _flat(text: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", text.lower())
-
-
-def _price(card: dict[str, Any]) -> float | None:
-    amount = card.get("price_usd")
-    if isinstance(amount, (int, float)) and amount > 0:
-        return float(amount)
+def _money(offer: dict[str, Any]) -> Money | None:
+    amount, currency = offer.get("priceAmount"), offer.get("priceCurrency")
+    if isinstance(amount, (int, float)) and amount > 0 and currency in {"USD", "VES"}:
+        return Money(float(amount), currency)
     return None
 
 
-def _impersonates(host: str, product: str) -> str | None:
-    flat_host = _flat(host)
-    flat_product = _flat(product)
-    for name, domains, marks in _BRANDS:
-        if not any(mark in flat_host for mark in marks):
+async def review_offers(product: str, offers: list[dict[str, Any]]) -> None:
+    """Le pone a cada oferta de la web abierta su contrato con el puntaje parcial.
+
+    Las consultas de dominio son gratis (RDAP y DNS sobre HTTPS) pero van por red: se hacen una
+    sola vez por host, en paralelo, y se recuerdan un día.
+    """
+    if not offers:
+        return
+    hosts = [host_of(str(offer.get("url") or "")) for offer in offers]
+    domains, rate = await look_up(hosts), await get_rate()
+    for offer, host in zip(offers, hosts):
+        url = str(offer.get("url") or "")
+        title = str(offer.get("title") or "")
+        if not url or not host:
             continue
-        if not any(mark in flat_product for mark in marks):
-            continue
-        if any(host == domain or host.endswith(f".{domain}") for domain in domains):
-            continue
-        return name
-    return None
-
-
-def review_one(product: str, card: dict[str, Any], others: list[float]) -> dict[str, Any]:
-    """Un listado. `others` son los precios en USD de las demás ofertas de la misma búsqueda."""
-    reasons: list[str] = []
-    cautions: list[str] = []
-    title = str(card.get("title") or "")
-    url = str(card.get("url") or "")
-    if _ACCESSORY.search(title) and not _ACCESSORY.search(product):
-        reasons.append("Es una funda, una copia o un accesorio, no el producto pedido")
-    brand = _impersonates(_host(url), product)
-    if brand:
-        reasons.append(f"El dominio imita a {brand}")
-    price = _price(card)
-    if price is not None and others:
-        middle = statistics.median(others)
-        if middle > 0 and price <= middle * 0.5:
-            reasons.append("Precio más de 50% bajo las otras ofertas")
-    if url.startswith("http://"):
-        cautions.append("La página no usa https")
-    if reasons:
-        return {"verdict": "riesgosa", "reasons": reasons}
-    if cautions:
-        return {"verdict": "precaucion", "reasons": cautions}
-    return {"verdict": "sin_datos", "reasons": []}
-
-
-def review_listings(product: str, listings: list[dict[str, Any]]) -> None:
-    """Escribe trust_review en cada listado de la web abierta."""
-    prices = [_price(card) for card in listings]
-    for index, card in enumerate(listings):
-        others = [amount for other, amount in enumerate(prices) if other != index and amount is not None]
-        card["trust_review"] = review_one(product, card, others)
+        merchant = offer.get("merchant") or {}
+        trust = web_trust(url, title, product, domains.get(host) or _EMPTY)
+        contract_offer, contract_merchant = contract_build.build(
+            merchant_id=f"web:{host}",
+            name=str(merchant.get("name") or host),
+            channel="web",
+            merchant_url=f"https://{host}",
+            zone=merchant.get("zone"),
+            delivers=merchant.get("delivers"),
+            title=title,
+            url=url,
+            seen_at=str(offer.get("seenAt") or ""),
+            price=_money(offer),
+            price_usd=offer.get("priceUsd"),
+            rate=rate,
+            product=product,
+            trust=trust,
+            link_value=host,
+        )
+        offer.update(contract_build.as_card(contract_offer, contract_merchant))

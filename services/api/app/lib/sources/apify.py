@@ -32,6 +32,12 @@ log = logging.getLogger("prais.apify")
 
 INSTAGRAM_ACTOR = "apify/instagram-scraper"
 TIKTOK_ACTOR = "clockworks/tiktok-scraper"
+# Instagram no busca publicaciones por frase: el actor oficial solo acepta la página de un hashtag
+# o un perfil. Este sí, y con sintaxis booleana, así que el "de Venezuela" entra en la consulta en
+# vez de filtrarse después de pagar los resultados. Las dos entradas corren juntas: el hashtag
+# alcanza publicaciones que la búsqueda no indexa, y la búsqueda alcanza vendedores que no
+# etiquetan nada.
+SEARCH_ACTOR = "scraping_solutions/instagram-boolean-search-scraper-posts-reels"
 # El actor cobra por publicación (unos USD 2,70 por 1.000 en Instagram): el tope va en el input
 # y además en max_items, que la API respeta aunque el actor pida más.
 RESULTS = 20
@@ -44,12 +50,21 @@ LIVE_WAIT_S = 6
 CACHE_S = 6 * 60 * 60
 # Una corrida sin publicaciones útiles (o que falló) no se repite enseguida: cada una cuesta.
 EMPTY_CACHE_S = 15 * 60
-# Instagram no dice de qué ciudad es una publicación. La zona del comercio queda sin afinar.
+# Cuando la publicación no dice de qué ciudad es. La búsqueda por publicaciones sí suele traerla.
 ZONE = "Venezuela"
+# Ciudades que entran en la consulta para que el resultado sea venezolano desde el principio.
+CITIES = ("Venezuela", "Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay")
 
 _cache: dict[tuple[str, str], tuple[float, SourceResult]] = {}
 _runs: dict[tuple[str, str], asyncio.Task[None]] = {}
 
+# Pagar a plazos. "desde" también: un "desde 390$" es el piso de una lista, no el precio de esto.
+_FINANCING = re.compile(
+    r"\b(inicial|iniciales|cuota|cuotas|credito|financia\w*|abono|reserva|desde)\b|cashea|zelle\s*a\s*plazos"
+)
+# Equipo que no es nuevo. "pre-owned" y "reacondicionado" los escriben de las dos formas.
+_USED = re.compile(r"\b(usado|usada|usados|pre\s*-?\s*owned|preowned|seminuevo|second\s*hand|de\s+uso)\b")
+_REFURBISHED = re.compile(r"\b(reacondicionado|reacondicionada|refurbished|renewed)\b")
 _DELIVERS = re.compile(r"\b(envio|envios|enviamos|delivery|despacho|despachamos|encomienda)\b")
 _ASKS_DM = re.compile(r"precios?\s*(?:al|por|via)?\s*(?:dm|inbox|interno|privado|mensaje|whatsapp|wasap)")
 # Una cifra con su unidad no va en el hashtag: nadie etiqueta #harinapan1kg ni #iphone15128gb.
@@ -73,13 +88,24 @@ def _hashtag(product: str) -> str:
     return "".join(tag[:3])[:30]
 
 
+def _payable(text: str) -> str:
+    """El caption sin las líneas que hablan de pagar a plazos.
+
+    En Venezuela media tienda publica "Con Cashea desde 230$ de inicial" de un equipo que cuesta
+    el triple. Esa cifra no es el precio del producto, y leerla como tal es peor que no mostrar
+    nada: la línea entera se cae antes de buscar montos.
+    """
+    return "\n".join(line for line in text.splitlines() if not _FINANCING.search(plain(line)))
+
+
 def _price(text: str) -> Money | None:
     """El precio de la publicación, solo si no hay dudas de cuál es.
 
     Muchas tiendas publican el mismo producto en dólares y en bolívares: manda el de dólares. Si
-    la publicación lista varios productos con su precio, no se usa ninguno.
+    la publicación lista varios productos con su precio, no se usa ninguno. Lo que es una cuota
+    o una inicial no cuenta como precio.
     """
-    written = {amount: {c for c in currencies if c} for amount, currencies in published_prices(text).items()}
+    written = {amount: {c for c in currencies if c} for amount, currencies in published_prices(_payable(text)).items()}
     usd = [amount for amount, currencies in written.items() if amount > 0 and currencies == {"USD"}]
     ves = [amount for amount, currencies in written.items() if amount > 0 and currencies == {"VES"}]
     if len(usd) == 1:
@@ -89,17 +115,27 @@ def _price(text: str) -> Money | None:
     return None
 
 
+def _condition(text: str) -> str | None:
+    """Nuevo, usado o reacondicionado según lo diga la publicación. None es "no lo dice"."""
+    clean = plain(text)
+    if _REFURBISHED.search(clean):
+        return "reacondicionado"
+    if _USED.search(clean):
+        return "usado"
+    return None
+
+
 def _title(text: str, product: str) -> str:
     line = next((part.strip() for part in text.splitlines() if part.strip()), "")
     line = " ".join(re.sub(r"#\S+", "", line).split())
     return line[:90] if len(line) >= 3 else product
 
 
-def _count(value: Any) -> int | None:
+def count_of(value: Any) -> int | None:
     return value if isinstance(value, int) and value >= 0 else None
 
 
-def _seen_at(value: Any, default: str) -> str:
+def seen_at_of(value: Any, default: str) -> str:
     return value if isinstance(value, str) and value else default
 
 
@@ -115,6 +151,34 @@ def _instagram_input(product: str) -> dict[str, Any] | None:
         "resultsLimit": RESULTS,
         "onlyPostsNewerThan": POSTS_SINCE,
         "addParentData": False,
+    }
+
+
+def _instagram_query(product: str) -> dict[str, Any]:
+    cities = " OR ".join(CITIES)
+    return {
+        "searchQuery": f'"{product}" AND ({cities})',
+        "resultsLimit": RESULTS,
+        "contentType": "posts_and_reels",
+        "hashtagFeedType": "recent",
+        "searchCoverage": "efficient",
+    }
+
+
+def _from_search(item: dict[str, Any]) -> dict[str, Any]:
+    """La publicación del buscador, con los nombres del actor oficial.
+
+    Así el lector de ofertas es uno solo y no sabe por qué puerta entró la publicación.
+    """
+    return {
+        "caption": item.get("caption"),
+        "ownerUsername": item.get("username"),
+        "ownerFullName": item.get("fullName"),
+        "url": item.get("url"),
+        "likesCount": item.get("likeCount"),
+        "commentsCount": item.get("commentCount"),
+        "timestamp": item.get("publishedAt"),
+        "locationName": item.get("locationName"),
     }
 
 
@@ -137,7 +201,9 @@ def _instagram_profiles(handles: list[str]) -> dict[str, Any]:
 
 
 def _instagram_offers(items: list[dict[str, Any]], product: str, now: str) -> SourceResult:
-    offers, merchants = [], {}
+    # Las puertas se solapan: la misma publicación puede llegar por la búsqueda, por el
+    # hashtag y por la corrida de perfiles. Una publicación es una oferta, no tres.
+    offers, merchants, seen = [], {}, set()
     for item in items:
         caption = item.get("caption") or ""
         user, url = item.get("ownerUsername"), item.get("url")
@@ -146,6 +212,9 @@ def _instagram_offers(items: list[dict[str, Any]], product: str, now: str) -> So
         price = _price(caption)
         if price is None and not _ASKS_DM.search(plain(caption)):
             continue
+        if url in seen:
+            continue
+        seen.add(url)
         merchant_id = f"ig:{user}"
         if merchant_id not in merchants:
             merchants[merchant_id] = Merchant(
@@ -153,11 +222,20 @@ def _instagram_offers(items: list[dict[str, Any]], product: str, now: str) -> So
                 name=item.get("ownerFullName") or user,
                 channel="instagram",
                 url=f"https://www.instagram.com/{user}/",
-                zone=ZONE,
+                zone=item.get("locationName") or ZONE,
                 delivers=bool(_DELIVERS.search(plain(caption))),
-                comments=_count(item.get("commentsCount")),
+                comments=count_of(item.get("commentsCount")),
             )
-        offers.append(Offer(merchant_id, _title(caption, product), url, price, _seen_at(item.get("timestamp"), now)))
+        offers.append(
+            Offer(
+                merchant_id,
+                _title(caption, product),
+                url,
+                price,
+                seen_at_of(item.get("timestamp"), now),
+                condition=_condition(caption),
+            )
+        )
     # El puntaje es de la cuenta, así que lo mide con todas sus publicaciones, no solo con las
     # que coincidieron con el producto.
     trust = {
@@ -197,7 +275,9 @@ def _tiktok_profiles(handles: list[str]) -> dict[str, Any]:
 
 
 def _tiktok_offers(items: list[dict[str, Any]], product: str, now: str) -> SourceResult:
-    offers, merchants = [], {}
+    # Las puertas se solapan: la misma publicación puede llegar por la búsqueda, por el
+    # hashtag y por la corrida de perfiles. Una publicación es una oferta, no tres.
+    offers, merchants, seen = [], {}, set()
     for item in items:
         author = item.get("authorMeta") or {}
         text = item.get("text") or ""
@@ -207,6 +287,9 @@ def _tiktok_offers(items: list[dict[str, Any]], product: str, now: str) -> Sourc
         price = _price(text)
         if price is None and not _ASKS_DM.search(plain(text)):
             continue
+        if url in seen:
+            continue
+        seen.add(url)
         merchant_id = f"tt:{user}"
         if merchant_id not in merchants:
             merchants[merchant_id] = Merchant(
@@ -216,10 +299,19 @@ def _tiktok_offers(items: list[dict[str, Any]], product: str, now: str) -> Sourc
                 url=author.get("profileUrl") or f"https://www.tiktok.com/@{user}",
                 zone=ZONE,
                 delivers=bool(_DELIVERS.search(plain(text))),
-                followers=_count(author.get("fans")),
-                comments=_count(item.get("commentCount")),
+                followers=count_of(author.get("fans")),
+                comments=count_of(item.get("commentCount")),
             )
-        offers.append(Offer(merchant_id, _title(text, product), url, price, _seen_at(item.get("createTimeISO"), now)))
+        offers.append(
+            Offer(
+                merchant_id,
+                _title(text, product),
+                url,
+                price,
+                seen_at_of(item.get("createTimeISO"), now),
+                condition=_condition(text),
+            )
+        )
     trust = {}
     for merchant_id in merchants:
         videos = [item for item in items if (item.get("authorMeta") or {}).get("name") == merchant_id[3:]]
@@ -246,15 +338,15 @@ class ApifySource:
         id: str,
         channel: Channel,
         actor: str,
-        run_input: Callable[[str], dict[str, Any] | None],
+        entries: Callable[[str], list[tuple[str, dict[str, Any]]]],
         read: Callable[[list[dict[str, Any]], str, str], SourceResult],
-        profiles: Callable[[list[str]], dict[str, Any]],
+        profiles: Callable[[list[str]], dict[str, Any]] | None = None,
     ) -> None:
         self.id = id
         self.channel = channel
         self.actor = actor
         self.enabled = bool(os.environ.get("APIFY_TOKEN"))
-        self._run_input = run_input
+        self._entries = entries
         self._read = read
         self._profiles = profiles
 
@@ -277,18 +369,22 @@ class ApifySource:
         now = time.strftime("%Y-%m-%dT%H:%M:%S%z")
         items: list[dict[str, Any]] = []
         detail = None
-        run_input = self._run_input(product)
-        try:
-            if run_input:
-                items = await run_actor(self.actor, run_input)
-        except Exception as error:  # noqa: BLE001  una fuente que falla no tumba la búsqueda
-            detail = f"{type(error).__name__}: {error}"
+        entries = self._entries(product)
+        # Las puertas corren en paralelo y son independientes: si una falla, la otra sigue.
+        gathered = await asyncio.gather(
+            *(run_actor(actor, run_input) for actor, run_input in entries), return_exceptions=True
+        )
+        for (actor, _run_input), result in zip(entries, gathered):
+            if isinstance(result, BaseException):
+                detail = f"{actor}: {type(result).__name__}: {result}"
+                continue
+            items += [_NORMALIZE[actor](item) if actor in _NORMALIZE else item for item in result]
         result = self._read(items, product, now) if items else SourceResult(offers=[], merchants=[])
         # Segunda corrida: las publicaciones recientes de los comercios que sí dieron oferta. La
         # búsqueda deja una publicación por cuenta, y con una sola no se pueden medir las
         # proporciones ni el ritmo que pide el puntaje. Solo se paga por quien ya aportó algo.
         deepened = 0
-        if result.merchants:
+        if result.merchants and self._profiles is not None:
             handles = [merchant.id.split(":", 1)[-1] for merchant in result.merchants]
             try:
                 extra = await run_actor(self.actor, self._profiles(handles))
@@ -312,7 +408,7 @@ class ApifySource:
                     "items": len(items),
                     "offers": len(result.offers),
                     "deepened": deepened,
-                    **({"input": run_input} if run_input else {"skipped": "sin hashtag"}),
+                    "entries": [actor for actor, _ in entries],
                     **({"detail": detail} if detail else {}),
                 },
                 ensure_ascii=False,
@@ -320,7 +416,23 @@ class ApifySource:
         )
 
 
+_NORMALIZE: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {SEARCH_ACTOR: _from_search}
+
+
+def _instagram_entries(product: str) -> list[tuple[str, dict[str, Any]]]:
+    """Las dos puertas de Instagram: la página del hashtag y la búsqueda por publicaciones."""
+    entries = [(SEARCH_ACTOR, _instagram_query(product))]
+    hashtag = _instagram_input(product)
+    if hashtag:
+        entries.append((INSTAGRAM_ACTOR, hashtag))
+    return entries
+
+
+def _tiktok_entries(product: str) -> list[tuple[str, dict[str, Any]]]:
+    return [(TIKTOK_ACTOR, _tiktok_input(product))]
+
+
 instagram_source = ApifySource(
-    "apify-instagram", "instagram", INSTAGRAM_ACTOR, _instagram_input, _instagram_offers, _instagram_profiles
+    "apify-instagram", "instagram", INSTAGRAM_ACTOR, _instagram_entries, _instagram_offers, _instagram_profiles
 )
-tiktok_source = ApifySource("apify-tiktok", "tiktok", TIKTOK_ACTOR, _tiktok_input, _tiktok_offers, _tiktok_profiles)
+tiktok_source = ApifySource("apify-tiktok", "tiktok", TIKTOK_ACTOR, _tiktok_entries, _tiktok_offers, _tiktok_profiles)

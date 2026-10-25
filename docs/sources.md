@@ -18,11 +18,11 @@ Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegad
 
 | Fuente | Cómo se consulta | Ojo |
 |---|---|---|
-| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | La web abierta sigue sin puntaje (`trust` null). El motor ya puede cerrar una tienda si llegan sus señales; RDAP, DNS y Safe Browsing no están conectados |
+| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | Su puntaje (`web-v1`) lo arma `app/lib/sources/web_trust.py` con RDAP y DNS: ver [abajo](#la-confianza-de-una-tienda-web). Safe Browsing sigue sin conectar |
 | **Apify: Instagram** | Conectada: `instagram_source` en `app/lib/sources/apify.py`, actor `apify/instagram-scraper` | Se entra por la página del hashtag del producto. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
 | **Apify: TikTok** | Conectada: `tiktok_source` en el mismo archivo, actor `clockworks/tiktok-scraper` | Busca por palabras, con proxy venezolano. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
 | **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
-| **Mercado Libre** | API oficial, sitio `MLV` | Sigue **403 sin token**: no hay cliente en vivo. `score_mercadolibre` en `app/lib/trust.py` puntúa el JSON de `/items` y `/users` sin llamar a la red |
+| **Mercado Libre** | Conectada: `mercadolibre_source` en `app/lib/sources/mercadolibre.py`, actor `sourabhbgp/mercadolibre-scraper` con `country: "VE"` | Es un puente hasta tener la API oficial: ver [abajo](#mercado-libre-por-ahora-con-un-actor) |
 | **Amazon + courier** | Actor `junglee/Amazon-crawler` y el cotizador de cada courier. Ver [Traerlo de USA](#traerlo-de-usa) | Sin `APIFY_TOKEN` la tool no llama a Amazon. El precio que compite es el total puesto en Venezuela |
 | **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta_ads_signals.py](../resources/meta_ads_signals.py)) |
 
@@ -75,12 +75,16 @@ Las dos están en `app/lib/sources/apify.py`: comparten el cliente, la caché y 
 
 | | Instagram | TikTok |
 |---|---|---|
-| Entrada | `directUrls` con `https://www.instagram.com/explore/tags/<hashtag>/` y `resultsType: posts` | `searchQueries` con el producto, `searchSection: /video` |
+| Entrada | **Dos puertas en paralelo**: la búsqueda por publicaciones (`scraping_solutions/instagram-boolean-search-scraper-posts-reels`, con `searchQuery` booleana) y la página del hashtag (`directUrls`, `resultsType: posts`) | `searchQueries` con el producto, `searchSection: /video` |
 | Hashtag | `_hashtag()` arma el tag del producto: "Harina PAN 1 kg" es `#harinapan`, "iPhone 15 128 GB" es `#iphone15`. Una cifra seguida de su unidad se cae: es la presentación, no el modelo | — |
 | Zona | `proxyCountryCode` no aplica: el hashtag es global y se filtra por el caption | `proxyCountryCode: "VE"` |
 | Seguidores | No vienen en una publicación: `followers` va en `None` | `authorMeta.fans` |
 
-`searchType: "hashtag"` **no** sirve para esto: devuelve el volumen del hashtag y los relacionados, no sus publicaciones. Por eso se usa la URL del hashtag.
+`searchType: "hashtag"` del actor oficial **no** sirve para esto: devuelve el volumen del hashtag y los relacionados, no sus publicaciones. Por eso esa puerta usa la URL del hashtag.
+
+**Por qué dos puertas.** El actor oficial no busca publicaciones por frase, y la página de un hashtag es global: una corrida real de `#iphone15` trajo 18 publicaciones de India, Tailandia, Brasil y Japón, y **ninguna** de un vendedor venezolano. El buscador booleano sí acepta `"iPhone 15" AND (Venezuela OR Caracas OR ...)`, así que el país entra en la consulta en vez de filtrarse después de pagar los resultados: la misma prueba devolvió 10 publicaciones y las 10 eran de tiendas venezolanas, 8 con su ciudad. El hashtag se queda porque alcanza publicaciones que el buscador no indexa. Las dos corren a la vez y son independientes: si una falla, la otra sigue, y sus publicaciones se leen igual porque `_from_search` les pone los nombres de campo del actor oficial.
+
+**La ciudad.** La búsqueda por publicaciones trae `locationName`, así que `merchant.zone` deja de ser "Venezuela" a secas y pasa a ser la ciudad real cuando la publicación la tiene.
 
 **Dos corridas, no una.** La búsqueda devuelve una publicación por cuenta, y con una sola no se
 pueden medir proporciones ni ritmo: el puntaje se quedaría bajo el 40 % de cobertura. Por eso, con
@@ -104,6 +108,8 @@ agregador al final del turno. El contrato y por qué funciona así están en
 - El monto tiene que estar escrito **con su moneda** ($, USD, Bs). Un número suelto, como un teléfono, no es un precio.
 - Si la publicación nombra el precio en dólares y en bolívares, manda el de dólares.
 - Si nombra **varios precios** en la misma moneda (un post con tres modelos), no se usa ninguno.
+- **Una cuota o una inicial no es un precio.** Media tienda venezolana publica "Con Cashea desde 230$ de inicial" de un equipo que cuesta el triple. Antes de buscar montos se cae toda línea que hable de pagar a plazos (`inicial`, `cuota`, `crédito`, `financia`, `abono`, `reserva`, `desde`, `Cashea`). Leer esa cifra como el precio es peor que no mostrar nada.
+- **La condición la declara la fuente**, porque ve el caption entero y a la búsqueda solo le llega el título: `Pre-Owned`, `preowned`, `seminuevo` y `usado` son usado; `reacondicionado` y `refurbished`, reacondicionado.
 - Sin precio, la oferta solo se guarda si el caption dice "precio al DM" (o inbox, interno, privado, whatsapp), y va con `price=None`.
 - La publicación tiene que nombrar el producto pedido (`matches_product` sobre el caption), si no, se descarta.
 
@@ -155,6 +161,77 @@ El impuesto de Liberty es el que el cotizador devuelve (`taxSource: "cotizado"`)
 La oferta sale con `import-v1` en `stage: "parcial"`. Al cerrar, `price_anomaly` compara el precio de Amazon con la mediana del mismo ASIN. No mira el precio venezolano: si lo mirara, una importación más barata que las tiendas de aquí saldría con puntaje 0. Con un solo precio de ese ASIN no hay mediana y la señal queda sin dato. Vendido y enviado por Amazon usa el atajo de 95. El puntaje del courier (`courier_trust`) queda vacío: `courier-v1` no se calculó porque sus pesos siguen sin confirmar. Vacío no es cero.
 
 No se guardan las cotizaciones. Postgres hoy guarda la conversación del agente, no esta tarifa.
+
+## La confianza de una tienda web
+
+`app/lib/sources/web_trust.py` arma el puntaje parcial `web-v1` de cada oferta de la web abierta, y
+`app/agents/open_web_trust.py` se lo pega a la oferta como contrato. Lo cierra el agregador, igual
+que en los demás canales ([contracts.md](contracts.md#el-puntaje-de-confianza-de-una-fuente)).
+
+Mide lo que se sabe del dominio **sin pagar otra lectura de la página**:
+
+| Señal | Peso | De dónde sale | Cuesta |
+|---|---|---|---|
+| `domain_age` | 15 | RDAP (`rdap.org/domain/<dominio>`) | Gratis, sin API key |
+| `contact` | 10 | Si el host está en `cadenas.py`: una cadena revisada a mano es una empresa con contacto verificable | Gratis |
+| `https` | 5 | La URL | Gratis |
+| `mx` | 5 | DNS sobre HTTPS (`dns.google`) | Gratis, sin API key |
+| `risk_language` | 5 | El helper compartido de `trust.py` | Gratis |
+
+Las dos consultas de red se hacen **una vez por host**, en paralelo y con 4 segundos de tope, y se
+recuerdan un día. Lo que no se pudo averiguar queda en `None`: no cuenta y su peso se reparte.
+
+Una cadena conocida llega a 0,40 de cobertura sola; una tienda que no está en `cadenas.py` llega a
+0,30 y necesita que el agregador llene `price_anomaly` (20) para pasar el mínimo. `linked_socials`
+(10) lo llena el agregador con el puntaje ya cerrado de las redes del mismo comercio, que existe
+desde que Instagram y TikTok emiten el contrato.
+
+**Lo que falta**: `contact` completo (RIF, dirección), `policies` y `catalog` piden otra extracción
+con Firecrawl, y `safe_browsing` una `GOOGLE_SAFE_BROWSING_KEY`.
+
+**Dos banderas rojas** se conservan de la revisión anterior, ahora dentro del puntaje: un dominio
+que imita a una marca sin serlo (`iphone-venezuela.com`) y un anuncio que en realidad vende un
+accesorio. La tercera que había —precio más de 50 % bajo el resto— **no se repite aquí**: es
+`price_anomaly`, y el agregador ya la aplica con ese mismo umbral.
+
+## Mercado Libre: por ahora, con un actor
+
+La API oficial responde **403 hasta en `/sites/MLV`**: hay que registrar una app gratis en
+developers.mercadolibre.com.ve para tener `client_id` y `client_secret`. El endpoint de token
+acepta `client_credentials`, así que no haría falta OAuth con navegador.
+
+Mientras eso no exista, el canal entra por `sourabhbgp/mercadolibre-scraper` con `country: "VE"`.
+Leer el sitio directo no es opción: `listado.mercadolibre.com.ve` devuelve su verificación
+anti-bots, y no se intenta saltarla (por eso `mercadolibre.` y `tucarro.` están en `_SKIP_HOSTS`
+de la web abierta).
+
+**MLV tiene catálogo**, contra lo que se podía suponer: una corrida real de "iPhone 15" devolvió 15
+avisos, los 15 de Venezuela y todos con precio en dólares. Pero su relevancia es floja —entre los 15
+había varios Xiaomi Redmi—, así que el filtro `matches_product` no es opcional.
+
+**`scrapeProductDetails` es obligatorio.** Sin abrir la ficha no vienen la reputación del vendedor
+ni la garantía, y el puntaje se queda en 15 % de cobertura. Con detalle, 15 resultados salieron por
+unos 3 céntimos.
+
+**El puntaje.** `score_mercadolibre` ya existía y lee la forma de la API oficial, así que la fuente
+le traduce la del actor (`sellerReputation` → `seller_reputation.level_id`, `sellerPowerStatus` →
+`power_seller_status`). Lo que el actor no trae queda en `None`, no cuenta y su peso se reparte:
+
+| Señal | Peso | ¿La trae el actor? |
+|---|---|---|
+| `thermometer` | 15 | Sí (`5_green`, `2_orange`…) |
+| `power_seller` | 5 | Sí (`silver`, `gold`…) |
+| `completeness`, `warranty`, `risk_language` | 15 | Sí |
+| `sales_volume`, `negative_ratings`, `account_age`, `location` | 35 | **No**: solo la API oficial |
+
+Un vendedor con reputación llega a 35 % de cobertura, y a 55 % cuando el agregador llena
+`price_anomaly`. Cuando exista el token, la fuente se reemplaza y `score_mercadolibre` no cambia.
+
+**Los términos de servicio.** Scrapear Mercado Libre va contra sus términos, y que lo haga un actor
+de terceros no cambia eso. La API es la vía sancionada: para una demo el riesgo es bajo, pero si
+esto va a producción de verdad, registrar la app deja de ser opcional.
+
+No necesita variable nueva: usa `APIFY_TOKEN`, el mismo de Instagram y TikTok.
 
 ## Puntaje de confianza por fuente
 
