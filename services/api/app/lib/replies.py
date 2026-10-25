@@ -15,7 +15,10 @@ from sqlalchemy import Column, Float, MetaData, String, Table, insert, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-LEASE_SECONDS = 120
+# Por encima de routes.whatsapp.TURN_TIMEOUT_S más lo que tarde el envío. Si el plazo vence
+# antes de que el turno termine, el reintento de la cola se lleva la reserva de un turno que
+# todavía corre: lo da por hecho con un 200 y esa respuesta ya no se reintenta nunca.
+LEASE_SECONDS = 240
 
 _metadata = MetaData()
 _replies = Table(

@@ -34,6 +34,13 @@ MAX_ATTEMPTS = int(os.environ.get("TASKS_MAX_ATTEMPTS", "5"))
 # Las pruebas lo ponen en 0. Kapso puede bufferar 5 s; esto cubre el caso local.
 QUIET_S = 1.5
 QUIET_CAP_S = 4.0
+
+# Cloud Run corta la request a los 300 s. Sin tope propio, un turno que se cuelga se lleva
+# ese plazo entero: la cola ya dio la tarea por hecha y la persona se queda con el indicador
+# de "escribiendo" encendido, sin respuesta y sin reintento. Cortar antes y avisar vale más
+# que el silencio. El plazo de replies.LEASE_SECONDS tiene que quedar por encima de esto.
+TURN_TIMEOUT_S = float(os.environ.get("TURN_TIMEOUT_S", "120"))
+TIMEOUT_REPLY = "La búsqueda está tardando más de lo normal. Dime el producto otra vez, por favor."
 _inbox: dict[str, list[tuple[str, str | None, str]]] = {}
 _running: set[str] = set()
 
@@ -87,6 +94,9 @@ async def _post_message(phone_number_id: str, payload: dict[str, Any]) -> None:
             headers={"X-API-Key": os.environ["KAPSO_API_KEY"]},
             json=payload,
         )
+        if response.is_error:
+            # Kapso dice en el cuerpo qué campo rechazó. Sin esto un 400 es solo silencio.
+            log.error("kapso respondió %s: %s", response.status_code, response.text[:500])
         response.raise_for_status()
 
 
@@ -259,7 +269,13 @@ async def _drain(sender: str) -> None:
         await _show_typing(phone_number_id, last_id)
         typing = _keep_typing_alive(phone_number_id, last_id)
         try:
-            answer = await ask_prais(f"whatsapp:{sender}", text, _acknowledge(phone_number_id, sender))
+            answer = await asyncio.wait_for(
+                ask_prais(f"whatsapp:{sender}", text, _acknowledge(phone_number_id, sender)),
+                TURN_TIMEOUT_S,
+            )
+        except TimeoutError:
+            log.warning("whatsapp turn timed out after %ss", TURN_TIMEOUT_S)
+            answer = PraisAnswer(text=TIMEOUT_REPLY)
         finally:
             await _stop_typing(typing)
         if _inbox.get(sender):
@@ -271,7 +287,16 @@ async def _drain(sender: str) -> None:
             await _post_message(phone_number_id, payload)
         except Exception:
             log.exception("whatsapp send failed")
-            return
+            if payload.get("type") == "text":
+                return
+            # El carrusel se fue sin salir (un título largo, un campo de más). El veredicto
+            # en texto plano vale más que dejar a la persona sin nada.
+            payload = _text_payload(sender, _result_body(answer))
+            try:
+                await _post_message(phone_number_id, payload)
+            except Exception:
+                log.exception("whatsapp text fallback failed")
+                return
         for message_id in pending_ids:
             if message_id:
                 await replies.complete(message_id, payload)

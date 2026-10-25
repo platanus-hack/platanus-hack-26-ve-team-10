@@ -39,6 +39,7 @@ gcloud run deploy "$API_SERVICE" \
   --min-instances="$MIN_INSTANCES" \
   --max-instances="$API_MAX_INSTANCES" \
   --memory="$API_MEMORY" \
+  --concurrency="$API_CONCURRENCY" \
   --port=8080 \
   --no-cpu-throttling \
   --allow-unauthenticated

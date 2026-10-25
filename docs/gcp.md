@@ -13,7 +13,7 @@ El backend se despliega antes que la web, porque la web necesita su URL para con
 
 Configuración del backend:
 - `--no-cpu-throttling`: la CPU queda asignada mientras la instancia vive. El webhook ya no depende de eso (encola y responde), pero cada turno del agente tarda varios segundos y así no se corta; sin cola, en local, el webhook sí lo necesita.
-- `max-instances=4` y `1Gi` de memoria: varias copias pueden atender a la vez porque la conversación está en Postgres. `min-instances=0`, así que se apaga cuando no hay tráfico. El día de la demo, `MIN_INSTANCES=1 ./infra/50-deploy-api.sh` deja una copia despierta; después, `MIN_INSTANCES=0 ./infra/50-deploy-api.sh`.
+- `max-instances=4`, `2Gi` de memoria y `concurrency=8`: varias copias pueden atender a la vez porque la conversación está en Postgres. Con `1Gi` y las 80 peticiones a la vez que trae Cloud Run por defecto, un puñado de turnos simultáneos (cada uno baja fotos y páginas) llenaba la memoria y la instancia moría en medio de la búsqueda. `min-instances=0`, así que se apaga cuando no hay tráfico. El día de la demo, `MIN_INSTANCES=1 ./infra/50-deploy-api.sh` deja una copia despierta; después, `MIN_INSTANCES=0 ./infra/50-deploy-api.sh`.
 - Gemini en Vertex AI: `GOOGLE_GENAI_USE_VERTEXAI=true`, `GOOGLE_CLOUD_PROJECT` y `GOOGLE_CLOUD_LOCATION`. La cuenta de servicio del backend tiene `Vertex AI User`, sin API key.
 - Una cuenta de servicio por servicio, con permisos mínimos. La de la web no tiene roles ni secretos.
 - Cola de WhatsApp (ver abajo): `TASKS_QUEUE`, `TASKS_LOCATION`, `TASKS_MAX_ATTEMPTS`, `TASKS_OIDC_SA` y `SELF_URL`. Las fija `infra/50-deploy-api.sh`.
