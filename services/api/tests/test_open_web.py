@@ -92,10 +92,46 @@ class FakeFirecrawl:
         return page[kind]
 
 
+class CountingFirecrawl(FakeFirecrawl):
+    """Cuenta cuántos scrapes hay a la vez y guarda el timeout que recibió cada uno."""
+
+    def __init__(self, pages, **kw):
+        super().__init__(pages, **kw)
+        self.in_flight = 0
+        self.peak = 0
+        self.timeouts: list[int] = []
+
+    async def scrape(self, url, *, formats, only_main_content, timeout):
+        self.in_flight += 1
+        self.peak = max(self.peak, self.in_flight)
+        self.timeouts.append(timeout)
+        try:
+            return await super().scrape(
+                url, formats=formats, only_main_content=only_main_content, timeout=timeout
+            )
+        finally:
+            self.in_flight -= 1
+
+
+class RateLimitedOnce:
+    """Primera lectura 429, la segunda responde. Es lo que hace el límite del equipo."""
+
+    def __init__(self, page):
+        self.page = page
+        self.tries = 0
+
+    def __getitem__(self, kind):
+        self.tries += 1
+        if self.tries == 1:
+            raise firecrawl.RateLimitError("429")
+        return self.page[kind]
+
+
 class OpenWebTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         firecrawl._cache.clear()
         firecrawl._page_cache.clear()
+        firecrawl._gates.clear()
         for patcher in (
             mock.patch.dict(os.environ, {"FIRECRAWL_API_KEY": "fake"}),
             mock.patch.object(firecrawl, "get_rate", mock.AsyncMock(return_value=RATE)),
@@ -343,6 +379,43 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
         trovit = "https://carros.trovit.co.ve/carros-usados/chevrolet-aveo"
         ebay = "https://ve.ebay.com/b/Apple-iPhone-15/9355/bn_7121790163"
         client = FakeFirecrawl({url: blocked_page(url) for url in (tucarro, trovit, ebay)})
+        result = await self.run_search(client)
+        self.assertEqual(client.scraped, [])
+        self.assertEqual(result["failedSources"], [])
+
+    async def test_no_more_scrapes_at_once_than_the_plan_allows(self):
+        # Firecrawl limita por equipo: pedir de más no trae más datos, devuelve 429
+        # y esa página se pierde entera. El cupo local tiene que seguir al del plan.
+        urls = [f"https://tienda{n}.com.ve/aveo" for n in range(6)]
+        client = CountingFirecrawl({url: product_page(url, 5000) for url in urls}, slow=urls)
+        with mock.patch.object(firecrawl, "SCRAPE_CONCURRENCY", 2):
+            await self.run_search(client)
+        self.assertLessEqual(client.peak, 2)
+        # Y las seis se leen igual: el cupo las encola, no las descarta.
+        self.assertEqual(len({url for url, _kind in client.scraped}), 6)
+
+    async def test_a_rate_limited_page_is_read_again_instead_of_lost(self):
+        url = "https://tienda.com.ve/aveo"
+        page = product_page(url, 5000, title="Chevrolet Aveo", brand="Chevrolet")
+        client = FakeFirecrawl({url: RateLimitedOnce(page)})
+        with mock.patch.object(firecrawl, "RATE_RETRY_S", 0):
+            result = await self.run_search(client)
+        self.assertEqual(len([item for item in client.scraped if item[0] == url]), 2)
+        self.assertEqual(len(result["offers"]), 1)
+
+    async def test_one_page_cannot_take_the_whole_budget(self):
+        # El reloj de la búsqueda lo fija la página más lenta: sin tope por página,
+        # una sola se lleva el turno entero aunque el presupuesto total sea amplio.
+        url = "https://lenta.com.ve/aveo"
+        client = CountingFirecrawl({url: product_page(url, 5000)})
+        with mock.patch.object(firecrawl, "PAGE_BUDGET_S", 3):
+            await self.run_search(client, budget_s=45)
+        self.assertTrue(client.timeouts)
+        self.assertLessEqual(max(client.timeouts), 3 * 1000)
+
+    async def test_reddit_is_not_scraped(self):
+        url = "https://www.reddit.com/r/venezuela/comments/x/aveo"
+        client = FakeFirecrawl({url: blocked_page(url)})
         result = await self.run_search(client)
         self.assertEqual(client.scraped, [])
         self.assertEqual(result["failedSources"], [])
