@@ -14,9 +14,13 @@ Kapso exige que el webhook responda en menos de 10 segundos. Por eso la ruta res
 
 ## Qué lee el agente
 
-El texto de la persona llega al agente. Un toque en una lista vieja también: Kapso lo manda como `interactive` con `list_reply.title` (y `button_reply.title` para un botón). Ese título es el mensaje.
+El texto de la persona llega al agente tal cual, junto con lo que esa conversación ya dijo. La sesión es la de ADK (`whatsapp:{número}`): los turnos quedan en los eventos, y un nombre concreto queda en `session.state` como apunte (`product`). Un mensaje que no nombra un producto no borra ese apunte. "El último" no se convierte en una frase para buscar.
 
-Hay dos recetas. Si el mensaje trae un link, se lee el nombre del producto en esa página y se compara ese nombre: no se vuelve a preguntar cuál modelo es. Si la persona empieza de cero y el nombre ya se puede buscar, se busca. Si es vago, el agente pregunta una sola cosa, en una frase. La misma pregunta no se manda dos veces: a la segunda, se busca con lo que la persona ya dijo.
+Varias burbujas seguidas son un turno. El webhook espera un silencio corto (`QUIET_S`, 1,5 s, tope 4 s) antes de llamar al agente, y un mensaje que llega mientras se arma la respuesta se suma a ese mismo turno. Kapso puede bufferar 5 segundos además; no hace falta para que esto funcione.
+
+Cuando empieza el turno, el webhook marca el mensaje como leído y muestra que Prais está escribiendo (`typing_indicator` en el POST de mensajes de Kapso). Eso no es una tool del agente: si el modelo enviara el WhatsApp, se saltaría las tarjetas. El agente no tiene tools de Kapso. La historia del hilo ya está en la sesión de ADK; pedirla otra vez a Kapso solo agrega una vuelta.
+
+Hay dos recetas. Si el mensaje trae un link, se lee el nombre del producto en esa página y se compara ese nombre: no se vuelve a preguntar cuál modelo es. Si la persona empieza de cero y el nombre ya se puede buscar, se busca. Si es vago y el hilo tampoco lo dijo, el agente pregunta una sola cosa, en una frase. La misma pregunta no se manda dos veces. Una duda ("el 17 o el 18", "el último") no se busca como si fuera el nombre del producto.
 
 No hay una lista de modelos armada en el código. Si el agente pregunta, la pregunta sale en texto. Cuando hay dos o más ofertas con precio, la respuesta es el carrusel. Cuando hay una sola, es una tarjeta con el botón para abrirla. El producto de la conversación queda en el estado de la sesión de ADK (`product`). Un mensaje que llega después ("el último", "el que salió") no borra ese producto y no dispara "¿cuál modelo buscas?".
 

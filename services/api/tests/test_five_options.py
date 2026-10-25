@@ -206,6 +206,7 @@ class ReplyTests(unittest.IsolatedAsyncioTestCase):
             "message": {"type": "text", "from": "5801", "text": {"body": "harina pan"}},
         }
         with (
+            mock.patch("app.routes.whatsapp.QUIET_S", 0),
             mock.patch("app.routes.whatsapp.ask_prais", fake),
             mock.patch("app.routes.whatsapp._post_message", capture),
             mock.patch("app.agents.listing.marked_product_image", boom),

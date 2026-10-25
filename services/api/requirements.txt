@@ -12,3 +12,4 @@ requests==2.34.2
 firecrawl==4.54.0
 apify-client==3.3.0
 pillow==12.2.0
+aiosqlite==0.22.1

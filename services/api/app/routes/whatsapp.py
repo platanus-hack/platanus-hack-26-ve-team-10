@@ -30,6 +30,10 @@ MAX_ATTEMPTS = int(os.environ.get("TASKS_MAX_ATTEMPTS", "5"))
 
 # Una persona, un turno. Los mensajes que llegan mientras se arma la respuesta
 # se suman y sale una sola contestación, no una búsqueda por mensaje.
+# QUIET_S espera un silencio corto para que dos burbujas seguidas sean ese turno.
+# Las pruebas lo ponen en 0. Kapso puede bufferar 5 s; esto cubre el caso local.
+QUIET_S = 1.5
+QUIET_CAP_S = 4.0
 _inbox: dict[str, list[tuple[str, str | None, str]]] = {}
 _running: set[str] = set()
 
@@ -118,12 +122,38 @@ async def _outbound(sender: str, answer: Any) -> dict[str, Any]:
     return _text_payload(sender, clamp_summary(answer.text))
 
 
+async def _show_typing(phone_number_id: str, message_id: str | None) -> None:
+    """Marca leído y muestra que Prais escribe. Lo hace el webhook, no el modelo.
+
+    Kapso documenta el indicador en el mismo POST de mensajes, junto con status read.
+    Una tool de envío en el agente se saltaría las tarjetas.
+    """
+    if not message_id or not os.environ.get("KAPSO_API_KEY"):
+        return
+    try:
+        await _post_message(
+            phone_number_id,
+            {
+                "messaging_product": "whatsapp",
+                "status": "read",
+                "message_id": message_id,
+                "typing_indicator": {"type": "text"},
+            },
+        )
+    except Exception:
+        log.exception("whatsapp typing failed")
+
+
 async def _drain(sender: str) -> None:
     """Responde cuando ya no queda texto nuevo de esta persona."""
     pending_ids: list[str | None] = []
     phone_number_id = ""
     said: list[str] = []
+    waited = 0.0
     while True:
+        if QUIET_S > 0 and waited < QUIET_CAP_S:
+            await asyncio.sleep(QUIET_S)
+            waited += QUIET_S
         batch = _inbox.pop(sender, [])
         if not batch and not said:
             return
@@ -131,7 +161,10 @@ async def _drain(sender: str) -> None:
             phone_number_id = batch[-1][0]
             pending_ids.extend(item[1] for item in batch)
             said.extend(item[2] for item in batch)
+        if _inbox.get(sender) and waited < QUIET_CAP_S:
+            continue
         text = "\n".join(said)
+        await _show_typing(phone_number_id, next((item for item in reversed(pending_ids) if item), None))
         answer = await ask_prais(f"whatsapp:{sender}", text)
         if _inbox.get(sender):
             continue
@@ -147,6 +180,7 @@ async def _drain(sender: str) -> None:
             if message_id:
                 await replies.complete(message_id, payload)
         pending_ids = []
+        said = []
         if not _inbox.get(sender):
             return
 

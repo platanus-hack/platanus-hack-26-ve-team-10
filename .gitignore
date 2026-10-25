@@ -47,6 +47,7 @@ next-env.d.ts
 # configuración personal de Claude Code
 # python (services/api)
 .venv/
+.sessions.db
 __pycache__/
 *.pyc
 .ruff_cache/

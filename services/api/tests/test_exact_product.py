@@ -73,9 +73,7 @@ class AgentReceivesTheMessageTests(unittest.IsolatedAsyncioTestCase):
         with self._runner(), self._no_network():
             for message in messages:
                 await ask_prais(f"person-{message}", message)
-        self.assertIn("comprar un iphone 17pro", self.heard[0])
-        self.assertIn("Producto ya fijado", self.heard[0])
-        self.assertEqual(self.heard[1:], list(messages[1:]))
+        self.assertEqual(self.heard, list(messages))
 
     async def test_a_link_is_compared_by_the_product_on_the_page(self):
         async def name(_url: str) -> str:
@@ -100,8 +98,8 @@ class AgentReceivesTheMessageTests(unittest.IsolatedAsyncioTestCase):
             first = await ask_prais("twice", "un iphone")
             second = await ask_prais("twice", "el normal")
         self.assertEqual(first.text, "¿Cuál iPhone buscas?")
-        self.assertEqual(second.text, "Sigo con lo que ya me dijiste.")
-        self.assertEqual(searched, ["el normal"])
+        self.assertEqual(second.text, "Dime el nombre y lo busco.")
+        self.assertEqual(searched, [])
 
     async def test_latest_model_does_not_ask_which_model(self):
         searched: list[str] = []
@@ -125,6 +123,11 @@ class ProductMemoryTests(unittest.TestCase):
         self.assertEqual(named, "iphone 18")
         self.assertEqual(track_product(named, "el ultimo modelo que salio"), "iphone 18")
 
+    def test_latest_without_a_name_is_not_a_search_phrase(self):
+        self.assertIsNone(track_product(None, "el ultimo modelo por favor"))
+        self.assertIsNone(track_product(None, "el 17 o el 18 no me acuerdo cual es"))
+        self.assertIsNone(track_product("iphone 17", "el 17 o el 18 no me acuerdo cual es"))
+
 
 class SearchGateTests(unittest.TestCase):
     def test_the_product_name_does_not_block_the_search(self):
@@ -137,8 +140,25 @@ class SearchGateTests(unittest.TestCase):
         self.assertEqual(again["listings"], [])
         self.assertEqual(again["notice"], "This search already ran for this message. Use those listings.")
 
+    def test_an_unresolved_phrase_is_not_searched_and_does_not_use_the_turn(self):
+        tool = SimpleNamespace(name="find_listings_open_web")
+        context = SimpleNamespace(invocation_id="vague", session=SimpleNamespace(user_id="somebody"))
+        blocked = _before_search(tool, {"product": "el último iPhone"}, context)
+        assert blocked is not None
+        self.assertEqual(blocked["listings"], [])
+        self.assertIn("not a product name", blocked["notice"])
+        concrete = _before_search(tool, {"product": "iPhone 17"}, context)
+        self.assertIsNone(concrete)
+
 
 class WhatsAppTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self._quiet = mock.patch("app.routes.whatsapp.QUIET_S", 0)
+        self._quiet.start()
+
+    def tearDown(self):
+        self._quiet.stop()
+
     def test_text_and_a_tapped_row_are_the_message(self):
         self.assertEqual(
             _inbound_text(_text_event("5800", "comprar un iphone 17pro")),
@@ -176,7 +196,7 @@ class WhatsAppTests(unittest.IsolatedAsyncioTestCase):
             await _reply(_list_reply("5800", "iPhone 17 Pro", "iphone-17-pro"))
 
         self.assertIn("comprar un iphone 17pro", heard[0])
-        self.assertIn("iphone 17pro", heard[0])
+        self.assertNotIn("Producto ya fijado", heard[0])
         self.assertEqual(heard[1], "toyota corolla en valencia")
         self.assertIn("iPhone 17 Pro", heard[2])
         self.assertEqual([item["type"] for item in posted], ["text", "text", "text"])
