@@ -38,8 +38,44 @@ Una oferta de importación no sale de `search_offers`. La arma `find_listings_im
 3. Agrégala a la lista de `sources/__init__.py`. Es la única línea que tocas fuera de tu archivo.
 4. Los ids de comercio llevan el prefijo de tu fuente (`ig:bodegon`, `ml:12345`), para no chocar con otras fuentes.
 5. Tu fuente solo trae datos. No filtres por zona, no conviertas monedas ni ordenes: eso lo hace `search_offers` para todas.
+6. Si sabes puntuar tu canal, devuelve también `SourceResult.trust[merchant_id]`. Ver abajo.
 
 Las particularidades de cada fuente están en [sources.md](sources.md).
+
+## El puntaje de confianza de una fuente
+
+Un especialista **mide solo lo que ve su canal y nunca cierra**. Devuelve un `TrustScore` en etapa
+`parcial` (sin puntaje y con veredicto `sin_datos`) y el agregador lo cierra al final del turno,
+porque `price_anomaly` necesita la mediana de todas las fuentes y eso ninguna fuente lo sabe sola.
+
+Tres cosas impiden que cada fuente invente su propio puntaje:
+
+1. **El catálogo es el contrato.** `CATALOGS` en `contracts.py` declara las señales de cada canal,
+   su peso y quién la llena. `build_signals` rechaza una clave que no esté en el catálogo, y el
+   validador de `TrustScore` rechaza una lista que no cuadre con él, pesos que no sumen 100, una
+   cobertura mal calculada o una etapa `final` con señales en `pending`. No es una convención: no
+   compila.
+2. **El especialista no cierra.** Siempre `stage="parcial"`. Cerrar es del agregador.
+3. **Lo que es igual en todos los canales vive en `trust.py`**, no en cada fuente: `risk_language`
+   es el mismo en una bio de Instagram y en una descripción de Mercado Libre.
+
+El camino, de punta a punta:
+
+```
+fuente            search_offers              agente
+build_signals  →  contractOffer/Merchant  →  close_listings  →  tarjeta
+compute_trust     (precio, tasa, USD)        aggregate + finalize
+stage="parcial"                              stage="final", veredicto y estrellas
+```
+
+Lo que mide cada canal está en el borrador de `resources/<canal>_trust_score.py`: las fórmulas y
+los umbrales se portan de ahí, no se inventan. Lo que la fuente no trae queda en `None`: no cuenta
+y su peso se reparte entre las señales que sí hay. Con menos del 40 % del peso medido el veredicto
+es `sin_datos`, que es la respuesta honesta cuando no se sabe.
+
+Una fuente que todavía no puntúa su canal deja `trust` vacío y su oferta sigue mostrando el entero
+provisional de `prices.py`. Las dos formas conviven: `close_listings` cierra lo que trae contrato y
+deja pasar el resto.
 
 ## Decisión pendiente: la forma de una oferta
 

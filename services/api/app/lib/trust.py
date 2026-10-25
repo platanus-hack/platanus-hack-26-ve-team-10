@@ -174,6 +174,17 @@ def anomaly_from_deviation(deviation: float) -> tuple[float, str, bool]:
     return value, f"Precio {percent}% bajo el mercado", value == 1
 
 
+def risk_language(*texts: str | None) -> Measured:
+    """La señal `risk_language`, igual en los seis canales.
+
+    Vive aquí y no en cada fuente para que "lenguaje de riesgo" signifique lo mismo en una bio de
+    Instagram, en el texto de un TikTok y en la descripción de Mercado Libre.
+    """
+    joined = "\n".join(text for text in texts if text)
+    hits = [label for pattern, label in _RISK_PATTERNS if pattern.search(joined)]
+    return Measured(clamp(1 - len(hits) / 3), " · ".join(hits) or None, not hits)
+
+
 def build_signals(formula: str, values: dict[str, Measured] | None = None) -> list[TrustSignal]:
     """Arma la lista completa del canal. Lo que no viene queda null o pending."""
     provided = values or {}
@@ -430,8 +441,7 @@ def score_mercadolibre(
         f"Garantía: {warranty}" if has_warranty else "Sin garantía declarada",
         has_warranty,
     )
-    hits = [label for pattern, label in _RISK_PATTERNS if pattern.search(f"{item.get('title') or ''}\n{text}")]
-    values["risk_language"] = Measured(clamp(1 - len(hits) / 3), " · ".join(hits) or None, not hits)
+    values["risk_language"] = risk_language(item.get("title"), text)
     if price_deviation is None:
         values["price_anomaly"] = Measured("pending")
     else:

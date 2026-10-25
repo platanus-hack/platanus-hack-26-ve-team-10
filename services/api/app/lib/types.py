@@ -1,5 +1,8 @@
-from dataclasses import dataclass
-from typing import Literal, Protocol
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Literal, Protocol
+
+if TYPE_CHECKING:  # contracts.py importa Channel de aquí: la anotación va entre comillas
+    from app.lib.contracts import TrustScore
 
 Currency = Literal["USD", "VES"]
 Channel = Literal["instagram", "tiktok", "web", "mercadolibre", "facebook", "amazon", "importacion"]
@@ -101,6 +104,10 @@ class SearchQuery:
 class SourceResult:
     offers: list[Offer]
     merchants: list[Merchant]  # los comercios de esas ofertas; el id va con prefijo de la fuente, ej. "ig:bodegon"
+    # Puntaje de confianza por comercio, en el contrato de trust.py y siempre en etapa "parcial":
+    # la fuente mide solo lo que ve su canal y el agregador cierra. Una fuente que todavía no
+    # puntúa su canal lo deja vacío y su oferta sigue mostrando el entero provisional.
+    trust: "dict[str, TrustScore]" = field(default_factory=dict)
 
 
 class Source(Protocol):
