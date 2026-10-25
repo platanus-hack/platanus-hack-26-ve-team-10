@@ -1,6 +1,7 @@
 """Un reintento de WhatsApp reenvía la respuesta guardada y no vuelve a preguntar al agente."""
 
 import asyncio
+import os
 import unittest
 from unittest import mock
 
@@ -21,6 +22,7 @@ class WhatsappRetryTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         whatsapp._running.clear()
         whatsapp._inbox.clear()
+        whatsapp.QUIET_S = 0
         self.store = MemoryReplyStore()
         replies.set_store(self.store)
         self.asked: list[str] = []
@@ -45,6 +47,7 @@ class WhatsappRetryTests(unittest.IsolatedAsyncioTestCase):
         self._post.stop()
         self._cards.stop()
         replies.set_store(MemoryReplyStore())
+        whatsapp.QUIET_S = 1.5
         whatsapp._running.clear()
         whatsapp._inbox.clear()
 
@@ -88,3 +91,28 @@ class WhatsappRetryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.asked, ["17", "17\nel ultimo modelo"])
         self.assertEqual(len(self.sent), 1)
         self.assertEqual(self.sent[0]["text"]["body"], "17 el ultimo modelo")
+
+    async def test_two_quick_messages_are_one_turn(self) -> None:
+        whatsapp.QUIET_S = 0.25
+        whatsapp.QUIET_CAP_S = 1
+        first = asyncio.create_task(whatsapp._reply(_event("q1", "Hola")))
+        await asyncio.sleep(0.05)
+        await whatsapp._reply(_event("q2", "quiero un iphone"))
+        await first
+        self.assertEqual(self.asked, ["Hola\nquiero un iphone"])
+        self.assertEqual(len(self.sent), 1)
+
+    async def test_typing_is_the_kapso_read_payload(self) -> None:
+        previous = os.environ.get("KAPSO_API_KEY")
+        os.environ["KAPSO_API_KEY"] = "test-key"
+        try:
+            await whatsapp._reply(_event("ty1", "iphone 15"))
+        finally:
+            if previous is None:
+                os.environ.pop("KAPSO_API_KEY", None)
+            else:
+                os.environ["KAPSO_API_KEY"] = previous
+        self.assertEqual(self.sent[0]["status"], "read")
+        self.assertEqual(self.sent[0]["message_id"], "ty1")
+        self.assertEqual(self.sent[0]["typing_indicator"], {"type": "text"})
+        self.assertEqual(self.sent[1]["text"]["body"], "abre la tienda ejemplo")

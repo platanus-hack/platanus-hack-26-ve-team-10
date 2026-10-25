@@ -71,18 +71,15 @@ _last_question: dict[str, str] = {}
 
 
 def track_product(previous: str | None, message: str) -> str | None:
-    """Lo que esta conversación ya sabe que hay que buscar. Vive en la sesión."""
+    """Nombre concreto que este mensaje confirma. None no borra el anterior.
+
+    "El último" no es un producto. No se inventa una frase para buscar.
+    """
     match = _MODEL.search(message)
     if match:
         return " ".join(match.group(1).split())
-    if _LATEST.search(message):
-        if previous:
-            return previous
-        if re.search(r"iphone", message, re.IGNORECASE):
-            return "el último iPhone"
-        return previous
     words = re.findall(r"[a-z0-9]+", message.lower())
-    if previous and len(words) <= 3:
+    if _LATEST.search(message) or (previous and len(words) <= 3):
         return previous
     return None
 
@@ -95,22 +92,30 @@ async def _session(user_id: str):
     return session
 
 
+async def _store_product(user_id: str, product: str) -> None:
+    """El apunte vive en session.state. Solo se escribe por un evento, como pide ADK."""
+    session = await _session(user_id)
+    previous = session.state.get("product")
+    if product == previous:
+        return
+    await runner.session_service.append_event(
+        session,
+        Event(
+            invocation_id="product",
+            author="system",
+            actions=EventActions(state_delta={"product": product}),
+        ),
+    )
+
+
 async def _remember(user_id: str, message: str) -> str | None:
-    """Guarda el producto en session.state, que es el cuaderno de este hilo."""
+    """Guarda un nombre concreto. Un mensaje que no lo trae no borra el anterior."""
     session = await _session(user_id)
     previous = session.state.get("product")
     previous = previous if isinstance(previous, str) and previous else None
     product = track_product(previous, message)
-    stored = product or ""
-    if stored != (previous or ""):
-        await runner.session_service.append_event(
-            session,
-            Event(
-                invocation_id="product",
-                author="system",
-                actions=EventActions(state_delta={"product": stored}),
-            ),
-        )
+    if product:
+        await _store_product(user_id, product)
     return product
 
 
@@ -155,14 +160,6 @@ async def _for_the_agent(message: str) -> tuple[str, str | None]:
     return f"{message}\n\n{note}", name
 
 
-def _search_text(message: str, named: str | None) -> str:
-    if named:
-        return named
-    without_link = _URL.sub(" ", message)
-    text = " ".join(without_link.split())
-    return text or message
-
-
 async def _search_instead(product: str) -> list[dict]:
     found = await search_open_web(product)
     listings = cards_from_offers(found.get("offers") or [])
@@ -204,16 +201,20 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
                 reply += "".join(part.text or "" for part in event.content.parts if not part.function_call)
     except Exception:
         log.exception("agent run failed")
-        return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings))
+        text = reply.strip()
+        if not text and listings:
+            text = "Encontré opciones. El resumen no salió; abre la primera."
+        return PraisAnswer(text=text or FALLBACK_REPLY, listings=close_listings(listings))
     return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings))
 
 
 async def ask_prais(user_id: str, message: str) -> PraisAnswer:
-    """El agente lee el mensaje. El producto queda en la sesión. Una pregunta ya hecha no se repite."""
+    """El agente lee el mensaje tal cual. La sesión de ADK es el hilo. Una pregunta ya hecha no se repite."""
     product = await _remember(user_id, message)
     brief, named = await _for_the_agent(message)
-    if product:
-        brief = f"{brief}\n\nProducto ya fijado en la sesión: {product}. Búscalo. No preguntes cuál modelo."
+    if named:
+        product = named
+        await _store_product(user_id, named)
     answer = await _run_agent(user_id, brief)
     if product and _WHICH_MODEL.search(answer.text):
         if not answer.listings:
@@ -226,13 +227,16 @@ async def ask_prais(user_id: str, message: str) -> PraisAnswer:
     key = _question_key(answer.text)
     previous = _last_question.get(user_id)
     if _is_question(answer.text) and _same_question(key, previous or ""):
-        product = _search_text(message, named)
-        if not answer.listings and product:
-            try:
-                answer.listings = await _search_instead(product)
-            except Exception:
-                log.exception("repeat question fell back to search")
-        answer.text = "Sigo con lo que ya me dijiste."
+        if product:
+            if not answer.listings:
+                try:
+                    answer.listings = await _search_instead(product)
+                except Exception:
+                    log.exception("repeat question fell back to search")
+            answer.text = f"Busco {product}."
+        else:
+            # No se busca la duda ("el 17 o el 18", "el normal"). Eso no es un producto.
+            answer.text = "Dime el nombre y lo busco."
         return answer
     if _is_question(answer.text) and key:
         _last_question[user_id] = key
