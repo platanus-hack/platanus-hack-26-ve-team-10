@@ -195,6 +195,21 @@ _LISTING_SEGMENTS = frozenset({
     "search", "busca", "busqueda",
 })
 
+# A classifieds portal puts several ads on one page (used cars, bikes, homes).
+# The match is a whole path segment: /auto/usado/chevrolet/aveo is a listing,
+# and /iphone-15-usado is still one product. The product format reads a single
+# product, so these pages use the same one-shot JSON scrape as a category.
+_CLASSIFIED_SEGMENTS = frozenset({
+    "usado", "usados", "usada", "usadas",
+    "clasificado", "clasificados",
+    "anuncio", "anuncios",
+    "auto", "autos",
+    "carro", "carros",
+    "vehiculo", "vehiculos",
+    "moto", "motos",
+    "inmueble", "inmuebles",
+})
+
 
 def _foreign_host(host: str) -> bool:
     if host.endswith(".ve"):
@@ -234,11 +249,11 @@ def _ve_group(url: str) -> int:
 
 
 def _is_listing(url: str) -> bool:
-    """A category or search page, which has no single product price."""
+    """A category, search, or classifieds page: several items, no single product price."""
     if _host(url).startswith("listado."):
         return True
     segments = [plain(segment) for segment in unquote(urlparse(url).path).split("/") if segment]
-    return any(segment in _LISTING_SEGMENTS for segment in segments)
+    return any(segment in _LISTING_SEGMENTS or segment in _CLASSIFIED_SEGMENTS for segment in segments)
 
 
 def _pick_urls(hits: list[Any]) -> list[tuple[str, str | None]]:
