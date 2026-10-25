@@ -18,7 +18,7 @@ El texto de la persona llega al agente. Un toque en una lista vieja también: Ka
 
 Hay dos recetas. Si el mensaje trae un link, se lee el nombre del producto en esa página y se compara ese nombre: no se vuelve a preguntar cuál modelo es. Si la persona empieza de cero y el nombre ya se puede buscar, se busca. Si es vago, el agente pregunta una sola cosa, en una frase. La misma pregunta no se manda dos veces: a la segunda, se busca con lo que la persona ya dijo.
 
-No hay una lista de modelos armada en el código. Si el agente pregunta, la pregunta sale en texto. Cuando hay ofertas con precio, la respuesta es el carrusel.
+No hay una lista de modelos armada en el código. Si el agente pregunta, la pregunta sale en texto. Cuando hay dos o más ofertas con precio, la respuesta es el carrusel. Cuando hay una sola, es una tarjeta con el botón para abrirla. Los mensajes que llegan mientras esa respuesta se está armando se leen juntos y sale una sola contestación.
 
 ## Carrusel de la comparación
 

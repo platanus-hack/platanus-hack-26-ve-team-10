@@ -236,8 +236,7 @@ async def carousel_message(to: str, listings: list[dict[str, Any]], summary: str
         cards.append({**item, "image_url": image})
         if len(cards) == TARGET_OPTIONS:
             break
-    # WhatsApp exige al menos dos tarjetas. Con una, o con ninguna, quien llama
-    # manda el texto: la respuesta no falla por no llegar a cinco.
+    # WhatsApp exige al menos dos tarjetas. Con una sola se manda una tarjeta suelta.
     if len(cards) < MIN_CARDS:
         return None
     return {
@@ -264,3 +263,33 @@ async def carousel_message(to: str, listings: list[dict[str, Any]], summary: str
             },
         },
     }
+
+
+async def one_offer_message(to: str, listings: list[dict[str, Any]], summary: str) -> dict[str, Any] | None:
+    """Una sola oferta con precio: una tarjeta con botón, no solo un párrafo."""
+    chosen = choose_options(listings)
+    if len(chosen) != 1:
+        return None
+    item = chosen[0]
+    image = item.get("image_url") if _https(item.get("image_url")) else None
+    if not image:
+        image = await marked_product_image(str(item.get("title") or "producto"))
+    interactive: dict[str, Any] = {
+        "type": "cta_url",
+        "body": {"text": clamp_summary(summary)},
+        "action": {
+            "name": "cta_url",
+            "parameters": {"display_text": "Ver oferta", "url": item["url"]},
+        },
+    }
+    if _https(image):
+        interactive["header"] = {"type": "image", "image": {"link": image}}
+    return {"messaging_product": "whatsapp", "to": to, "type": "interactive", "interactive": interactive}
+
+
+async def shopping_message(to: str, listings: list[dict[str, Any]], summary: str) -> dict[str, Any] | None:
+    """Carrusel si hay dos o más ofertas. Una tarjeta si hay una. Nada si no hay precio."""
+    many = await carousel_message(to, listings, summary)
+    if many is not None:
+        return many
+    return await one_offer_message(to, listings, summary)
