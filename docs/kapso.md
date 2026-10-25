@@ -12,13 +12,13 @@ Kapso exige que el webhook responda en menos de 10 segundos. Por eso la ruta res
 2. Copia el secreto del webhook a `KAPSO_WEBHOOK_SECRET` y la API key del proyecto a `KAPSO_API_KEY`. En local van en `services/api/.env`; en producción, en el secreto `prais-api-secrets` (`infra/40-secrets.sh`).
 3. Opcional: activa el buffering (5 segundos), para que los mensajes seguidos de una persona lleguen juntos.
 
-## Lista para precisar el producto
+## Lo que llega del chat
 
-Si el nombre todavía deja una elección que cambia el precio, Prais pregunta una sola cosa y no busca. En WhatsApp esa pregunta sale como lista: el cuerpo es la pregunta y cada fila es una opción. Para un iPhone 14 las filas son iPhone 14, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max y Me da igual. El botón dice "Ver opciones".
+El texto que escribe la persona, o el título de una fila que toca, llega al agente tal cual. Un catálogo no arma una lista de modelos antes.
 
 La persona puede tocar una fila o contestar con texto. El texto se lee como siempre, en `message.text.body`. Un toque llega como mensaje `interactive`. Kapso documenta ese sobre para `button_reply` (`interactive.button_reply.title`); la fila de una lista usa el mismo sobre con `interactive.type` `list_reply` y `list_reply.title`.
 
-La forma del envío es la de [Enviar listas](https://docs.kapso.ai/docs/whatsapp/send-messages/lists.md): `type: interactive`, `interactive.type: list`, `body.text`, `action.button` y `action.sections[].rows[]` con `id` y `title`. Se manda al mismo endpoint de mensajes, con `X-API-Key`. La arma `list_message` en `services/api/app/agents/listing.py` y la envía `services/api/app/routes/whatsapp.py`. Si la lista falla, la misma pregunta se manda en texto.
+Si una respuesta ya trae opciones, WhatsApp las manda como lista. La forma es la de [Enviar listas](https://docs.kapso.ai/docs/whatsapp/send-messages/lists.md): `type: interactive`, `interactive.type: list`, `body.text`, `action.button` y `action.sections[].rows[]` con `id` y `title`. Se manda al mismo endpoint de mensajes, con `X-API-Key`. La arma `list_message` en `services/api/app/agents/listing.py` y la envía `services/api/app/routes/whatsapp.py` solo cuando la respuesta trae `choices`. Si la lista falla, el mismo texto se manda como mensaje de texto. El ejemplo de abajo es la forma del mensaje, no una lista que el catálogo arme solo.
 
 ```json
 {
