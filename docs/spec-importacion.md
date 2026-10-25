@@ -2,7 +2,7 @@
 
 Cuando alguien pregunta por un producto, Prais busca en Venezuela **y en paralelo** averigua cuánto costaría comprarlo en Amazon y traerlo con un courier. Si traerlo sale mejor, esa opción compite en la misma lista que las tiendas locales.
 
-Este documento son **definiciones, no implementación**. Fija qué se construye y por qué; el cómo queda para los PRs. Se apoya en [contrato-confianza.md](contrato-confianza.md) (el puntaje), [tool-result.md](tool-result.md) (la forma del resultado) y [handoff-orquestador.md](handoff-orquestador.md) (el pipeline).
+Este documento son **definiciones, no implementación**. Fija qué se construye y por qué; el cómo queda para los PRs. El puntaje de confianza está en [contrato-confianza.md](contrato-confianza.md).
 
 ## 1. El caso
 
@@ -172,7 +172,7 @@ Offer
 
 Los dos actores van en `merchants[]` como `Merchant` normales, cada uno con su `trust`. El courier vive en `merchants/{id}` del store y acumula reputación entre consultas.
 
-**Lo que va en la tarjeta es el resumen; el `landed` completo y las señales viajan en el `ToolResult`**, que es lo que después consume el agente de almacenamiento. Es la misma separación de la decisión 3 del [contrato de confianza](contrato-confianza.md).
+**Lo que va en la tarjeta es el resumen.** El costo desglosado y las señales quedan en los datos de la oferta, no en el texto de la tarjeta. Es la misma separación de la decisión 3 del [contrato de confianza](contrato-confianza.md).
 
 ## 6. Confianza
 

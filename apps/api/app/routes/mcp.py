@@ -16,7 +16,7 @@ OPEN_WEB_BUDGET_S = 25
 
 
 # Salida estructurada: el cliente recibe este schema como outputSchema. Los nombres van en
-# camelCase, igual que la respuesta de search_offers (agents/contracts.md).
+# camelCase, igual que la respuesta de search_offers (docs/contracts.md).
 class Merchant(BaseModel):
     name: str
     channel: str = Field(description="web, mercadolibre, instagram, tiktok or facebook")

@@ -1,7 +1,7 @@
 # infra
 
 Scripts de `gcloud` para `prais-app`. Todo se configura en [config.sh](config.sh) y cada script es idempotente.
-Los requisitos del equipo están en [agents/gcp.md](../agents/gcp.md).
+Los requisitos del equipo están en [docs/gcp.md](../docs/gcp.md).
 
 Dos servicios de Cloud Run del monorepo:
 

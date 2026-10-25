@@ -2,7 +2,7 @@
 
 Kickoff de la feature de *trust scoring*. Define **un solo schema** que todos los especialistas llenan, aunque cada fuente mida cosas distintas, y qué hace el orquestador con eso.
 
-Complementa [tool-result.md](tool-result.md) (el `ToolResult` completo) y [handoff-orquestador.md](handoff-orquestador.md) (el pipeline). Las señales, los pesos y las fórmulas de cada canal **no se repiten aquí**: viven en `resources/*_trust_score.py`, para que no se desincronicen.
+Las señales, los pesos y las fórmulas de cada canal **no se repiten aquí**: viven en `resources/*_trust_score.py`, para que no se desincronicen.
 
 Es una **propuesta de contrato**: cambia `app/lib/types.py`, así que se avisa al equipo antes de mergear ([plan.md](plan.md)).
 
@@ -62,7 +62,7 @@ El orden importa: **no es una pasada plana**.
 
 ## 4. Modelos
 
-Pydantic 2, en `app/lib/contracts.py`, con la clase `Model` de [tool-result.md](tool-result.md) (JSON en camelCase, Python en `snake_case`, `extra="forbid"`).
+Pydantic 2, en `app/lib/contracts.py`. En JSON los nombres van en camelCase; en Python, en `snake_case`. Un campo que no está en el modelo es un error.
 
 ```python
 SignalFamily = Literal[
@@ -229,7 +229,7 @@ Meta Ads no aparece: no tiene `formula` ni señales propias. Produce un `Adjustm
 
 | Señal | La llena | Cómo |
 |---|---|---|
-| Todas menos las de abajo | **el especialista** | Con lo que trajo su fuente ([sources.md § Datos que el puntaje necesita](../agents/sources.md#datos-que-el-puntaje-necesita)) |
+| Todas menos las de abajo | **el especialista** | Con lo que trajo su fuente ([sources.md § Datos que el puntaje necesita](../docs/sources.md#datos-que-el-puntaje-necesita)) |
 | `price_anomaly` | **el agregador**, pasada 1–2 | `(precio − mediana) / mediana` del mismo `product_key` + `condition`, con **≥5 comparables** |
 | `photos_original` (Facebook) | **el agregador**, pasada 1–2 | Hash perceptual de `image_url`: en cuántos `entity_id` distintos aparece la misma foto |
 | `linked_socials` (web) | **el agregador**, pasada 3 | El mejor puntaje de las redes enlazadas del mismo `entity_id` |
@@ -402,12 +402,12 @@ El agregador saca la mediana (`$789` con 6 comparables), llena los dos `price_an
 |---|---|---|---|
 | 1 | **`app/lib/trust.py`**: el motor común (cobertura, banderas, veredicto, ajustes, `to_stars`) y sus tests | `lib/trust.py` | Los siete canales lo usan sin ramificaciones |
 | 2 | **`app/lib/contracts.py`**: los modelos de la sección 4 y las validaciones de la 9 | `lib/contracts.py` | Los tests de las reglas pasan |
-| 3 | **Un paso determinista entre los especialistas y la respuesta.** Hoy no existe: el orquestador es un `LlmAgent` con `AgentTool` y entre que vuelven los especialistas y que habla no corre código nuestro | `app/agents/` | Las 4 pasadas de la sección 3 corren sobre datos reales |
+| 3 | **Las 4 pasadas del agregador.** `ask_prais` ya junta el JSON de cada tool antes de responder. Falta correr encima las pasadas de la sección 3 | `app/agent.py` | Las 4 pasadas corren sobre datos reales |
 | 4 | **Portar un canal de punta a punta** (sugerido: Mercado Libre, que no depende de otros) | `lib/sources/`, `lib/trust.py` | Una oferta real llega con `stage="final"` y su veredicto |
 | 5 | **Campos nuevos en `Merchant`** para los datos crudos de cada fuente | `lib/types.py` | **Cambia contrato: avisar antes de mergear** |
 | 6 | **Hash perceptual de fotos** | `lib/trust.py`, `requirements.txt` | `photos_original` se puede llenar. Son 20 de los 100 puntos de Facebook |
 | 7 | **Corregir los umbrales del catálogo** de 70/50 a 75/50 | `lib/catalogo.py` | El texto no contradice al veredicto |
-| 8 | **`amazon` como `Channel`** | `lib/types.py` | `tool-result.md` ya lo incluye; `types.py` todavía no |
+| 8 | **`amazon` como `Channel`** | `lib/types.py` | `types.py` todavía no lo incluye |
 | 9 | **Resolución de identidad** (sección 7) | `lib/trust.py` | `linked_socials` se puede calcular |
 
 **Orden sugerido:** 1 y 2 primero (son la base y no dependen de nadie), después 3, y recién ahí 4. Los demás, por PR, cuando su canal lo pida.
@@ -415,6 +415,5 @@ El agregador saca la mediana (`$789` con 6 comparables), llena los dos `price_an
 ### Lo que este contrato no cubre
 
 - **Cómo viajan los datos** al orquestador: lo decide quien implemente.
-- **El agente de almacenamiento.** El `ToolResult` completo queda listo para él, pero no se implementa todavía.
+- **Guardar los puntajes entre consultas.** No hay almacén. Sin eso no se pueden contar reportes de un vendedor ni fotos repetidas de consultas anteriores.
 - **`reports`.** No hay forma de reportar un vendedor: la señal existe en el schema y sale `None`.
-- **La persistencia** entre consultas, que es lo que haría posible `reports` y las fotos repetidas históricas. Según el [roadmap](handoff-orquestador.md#13-roadmap), entra cuando las métricas la pidan.

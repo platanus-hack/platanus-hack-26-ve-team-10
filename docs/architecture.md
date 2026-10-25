@@ -10,11 +10,12 @@ WhatsApp ─► Kapso ─► apps/api (FastAPI)
                       ├─ POST /whatsapp  ─► Cloud Tasks ─► POST /internal/whatsapp-task ─► agente ADK ─┤
                       └─ /mcp            ──────────────────────────────────────────────────────────────┤
 ChatGPT / Claude ─────┘                                                     search_offers ─► fuentes ◄──┘
-                                                                            (app/lib)       hoy: datos de ejemplo
+                                                                            (app/lib)       registro: ejemplo
+                                                                                            web abierta: Firecrawl
 ```
 
-- **`apps/api`**: FastAPI con tres rutas, `/health` y una ruta interna para la cola. Cada ruta es un router en `app/routes/`, registrado en `app/main.py`.
-- **El orquestador** (`app/agents/orchestrator.py`, corrido desde `app/agent.py`) entiende qué producto o servicio comparar, pide el hallazgo a un especialista por fuente y resume. Los especialistas no hablan con la persona.
+- **`apps/api`**: FastAPI. Los routers de `app/routes/` (`chat`, `whatsapp`, `catalogo`, `images`) y `/health` se registran en `app/main.py`. `/mcp` va montado al final. La ruta interna de la cola vive en el router de WhatsApp.
+- **El orquestador** (`app/agents/orchestrator.py`, corrido desde `app/agent.py`) entiende qué producto o servicio comparar, llama una vez a la web abierta y resume. Es el único que habla con la persona. Las otras fuentes están en `PAUSED_TOOLS`.
 - **`search_offers`** (`app/lib/search.py`) llama en paralelo a todas las fuentes de `app/lib/sources/`, convierte, filtra y ordena. Los contratos entre las piezas están en [contracts.md](contracts.md).
 - **WhatsApp** pasa por una cola de Cloud Tasks (`app/lib/tasks.py`): el webhook valida la firma, encola un mensaje por tarea y responde 200; la cola llama a `/internal/whatsapp-task`, que corre el agente y responde por Kapso. Así hay reintentos y no se procesa dos veces el mismo mensaje. Detalle en [kapso.md](kapso.md).
 - **MCP** llama directo a `search_all` (las fuentes de `search_offers` más la web abierta con Firecrawl), sin el agente, porque quien pregunta ya es un asistente de IA. Devuelve salida estructurada. Detalle en [mcp-tool.md](mcp-tool.md).
@@ -31,14 +32,14 @@ ChatGPT / Claude ─────┘                                             
 | MCP con `search_prices` | Hecho |
 | Catálogo SEO (`/ve/...`) | Hecho con datos de ejemplo: 147 modelos, 28 categorías. Se indexa solo cuando hay ofertas reales: ver [seo-geo.md](seo-geo.md) |
 | Confianza del comercio | Fórmula inicial en `apps/api/app/lib/prices.py`. Los borradores por fuente (Instagram, Marketplace, TikTok, tiendas web, Mercado Libre, Amazon y Meta Ads) están en `resources/`, resumidos en [sources.md](sources.md#puntaje-de-confianza-por-fuente) |
-| Fuentes reales | Faltan: Firecrawl, Apify, Mercado Libre, Meta Ads |
+| Fuentes reales | Firecrawl está conectado, fuera del registro de `search_offers`. Faltan Apify, Mercado Libre y Meta Ads |
 | Deploy en GCP | Armado: `infra/` y `cloudbuild.*.yaml`. Cómo funciona, en [gcp.md](gcp.md) |
 
 ## Decisiones tomadas (2026-10-24)
 
 - Agente con ADK y Gemini, Kapso y MCP en el backend. Web en Next.js, solo interfaz.
 - Infraestructura en GCP, con Cloud Build para desplegar. Cloudflare solo maneja el DNS.
-- Un orquestador (`root_agent`) y un especialista por fuente de la pizarra ([resources/usaprais.com-agentic-architecture.pdf](../resources/usaprais.com-agentic-architecture.pdf)). El orquestador resume. Los especialistas le reportan a él y no hablan con la persona.
+- Un orquestador (`root_agent`) y una tool por fuente de la pizarra ([resources/usaprais.com-agentic-architecture.pdf](../resources/usaprais.com-agentic-architecture.pdf)). Hoy solo corre la web abierta. Las demás tools están escritas y apagadas. El orquestador resume y es el único que habla con la persona.
 - Las sesiones del agente viven en memoria. Si se pierden con un reinicio, no importa para la demo.
 
 > **Backend: de Fastify a Python (FastAPI).** El backend se reescribió en Python conservando los contratos: las mismas rutas (`/chat`, `/whatsapp`, `/mcp`, `/health`), las mismas formas de entrada y salida y las mismas reglas. Lo único que cambia son los nombres internos, por el lenguaje (`searchOffers` → `search_offers`, `askPrais` → `ask_prais`, `getRate` → `get_rate`, tipos en `snake_case`) y que una fuente ya no recibe un `AbortSignal`: la búsqueda la cancela a los 8 s. Lo decidió quien arma el backend y la infra. El detalle está en [contracts.md](contracts.md).

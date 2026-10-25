@@ -4,14 +4,13 @@ Antes de escribir código contra una API externa, consulta su documentación ofi
 
 ## Skills y plugins
 
-Se activan solos al abrir el repo con Claude Code. La primera vez, Claude Code pide instalar los plugins del proyecto.
+No viven en este repo. Cada quien los instala en su máquina.
 
 | Skill o plugin | Qué trae | Dónde |
 |---|---|---|
-| **Apify** (plugin oficial) | Skills para usar y construir actores, un agente que elige el actor correcto y el MCP de Apify (OAuth con `/mcp`) | `.claude/settings.json` |
-| **Firecrawl** (plugin oficial) | Skills para buscar en la web y en docs de desarrollo, y el MCP de búsqueda de Firecrawl. `/firecrawl:setup` pide la key | `.claude/settings.json` |
-| **Fastify** | Buenas prácticas de Fastify. **Ya no aplica**: el backend pasó a FastAPI (Python). Queda en el repo, sin uso | `.claude/skills/fastify/`, copiado de [mcollina/skills](https://github.com/mcollina/skills) (MIT) |
-| **Kapso** (oficial) | Integrar WhatsApp, automatizarlo y depurar webhooks | No viene en el repo, porque no tiene licencia publicada. Cada uno lo instala con `npx skills add gokapso/agent-skills` |
+| **Apify** (plugin oficial) | Skills para usar y construir actores, un agente que elige el actor correcto y el MCP de Apify (OAuth con `/mcp`) | Se instala en el agente, no en el repo |
+| **Firecrawl** (plugin oficial) | Skills para buscar en la web y en docs de desarrollo, y el MCP de búsqueda de Firecrawl | Se instala en el agente, no en el repo |
+| **Kapso** (oficial) | Integrar WhatsApp, automatizarlo y depurar webhooks | No tiene licencia publicada. Cada uno lo instala con `npx skills add gokapso/agent-skills` |
 
 Sin skill propio:
 - **Next.js:** su doc viene con la versión instalada (`node_modules/next/dist/docs/`), y está el MCP `next-devtools`.

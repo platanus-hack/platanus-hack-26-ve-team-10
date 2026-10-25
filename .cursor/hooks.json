@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "node scripts/check-docs.mjs --cursor",
+        "failClosed": true
+      }
+    ]
+  }
+}

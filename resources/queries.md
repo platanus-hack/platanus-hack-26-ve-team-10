@@ -72,7 +72,7 @@ Con menos de 20 candidatos por producto, un solo error mueve el porcentaje mucho
 
 ## 3. Conversaciones para el agente
 
-Qué escribe la persona y qué esperamos. Las reglas salen de [agents/adk.md](../agents/adk.md): una pregunta a la vez, nunca inventar un precio, toda cifra con su fuente, fecha y tasa.
+Qué escribe la persona y qué esperamos. Las reglas salen de [docs/adk.md](../docs/adk.md): una pregunta a la vez, nunca inventar un precio, toda cifra con su fuente, fecha y tasa.
 
 | # | La persona escribe | Esperamos |
 |---|---|---|
