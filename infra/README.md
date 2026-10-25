@@ -3,6 +3,29 @@
 Scripts de `gcloud` para `prais-app`. Todo se configura en [config.sh](config.sh) y cada script es idempotente.
 Los requisitos del equipo están en [docs/gcp.md](../docs/gcp.md).
 
+## Para desarrollar en local
+
+[`env-local.sh`](env-local.sh) arma `services/api/.env` leyendo el secreto de producción. No entra en
+`up.sh` porque no toca la nube: solo lee.
+
+```bash
+./infra/env-local.sh              # Firecrawl, Apify, Vertex y sesiones en SQLite
+CON_KAPSO=1 ./infra/env-local.sh  # además KAPSO_*, para el webhook con un túnel
+FORCE=1 ./infra/env-local.sh      # sobrescribe un .env que ya existe
+```
+
+Deja fuera dos cosas a propósito. `KAPSO_API_KEY`, porque con ella el código de WhatsApp manda
+mensajes de verdad desde el número de producción. Y `SESSION_DATABASE_URL`, porque la de prod entra
+por el socket de Cloud SQL: en local no conecta, y si conectara escribirías las conversaciones reales.
+
+El modelo va por Vertex con tus propias credenciales, así que **hace falta
+`gcloud auth application-default login`**. Sin eso el SDK lanza `DefaultCredentialsError`, el agente
+lo atrapa y responde «Falló la búsqueda de …», que no se parece en nada a la causa. El script lo
+avisa antes de escribir nada.
+
+Las claves de fuentes son **las mismas que usa producción**: tus pruebas comparten con el bot en vivo
+los 5 runs concurrentes de Apify y el cupo de Firecrawl.
+
 Dos servicios de Cloud Run del monorepo:
 
 | Servicio | Carpeta | Acceso | Identidad |
