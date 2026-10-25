@@ -48,7 +48,11 @@ Volver a encenderla: `--activation-policy=always`. Hay que redesplegar el API (`
 
 ## Almacenamiento
 
-Bucket de Cloud Storage `prais-app-files` en `us-east1`, con acceso uniforme y sin acceso público. `prais-api-run` es `objectUser`, y el backend recibe el nombre en `STORAGE_BUCKET`. **El código todavía no lo usa.** Lo crea `infra/32-storage.sh`.
+Bucket de Cloud Storage `prais-app-files` en `us-east1`, con acceso uniforme y sin acceso público. `prais-api-run` es `objectUser`, y el backend recibe el nombre en `STORAGE_BUCKET`. Lo crea `infra/32-storage.sh`.
+
+Ahí van las fotos de las tarjetas de WhatsApp, en `cards/`. No se guardan en la memoria del proceso porque quien las descarga es WhatsApp, y esa descarga entra por cualquiera de las copias del API: la que tiene los bytes en RAM es una sola, y las demás responderían 404. Una tarjeta de carrusel sin imagen no se envía, así que esa respuesta se perdía entera. El nombre del objeto sale del producto (`sha256` del título, 16 caracteres), así que dos copias llegan al mismo nombre sin hablarse y una foto ya hecha no se vuelve a buscar en Firecrawl. La memoria del proceso queda como caché delante del bucket.
+
+El bucket es privado: la URL que recibe WhatsApp sigue siendo `GET /card-images/{token}.jpg` del propio API, que lee el objeto con su cuenta de servicio. No hay objetos públicos ni URLs firmadas. Sin `STORAGE_BUCKET` (el caso local) las fotos viven en memoria, como antes.
 
 ## Secretos
 

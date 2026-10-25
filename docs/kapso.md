@@ -42,6 +42,8 @@ Un botón vuelve **solo con su título**, sin el producto. Por eso lo ofrecido s
 
 Cuando el producto ya está exacto, la respuesta es un carrusel (`carousel_message` en `services/api/app/agents/listing.py`). WhatsApp acepta de 2 a 10 tarjetas. Prais manda hasta cinco: las más baratas que publican un precio.
 
+Cada tarjeta lleva imagen obligatoria. Si el anuncio no trae foto, Prais usa una del producto marcada «imagen de Prais» (`services/api/app/agents/card_image.py`). Esas fotos van al bucket de Cloud Storage y se sirven desde `GET /card-images/{token}.jpg`: ver [gcp.md](gcp.md#almacenamiento).
+
 Una fila sin precio no ocupa un lugar. Si hay ofertas reales con precio, las de ejemplo no se usan para llegar a cinco. Siguen marcadas como ejemplo y solo entran cuando no hay ninguna real con precio. Si hay menos de cinco, salen las que hay. Con una sola se manda una tarjeta con botón, no un párrafo. Con ninguna, se manda el texto. No se inventan precios para completar las cinco.
 
 ## Pendiente
