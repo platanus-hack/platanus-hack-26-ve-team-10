@@ -145,7 +145,7 @@ class PresenceTests(unittest.IsolatedAsyncioTestCase):
         )
         self._start(self._wired(answer))
         await _reply(_event())
-        body = self.posted[0]["interactive"]["body"]["text"]
+        body = self.posted[0]["text"]["body"]
         self.assertTrue(body.startswith("*iPhone 15 128 GB nuevo*\n"))
         self.assertIn("La más barata", body)
 
@@ -159,8 +159,8 @@ class PresenceTests(unittest.IsolatedAsyncioTestCase):
         )
         self._start(self._wired(answer))
         await _reply(_event())
-        self.assertEqual(self.posted[0]["interactive"]["type"], "carousel")
-        # WhatsApp no deja colgar botones de un carrusel: van aparte.
+        self.assertEqual(self.posted[0]["type"], "text")
+        # Los botones no se cuelgan de la comparación: van en su propio mensaje.
         self.assertEqual(self.posted[1]["interactive"]["type"], "button")
 
     async def test_a_dead_end_still_offers_a_way_out(self):
@@ -245,6 +245,7 @@ class StuckTurnTests(unittest.IsolatedAsyncioTestCase):
                 mock.patch("app.routes.whatsapp._show_typing", mock.AsyncMock()),
                 mock.patch("app.routes.whatsapp.ask_prais", fake_ask),
                 mock.patch("app.agents.listing.marked_product_image", no_image),
+                mock.patch("app.agents.listing.REPLY_STYLE", "carousel"),
             ]
         )
         await _reply(_event())

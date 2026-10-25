@@ -52,9 +52,28 @@ Después del resultado va un mensaje aparte con hasta tres botones, porque Whats
 
 Un botón vuelve **solo con su título**, sin el producto. Por eso lo ofrecido se guarda en la tabla `dialogs` (`app/lib/dialog.py`), en la misma base que las sesiones: Cloud Run corre varias copias de `prais-api`, así que la respuesta sale de una y el toque entra por otra. Sin eso, "Solo nuevos" se buscaría como si fuera un producto. Sin `SESSION_DATABASE_URL` queda en memoria, y un diálogo de más de 24 horas se ignora, que es la ventana en la que WhatsApp deja contestar libre.
 
-## Carrusel de la comparación
+## La comparación: lista o carrusel
 
-Cuando el producto ya está exacto, la respuesta es un carrusel (`carousel_message` en `services/api/app/agents/listing.py`). WhatsApp acepta de 2 a 10 tarjetas. Prais manda hasta cinco: las más baratas que publican un precio.
+Hay **dos formas de contestar la comparación y se elige una**, con `WHATSAPP_REPLY_STYLE`. Las dos viven en `services/api/app/agents/listing.py` y `shopping_message` despacha entre ellas.
+
+| Valor | Función | Qué manda |
+|---|---|---|
+| `list` (por defecto) | `list_message` | Texto: el veredicto y una viñeta por oferta con precio, vendedor, detalle y el enlace de la tienda |
+| `carousel` | `carousel_or_card` | El carrusel de tarjetas con foto, o una tarjeta con botón si solo hay una oferta |
+
+**Por qué la lista es lo de hoy.** La tarjeta lleva imagen obligatoria y, cuando el anuncio trae foto, se le pasa a WhatsApp la URL de la tienda tal cual. Meta rechaza algunos formatos y devuelve un `400` que tumba el mensaje entero:
+
+```
+(#131053) Media upload error — WebP image uploads are not currently supported.
+```
+
+Pasaba en cerca del 14 % de los turnos y se perdía la respuesta completa. La lista no depende del formato que sirva cada tienda. El carrusel queda entero: cuando las fotos pasen por nuestro propio JPEG, se vuelve a encender con `WHATSAPP_REPLY_STYLE=carousel`.
+
+La lista tampoco tiene mínimo de dos: con una sola oferta sale igual, y ahí no hace falta la tarjeta suelta. Los enlaces van sin vista previa (`preview_url: false`), porque con cinco WhatsApp expandiría el primero y descuadraría el mensaje.
+
+## El carrusel
+
+Cuando el producto ya está exacto, la respuesta es un carrusel (`carousel_message`). WhatsApp acepta de 2 a 10 tarjetas. Prais manda hasta cinco: las más baratas que publican un precio.
 
 Cada tarjeta lleva imagen obligatoria. Si el anuncio no trae foto, Prais usa una del producto marcada «imagen de Prais» (`services/api/app/agents/card_image.py`). Esas fotos van al bucket de Cloud Storage y se sirven desde `GET /card-images/{token}.jpg`: ver [gcp.md](gcp.md#almacenamiento).
 

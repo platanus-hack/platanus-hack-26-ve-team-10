@@ -11,7 +11,9 @@ from app.agents.listing import (
     TARGET_OPTIONS,
     card_text,
     carousel_message,
+    carousel_or_card,
     choose_options,
+    list_message,
     shopping_message,
 )
 from app.agents.orchestrator import root_agent
@@ -116,11 +118,65 @@ class CarouselTests(unittest.IsolatedAsyncioTestCase):
 
         rows = [_row("https://a.example/1", "USD 2,00", 2)]
         with mock.patch("app.agents.listing.marked_product_image", boom):
-            payload = await shopping_message("5800", rows, "Solo hay un precio.")
+            payload = await carousel_or_card("5800", rows, "Solo hay un precio.")
         assert payload is not None
         self.assertEqual(payload["interactive"]["type"], "cta_url")
         self.assertEqual(payload["interactive"]["action"]["parameters"]["url"], "https://a.example/1")
         self.assertEqual(payload["interactive"]["action"]["parameters"]["display_text"], "Ver oferta")
+
+
+class ListTests(unittest.IsolatedAsyncioTestCase):
+    """La lista de texto: es la forma por defecto desde que el carrusel se cae con WebP."""
+
+    async def test_every_offer_brings_its_price_seller_and_link(self):
+        rows = [_row(f"https://a.example/{n}", f"USD {n},00", float(n)) for n in (3, 1, 2)]
+        payload = await list_message("5800", rows, "El más barato está primero.")
+        assert payload is not None
+        body = payload["text"]["body"]
+        self.assertEqual(payload["type"], "text")
+        self.assertTrue(body.startswith("El más barato está primero."))
+        for n in (1, 2, 3):
+            self.assertIn(f"https://a.example/{n}", body)
+            self.assertIn(f"*USD {n},00*", body)
+        # Y en orden: lo más barato arriba, como el carrusel.
+        self.assertLess(body.index("USD 1,00"), body.index("USD 3,00"))
+
+    async def test_one_offer_is_a_list_too(self):
+        # El carrusel exige dos tarjetas y devolvía None con una sola. La lista no.
+        rows = [_row("https://a.example/1", "USD 2,00", 2)]
+        self.assertIsNone(await carousel_message("5800", rows, "Solo hay un precio."))
+        payload = await list_message("5800", rows, "Solo hay un precio.")
+        assert payload is not None
+        self.assertIn("https://a.example/1", payload["text"]["body"])
+
+    async def test_a_price_is_never_shown_without_its_date(self):
+        # Regla 7: todo precio lleva su fuente y su fecha.
+        rows = [_row("https://a.example/1", "USD 2,00", 2) | {"seen_at": "2026-10-24T08:00:00-04:00"}]
+        payload = await list_message("5800", rows, "Un precio.")
+        assert payload is not None
+        self.assertIn("24 oct", payload["text"]["body"])
+
+    async def test_previews_are_off_so_five_links_do_not_unfold(self):
+        rows = [_row(f"https://a.example/{n}", f"USD {n},00", float(n)) for n in (1, 2)]
+        payload = await list_message("5800", rows, "Dos precios.")
+        assert payload is not None
+        self.assertIs(payload["text"]["preview_url"], False)
+
+    async def test_nothing_with_a_price_means_no_message(self):
+        self.assertIsNone(await list_message("5800", [], "Sin precios."))
+
+    async def test_the_switch_brings_the_carousel_back(self):
+        async def boom(_title: str) -> str:
+            raise AssertionError("network")
+
+        rows = [_row(f"https://a.example/{n}", f"USD {n},00", float(n)) for n in (1, 2)]
+        with (
+            mock.patch("app.agents.listing.REPLY_STYLE", "carousel"),
+            mock.patch("app.agents.listing.marked_product_image", boom),
+        ):
+            payload = await shopping_message("5800", rows, "Dos precios.")
+        assert payload is not None
+        self.assertEqual(payload["interactive"]["type"], "carousel")
 
 
 def _offer(
@@ -210,6 +266,7 @@ class ReplyTests(unittest.IsolatedAsyncioTestCase):
             mock.patch("app.routes.whatsapp.ask_prais", fake),
             mock.patch("app.routes.whatsapp._post_message", capture),
             mock.patch("app.agents.listing.marked_product_image", boom),
+            mock.patch("app.agents.listing.REPLY_STYLE", "carousel"),
         ):
             await _reply(event)
             await _reply(event)
