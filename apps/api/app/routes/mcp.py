@@ -13,8 +13,9 @@ from app.lib.rate import get_rate
 from app.lib.search import search_all
 from app.lib.types import SearchQuery
 
-# Plazo de la web abierta (Firecrawl) dentro de una llamada al MCP. El agente le da 45 s; aquí
-# se responde antes con lo que haya, porque el cliente es otro asistente que espera en vivo.
+# Open-web budget inside one MCP call. The agent allows 45s. A listing is now one
+# Firecrawl read, so 25s still covers the search plus that read. The client is
+# another assistant waiting live, so this stays below the agent's 45s.
 OPEN_WEB_BUDGET_S = 25
 
 # Widget de ofertas (MCP Apps): Claude y ChatGPT lo muestran dentro del chat. Los assets son copias

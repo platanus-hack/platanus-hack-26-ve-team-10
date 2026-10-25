@@ -6,7 +6,7 @@ Cada fuente del registro es un archivo en `apps/api/app/lib/sources/` que cumple
 
 | Fuente | Cómo se consulta | Ojo |
 |---|---|---|
-| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP | El puntaje de tiendas web todavía no se calcula. El borrador está en [resources/website_trust_score.py](../resources/website_trust_score.py) |
+| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | El puntaje de tiendas web todavía no se calcula. El borrador está en [resources/website_trust_score.py](../resources/website_trust_score.py) |
 | **Apify: Instagram** | Cliente de Python de Apify + actor `apify/instagram-scraper` | Tarda de segundos a minutos. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
 | **Apify: TikTok** | Cliente de Python de Apify + actor `clockworks/tiktok-scraper` | Igual que Instagram. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
 | **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
@@ -20,6 +20,19 @@ Cada fuente del registro es un archivo en `apps/api/app/lib/sources/` que cumple
 - **Una fuente que falla no tumba la búsqueda.** `search_offers` ya la deja fuera y la anota en `failedSources`.
 - **Async de verdad.** `search` es `async`: usa clientes asíncronos (`httpx.AsyncClient`) para no bloquear a las demás fuentes.
 - **Guarda los datos del comercio** (seguidores, comentarios, reputación), porque los usa el puntaje de confianza. Qué traer de cada fuente está en [Datos que el puntaje necesita](#datos-que-el-puntaje-necesita).
+
+## Cómo Firecrawl lee un listado
+
+`search_open_web` busca el producto y después lee las páginas que salieron. Hay dos clases de página:
+
+- **Listado o categoría.** La ruta trae un tramo como `collections`, `categoria`, `category`, `departamento`, `laptops-gamer` o `listado`, o el dominio empieza por `listado.`. Esa página no es la ficha de un solo producto: el formato `product` no trae precio. Se lee **una sola vez**, pidiendo juntos `json` (la lista de ofertas) y `markdown` (para comprobar que cada precio está escrito en la página). Firecrawl acepta varios formatos en la misma llamada a `/scrape`. El scrape base cuesta 1 crédito y el JSON suma 4: 5 en total. El markdown no suma. El formato `product` tampoco suma, pero en un listado no devuelve precio; si se pide antes, la segunda lectura ya no cabe en el plazo del MCP.
+- **Ficha de un producto.** Se pide primero `product` (1 crédito, sin modelo de lenguaje). Si trae precio, no se pide el JSON. Si no trae precio y todavía queda tiempo, recién ahí se pide el JSON. Si no queda tiempo, esa segunda lectura no se lanza.
+
+El tiempo de cada lectura es el que le queda al plazo (25 s en el MCP, 45 s en el agente), no 15 s fijos y después 20 s. La búsqueda deja al menos unos 10 s de ese plazo para las lecturas: si se come los 20 s de su propio tope, las páginas no llegan a leerse.
+
+Antes de leer se descartan los dominios de otros países (`.mx`, `.pe`, `.co`, `.com.ar` y similares) y las webs de marca que no venden en Venezuela (`lenovo.com`, `nvidia.com`, `apple.com`…). Una ruta `/ve/` o un dominio `.ve` sí se lee (`apple.com/ve`). Las tiendas conocidas (`sigmatiendas.com`, `soytechno.com`, `tiendasdaka.com`, `elplazas.com`) y los dominios `.ve` van primero. De lo que queda se leen hasta 8 páginas. La búsqueda pide 15 resultados —4 créditos, porque son 2 por cada 10, redondeando hacia arriba— para que, al botar los de afuera, todavía queden tiendas de Venezuela.
+
+Si una página se leyó y otra se cortó por el tiempo, la que sí se leyó se guarda (una hora si trajo ofertas, 10 minutos si no). La consulta siguiente no vuelve a pagarla. El resultado entero no se guarda cuando alguna página quedó a medias: el MCP sigue en 25 s y el agente en 45 s. Con una sola lectura por listado, 25 s alcanza para la búsqueda y para leer la página.
 
 ## Puntaje de confianza por fuente
 
