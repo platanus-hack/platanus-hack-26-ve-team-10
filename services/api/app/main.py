@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.lib import replies
+from app.lib import dialog, replies
 from app.routes import catalogo, chat, images, whatsapp
 from app.routes.mcp import mcp_app, mcp_server
 
@@ -12,6 +12,7 @@ from app.routes.mcp import mcp_app, mcp_server
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await replies.ensure_schema()
+    await dialog.ensure_schema()
     async with mcp_server.session_manager.run():
         yield
 

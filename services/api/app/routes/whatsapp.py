@@ -12,8 +12,8 @@ from fastapi.responses import PlainTextResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-from app.agent import FALLBACK_REPLY, ask_prais
-from app.agents.listing import clamp_summary, shopping_message
+from app.agent import FALLBACK_REPLY, PraisAnswer, ask_prais
+from app.agents.listing import button_message, clamp_summary, shopping_message
 from app.lib import replies
 from app.lib.replies import ReplyInProgress
 from app.lib.tasks import enqueue_whatsapp_event, queue_enabled
@@ -98,6 +98,37 @@ async def _send_text(phone_number_id: str, to: str, body: str) -> None:
     await _post_message(phone_number_id, _text_payload(to, body))
 
 
+# WhatsApp apaga el indicador al enviar un mensaje o a los ~25 s, y una búsqueda
+# puede tardar más. Mandarlo una sola vez deja a la persona viendo el indicador
+# apagarse, que es peor que no ponerlo: mientras el agente trabaja, se reemite.
+TYPING_EVERY_S = 20
+
+
+async def _keep_typing(phone_number_id: str, message_id: str) -> None:
+    while True:
+        await asyncio.sleep(TYPING_EVERY_S)
+        await _show_typing(phone_number_id, message_id)
+
+
+def _keep_typing_alive(phone_number_id: str, message_id: str | None) -> asyncio.Task | None:
+    """El primero ya salió con _show_typing: esto solo lo mantiene vivo."""
+    if not message_id or not os.environ.get("KAPSO_API_KEY"):
+        return None
+    return asyncio.create_task(_keep_typing(phone_number_id, message_id))
+
+
+async def _stop_typing(typing: asyncio.Task | None) -> None:
+    if typing is None:
+        return
+    typing.cancel()
+    try:
+        await typing
+    except asyncio.CancelledError:
+        pass
+    except Exception:
+        log.warning("whatsapp typing stop failed", exc_info=True)
+
+
 def _message_id(event: dict[str, Any]) -> str | None:
     message_id = (event.get("message") or {}).get("id")
     if isinstance(message_id, str) and message_id:
@@ -111,15 +142,53 @@ async def _send_saved(phone_number_id: str, message_id: str | None, payload: dic
         await replies.complete(message_id, payload)
 
 
-async def _outbound(sender: str, answer: Any) -> dict[str, Any]:
+def _result_body(answer: PraisAnswer) -> str:
+    """El veredicto, debajo del producto con el que se buscó de verdad.
+
+    Lo que la conversación fue fijando no se veía en ningún lado: si quedó mal, la
+    persona se enteraba al leer tarjetas de otra cosa. Ahora lo lee antes.
+    """
+    summary = clamp_summary(answer.text)
+    product = " ".join(answer.product.split())
+    if not product or _folded(product) in _folded(summary):
+        return summary
+    return f"*{product}*\n{summary}"
+
+
+def _folded(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
+async def _outbound(sender: str, answer: PraisAnswer) -> dict[str, Any]:
+    body = _result_body(answer)
     try:
-        shopping = await shopping_message(sender, answer.listings, answer.text)
+        shopping = await shopping_message(sender, answer.listings, body)
     except Exception:
         log.exception("whatsapp cards failed")
         shopping = None
     if shopping is not None:
         return shopping
-    return _text_payload(sender, clamp_summary(answer.text))
+    return _text_payload(sender, body)
+
+
+_REFINE_BODY = "¿Lo afinamos?"
+_DEAD_END_BODY = "Puedo buscar más amplio:"
+
+
+async def _send_followups(phone_number_id: str, to: str, answer: PraisAnswer) -> None:
+    """Afinar si hubo precios, salir si no hubo. En su propio mensaje: WhatsApp no
+    deja colgar botones de un carrusel. No se guardan para el reintento de la cola:
+    lo que no puede perderse son las ofertas, y esas sí se guardan."""
+    if not answer.buttons:
+        return
+    body = _REFINE_BODY if answer.priced else _DEAD_END_BODY
+    payload = button_message(to, body, answer.buttons)
+    if payload is None:
+        return
+    try:
+        await _post_message(phone_number_id, payload)
+    except Exception:
+        log.exception("whatsapp followups failed")
 
 
 async def _show_typing(phone_number_id: str, message_id: str | None) -> None:
@@ -164,8 +233,13 @@ async def _drain(sender: str) -> None:
         if _inbox.get(sender) and waited < QUIET_CAP_S:
             continue
         text = "\n".join(said)
-        await _show_typing(phone_number_id, next((item for item in reversed(pending_ids) if item), None))
-        answer = await ask_prais(f"whatsapp:{sender}", text)
+        last_id = next((item for item in reversed(pending_ids) if item), None)
+        await _show_typing(phone_number_id, last_id)
+        typing = _keep_typing_alive(phone_number_id, last_id)
+        try:
+            answer = await ask_prais(f"whatsapp:{sender}", text)
+        finally:
+            await _stop_typing(typing)
         if _inbox.get(sender):
             continue
         payload = await _outbound(sender, answer)
@@ -181,6 +255,7 @@ async def _drain(sender: str) -> None:
                 await replies.complete(message_id, payload)
         pending_ids = []
         said = []
+        await _send_followups(phone_number_id, sender, answer)
         if not _inbox.get(sender):
             return
 

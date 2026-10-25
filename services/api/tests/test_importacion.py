@@ -189,7 +189,9 @@ class ImportacionTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn(ASIN_RED_FLAG, closed["trust"]["redFlags"])
         self.assertEqual(closed["trust"]["score"], 0)
         shown = card_text(closed)
-        self.assertIn("Confianza 0", shown)
+        # Cero de confianza se lee en estrellas, como el resto: el entero de 0 a 100
+        # no dice sobre qué, y cinco estrellas vacías sí.
+        self.assertIn("☆☆☆☆☆", shown)
 
     def test_category_weight_is_labeled_and_volume_wins(self):
         table = billable("iphone 15 128", ())

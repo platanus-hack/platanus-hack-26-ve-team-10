@@ -225,4 +225,6 @@ class WhatsAppTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(heard[1], "toyota corolla en valencia")
         self.assertIn("iPhone 17 Pro", heard[2])
         self.assertEqual([item["type"] for item in posted], ["text", "text", "text"])
+        # Aquí no corrió ninguna fuente, así que tampoco se encabeza con un producto:
+        # eso solo pasa cuando hubo búsqueda. El cuerpo es el texto del agente.
         self.assertEqual(posted[0]["text"]["body"], "Listo.")

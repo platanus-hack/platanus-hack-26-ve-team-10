@@ -11,13 +11,24 @@ from google.adk.models import Gemini
 from google.adk.runners import Runner
 from google.genai import types
 
-from app.agents.listing import cards_from_offers, listings_from_tool_response
+from app.agents.listing import (
+    ONLY_NEW,
+    ONLY_USED,
+    cards_from_offers,
+    has_published_price,
+    listings_from_tool_response,
+    mixed_condition,
+    narrowed,
+    says_condition,
+)
 from app.agents.open_web_trust import review_listings
 from app.agents.orchestrator import root_agent
+from app.lib import dialog
 from app.lib.sources.firecrawl import product_name_at, search_open_web
 from app.lib.trust import close_listings
 from app.runtime import session_service
 
+RETRY = "Reintentar"
 FALLBACK_REPLY = "Algo falló de mi lado. Inténtalo otra vez en un momento."
 log = logging.getLogger("prais.agent")
 
@@ -25,6 +36,15 @@ log = logging.getLogger("prais.agent")
 class PraisAnswer:
     text: str
     listings: list[dict] = field(default_factory=list)
+    # El producto con el que se buscó de verdad, para que la persona pueda corregirlo.
+    product: str = ""
+    # Botones que van después del resultado: afinar si hubo precios, salir si no hubo.
+    buttons: list[str] = field(default_factory=list)
+    priced: bool = False
+    # Si alguna fuente llegó a contestar. Sin esto no se distingue "no encontré"
+    # de "ni siquiera busqué", y un saludo terminaría con botones de búsqueda.
+    searched: bool = False
+    failed: bool = False
 
 
 # El resumen sustituye los turnos viejos. Tiene que conservar las cifras: sin ellas
@@ -180,11 +200,23 @@ def _event_listings(event: object) -> list[dict]:
     return found
 
 
+def _event_searched(event: object) -> bool:
+    """Si alguna fuente contestó, aunque haya traído cero. Distingue no encontrar de no buscar."""
+    for part in _event_parts(event):
+        response = getattr(getattr(part, "function_response", None), "response", None)
+        while isinstance(response, dict):
+            if "listings" in response:
+                return True
+            response = response.get("result")
+    return False
+
+
 async def _run_agent(user_id: str, message: str) -> PraisAnswer:
     """Corre el modelo. El texto es la guía; listings sale del JSON de cada especialista."""
     reply = ""
     listings: list[dict] = []
     seen: set[str] = set()
+    searched = False
     try:
         async for event in runner.run_async(
             user_id=user_id,
@@ -192,6 +224,7 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
             new_message=types.Content(role="user", parts=[types.Part(text=message)]),
             run_config=_RUN,
         ):
+            searched = searched or _event_searched(event)
             for card in _event_listings(event):
                 url = card.get("url")
                 if isinstance(url, str) and url not in seen:
@@ -204,11 +237,16 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
         text = reply.strip()
         if not text and listings:
             text = "Encontré opciones. El resumen no salió; abre la primera."
-        return PraisAnswer(text=text or FALLBACK_REPLY, listings=close_listings(listings))
-    return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings))
+        return PraisAnswer(
+            text=text or FALLBACK_REPLY,
+            listings=close_listings(listings),
+            searched=searched,
+            failed=not listings,
+        )
+    return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings), searched=searched)
 
 
-async def ask_prais(user_id: str, message: str) -> PraisAnswer:
+async def _answer(user_id: str, message: str) -> PraisAnswer:
     """El agente lee el mensaje tal cual. La sesión de ADK es el hilo. Una pregunta ya hecha no se repite."""
     product = await _remember(user_id, message)
     brief, named = await _for_the_agent(message)
@@ -242,4 +280,71 @@ async def ask_prais(user_id: str, message: str) -> PraisAnswer:
         _last_question[user_id] = key
         if len(_last_question) > 500:
             _last_question.pop(next(iter(_last_question)))
+    return answer
+
+
+async def _followups(user_id: str, product: str, answer: PraisAnswer) -> None:
+    """Los botones que cierran el turno, guardados para cuando vuelva el toque.
+
+    Un botón regresa solo con su título, sin el producto, y Cloud Run corre varias
+    copias de prais-api: la respuesta sale de una y el toque entra por otra. En un
+    dict del proceso, "Solo nuevos" se buscaría como si fuera un producto.
+    """
+    actions: dict[str, str | None] = {}
+    if answer.failed and product:
+        actions[RETRY] = product
+    elif answer.priced and product and not says_condition(product) and mixed_condition(answer.listings):
+        actions[ONLY_NEW] = f"{product} nuevo"
+        actions[ONLY_USED] = f"{product} usado"
+    elif answer.searched and not answer.priced and product:
+        wider = narrowed(product)
+        if wider:
+            actions[wider[0]] = wider[1]
+    answer.buttons = list(actions)
+    await dialog.save(user_id, {"product": product, "actions": actions})
+
+
+async def _searched_product(user_id: str, text: str, answer: PraisAnswer) -> str:
+    """Lo que de verdad se buscó, para enseñarlo y para saber qué se puede soltar.
+
+    La sesión guarda el modelo normalizado ("iPhone 15"), que es lo que sirve cuando
+    el mensaje es un seguimiento ("el último"). Pero el mensaje entero es lo que lleva
+    la capacidad o el estado, y es lo que hay que poder soltar si no hubo precios.
+    """
+    if not answer.searched and not answer.failed:
+        return ""  # Un saludo no buscó nada: no hay producto que enseñar ni que soltar.
+    session = await _session(user_id)
+    saved = session.state.get("product")
+    saved = saved if isinstance(saved, str) else ""
+    asked = " ".join(_URL.sub(" ", text).split())
+    if saved and saved.lower() not in asked.lower():
+        return saved
+    return asked or saved
+
+
+def _tapped(saved: dict, message: str) -> str | None:
+    """El producto a buscar si el mensaje es uno de los botones que se ofrecieron."""
+    actions = saved.get("actions")
+    if not isinstance(actions, dict):
+        return None
+    action = actions.get(message)
+    return action if isinstance(action, str) and action else None
+
+
+async def ask_prais(user_id: str, message: str) -> PraisAnswer:
+    """Contesta, y deja a mano la salida: afinar si hubo precios, soltar algo si no."""
+    text = " ".join(message.split())
+    again = _tapped(await dialog.load(user_id), text)
+    answer = await _answer(user_id, again or text)
+    answer.product = again or await _searched_product(user_id, text, answer)
+    answer.priced = any(has_published_price(card) for card in answer.listings)
+    answer.searched = answer.searched or bool(answer.listings)
+    # Solo cuando no volvió nada que mostrar. Si hay listados, el texto que ya
+    # existe dice más: puede ser el veredicto, o el aviso de que el resumen falló.
+    if answer.product and not answer.listings:
+        if answer.failed:
+            answer.text = f"Falló la búsqueda de {answer.product}."
+        elif answer.searched:
+            answer.text = f"No encontré ningún precio publicado para {answer.product}."
+    await _followups(user_id, answer.product, answer)
     return answer
