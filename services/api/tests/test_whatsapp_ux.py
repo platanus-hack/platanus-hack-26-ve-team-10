@@ -101,7 +101,7 @@ class PresenceTests(unittest.IsolatedAsyncioTestCase):
         async def typing(_phone_number_id, message_id):
             typed.append(message_id)
 
-        async def fake_ask(_user, _message):
+        async def fake_ask(_user, _message, _on_search=None):
             if delay:
                 await asyncio.sleep(delay)
             return answer

@@ -28,7 +28,7 @@ class WhatsappRetryTests(unittest.IsolatedAsyncioTestCase):
         self.asked: list[str] = []
         self.sent: list[dict] = []
 
-        async def ask(_user_id: str, message: str) -> PraisAnswer:
+        async def ask(_user_id: str, message: str, _on_search=None) -> PraisAnswer:
             self.asked.append(message)
             return PraisAnswer(text="abre la tienda ejemplo", listings=[])
 
@@ -73,7 +73,7 @@ class WhatsappRetryTests(unittest.IsolatedAsyncioTestCase):
         started = asyncio.Event()
         release = asyncio.Event()
 
-        async def ask(_user_id: str, message: str) -> PraisAnswer:
+        async def ask(_user_id: str, message: str, _on_search=None) -> PraisAnswer:
             self.asked.append(message)
             if message == "17":
                 started.set()

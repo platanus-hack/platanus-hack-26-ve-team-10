@@ -195,7 +195,7 @@ class ReplyTests(unittest.IsolatedAsyncioTestCase):
             ),
         ]
 
-        async def fake(_user: str, _message: str) -> PraisAnswer:
+        async def fake(_user: str, _message: str, _on_search=None) -> PraisAnswer:
             return answers.pop(0)
 
         async def boom(_title: str) -> str:

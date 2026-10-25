@@ -1,6 +1,8 @@
+import asyncio
 import logging
 import os
 import re
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 
 from google.adk.agents.run_config import RunConfig
@@ -31,6 +33,9 @@ from app.runtime import session_service
 RETRY = "Reintentar"
 FALLBACK_REPLY = "Algo falló de mi lado. Inténtalo otra vez en un momento."
 log = logging.getLogger("prais.agent")
+
+# Lo llama el canal para decir, en una línea, qué se está buscando. La web no lo usa.
+OnSearch = Callable[[str], Awaitable[None]]
 
 @dataclass
 class PraisAnswer:
@@ -200,6 +205,59 @@ def _event_listings(event: object) -> list[dict]:
     return found
 
 
+# Lo que el modelo ya decidió: si llama a una tool de búsqueda, va a buscar, y el
+# argumento es su lectura del producto. Sale en el primer turno, a uno o dos segundos,
+# mucho antes de los 45 s de scraping. Es gratis y lee cualquier cosa, no solo iPhones.
+ACK_GRACE_S = 1.5
+# Arranques de intención: "comprar un iphone 17pro" se acusa como "iphone 17pro".
+# Si no calza nada, se usa el texto tal cual. No es un catálogo de productos.
+_INTENT = re.compile(
+    r"^\s*(?:hola[,\s]+)?(?:me\s+)?(?:gustar[ií]a\s+)?"
+    r"(?:quiero|busco|buscar|comprar|conseguir|necesito|ver|precio[s]?\s+de|cu[aá]nto\s+(?:vale|cuesta))\s+"
+    r"(?:un[oa]?s?\s+|el\s+|la\s+|los\s+|las\s+)?",
+    re.IGNORECASE,
+)
+
+
+def searched_name(product: str) -> str:
+    """El nombre que se va a buscar, sin el arranque de intención."""
+    return " ".join(_INTENT.sub("", product).split()) or " ".join(product.split())
+
+
+def _event_search_call(event: object) -> str | None:
+    """El producto con el que el modelo acaba de pedir una búsqueda, si la pidió."""
+    for part in _event_parts(event):
+        call = getattr(part, "function_call", None)
+        name = getattr(call, "name", None)
+        if not isinstance(name, str) or not name.startswith("find_listings"):
+            continue
+        args = getattr(call, "args", None) or {}
+        product = args.get("product") if isinstance(args, dict) else None
+        if isinstance(product, str) and product.strip():
+            return searched_name(product)
+    return None
+
+
+async def _drop_ack(ack: asyncio.Task | None) -> None:
+    if ack is None:
+        return
+    ack.cancel()
+    try:
+        await ack
+    except asyncio.CancelledError:
+        pass
+
+
+async def _ack_after_grace(on_search: OnSearch, product: str) -> None:
+    """Se cancela si la respuesta llega antes: una búsqueda cacheada no gasta un mensaje."""
+    await asyncio.sleep(ACK_GRACE_S)
+    try:
+        await on_search(product)
+    except Exception:
+        # El acuse es cortesía: nunca tumba la respuesta que viene detrás.
+        log.warning("acuse de búsqueda falló", exc_info=True)
+
+
 def _event_searched(event: object) -> bool:
     """Si alguna fuente contestó, aunque haya traído cero. Distingue no encontrar de no buscar."""
     for part in _event_parts(event):
@@ -211,12 +269,13 @@ def _event_searched(event: object) -> bool:
     return False
 
 
-async def _run_agent(user_id: str, message: str) -> PraisAnswer:
+async def _run_agent(user_id: str, message: str, on_search: OnSearch | None = None) -> PraisAnswer:
     """Corre el modelo. El texto es la guía; listings sale del JSON de cada especialista."""
     reply = ""
     listings: list[dict] = []
     seen: set[str] = set()
     searched = False
+    ack: asyncio.Task | None = None
     try:
         async for event in runner.run_async(
             user_id=user_id,
@@ -224,6 +283,10 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
             new_message=types.Content(role="user", parts=[types.Part(text=message)]),
             run_config=_RUN,
         ):
+            if on_search is not None and ack is None:
+                asked = _event_search_call(event)
+                if asked:
+                    ack = asyncio.create_task(_ack_after_grace(on_search, asked))
             searched = searched or _event_searched(event)
             for card in _event_listings(event):
                 url = card.get("url")
@@ -243,17 +306,19 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
             searched=searched,
             failed=not listings,
         )
+    finally:
+        await _drop_ack(ack)
     return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings), searched=searched)
 
 
-async def _answer(user_id: str, message: str) -> PraisAnswer:
+async def _answer(user_id: str, message: str, on_search: OnSearch | None = None) -> PraisAnswer:
     """El agente lee el mensaje tal cual. La sesión de ADK es el hilo. Una pregunta ya hecha no se repite."""
     product = await _remember(user_id, message)
     brief, named = await _for_the_agent(message)
     if named:
         product = named
         await _store_product(user_id, named)
-    answer = await _run_agent(user_id, brief)
+    answer = await _run_agent(user_id, brief, on_search)
     if product and _WHICH_MODEL.search(answer.text):
         if not answer.listings:
             try:
@@ -331,11 +396,11 @@ def _tapped(saved: dict, message: str) -> str | None:
     return action if isinstance(action, str) and action else None
 
 
-async def ask_prais(user_id: str, message: str) -> PraisAnswer:
+async def ask_prais(user_id: str, message: str, on_search: OnSearch | None = None) -> PraisAnswer:
     """Contesta, y deja a mano la salida: afinar si hubo precios, soltar algo si no."""
     text = " ".join(message.split())
     again = _tapped(await dialog.load(user_id), text)
-    answer = await _answer(user_id, again or text)
+    answer = await _answer(user_id, again or text, on_search)
     answer.product = again or await _searched_product(user_id, text, answer)
     answer.priced = any(has_published_price(card) for card in answer.listings)
     answer.searched = answer.searched or bool(answer.listings)
