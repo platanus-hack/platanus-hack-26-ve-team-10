@@ -46,10 +46,21 @@ Cada tarjeta lleva imagen obligatoria. Si el anuncio no trae foto, Prais usa una
 
 Una fila sin precio no ocupa un lugar. Si hay ofertas reales con precio, las de ejemplo no se usan para llegar a cinco. Siguen marcadas como ejemplo y solo entran cuando no hay ninguna real con precio. Si hay menos de cinco, salen las que hay. Con una sola se manda una tarjeta con botón, no un párrafo. Con ninguna, se manda el texto. No se inventan precios para completar las cinco.
 
+## Cuando el turno no sale bien
+
+Un turno nunca puede terminar en silencio: la cola ya dio la tarea por hecha y la persona se queda con el indicador de «escribiendo» encendido para siempre.
+
+| Si pasa | Qué hace Prais |
+|---|---|
+| El agente se cuelga | `TURN_TIMEOUT_S` (120 s por defecto) corta y sale un aviso pidiendo el producto otra vez. Antes, el único tope eran los 300 s de Cloud Run, que mataban la request sin contestar nada |
+| Kapso rechaza el carrusel | El `400` se loguea con su cuerpo, que es el que dice qué campo fue, y el veredicto sale en texto plano. Antes se perdía la respuesta entera |
+
+`replies.LEASE_SECONDS` (240 s) tiene que quedar **por encima** de `TURN_TIMEOUT_S` más lo que tarde el envío. Si vence antes, el reintento de la cola se lleva la reserva de un turno que todavía corre, lo da por hecho con un `200` y esa respuesta ya no se reintenta nunca.
+
 ## Pendiente
 
 - Si un mensaje no trae `from` (los payloads nuevos pueden traer solo `business_scoped_user_id`), hoy se ignora.
-- Un reintento de la tarea reenvía la respuesta ya guardada (por id de mensaje) y no vuelve a correr el agente. Si el intento anterior sigue dentro de 120 s, la cola espera.
+- Un reintento de la tarea reenvía la respuesta ya guardada (por id de mensaje) y no vuelve a correr el agente. Si el intento anterior sigue dentro del plazo (`replies.LEASE_SECONDS`), la cola espera.
 
 ## Docs
 

@@ -176,6 +176,87 @@ class PresenceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.posted[1]["interactive"]["type"], "button")
 
 
+class StuckTurnTests(unittest.IsolatedAsyncioTestCase):
+    """Los dos finales mudos: el turno que no vuelve y el payload que Kapso rechaza."""
+
+    async def asyncSetUp(self):
+        await dialog.clear()
+        replies.set_store(replies.MemoryReplyStore())
+        whatsapp._inbox.clear()
+        whatsapp._running.clear()
+        self.posted: list[dict] = []
+        patcher = mock.patch.dict(os.environ, {"KAPSO_API_KEY": "fake"})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _start(self, patchers):
+        for patcher in patchers:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    async def test_a_turn_that_never_returns_still_answers(self):
+        posted = self.posted
+
+        async def capture(_phone_number_id, payload):
+            posted.append(payload)
+
+        async def never(_user, _message):
+            await asyncio.sleep(30)
+            raise AssertionError("el tope tenía que cortar antes")
+
+        self._start(
+            [
+                mock.patch("app.routes.whatsapp._post_message", capture),
+                mock.patch("app.routes.whatsapp._show_typing", mock.AsyncMock()),
+                mock.patch("app.routes.whatsapp.ask_prais", never),
+                mock.patch.object(whatsapp, "TURN_TIMEOUT_S", 0.05),
+            ]
+        )
+        await _reply(_event())
+        # Cloud Run corta la request a los 300 s y la cola ya dio la tarea por hecha.
+        # Sin este tope la persona se queda con el indicador encendido y sin respuesta.
+        self.assertEqual(posted[0]["type"], "text")
+        self.assertIn("tardando", posted[0]["text"]["body"])
+
+    async def test_a_rejected_carousel_falls_back_to_the_verdict_in_text(self):
+        posted = self.posted
+        answer = PraisAnswer(
+            text="La más barata es la primera.",
+            listings=[_card(), _card("https://b.example/2")],
+            product="iPhone 15",
+            priced=True,
+        )
+
+        async def capture(_phone_number_id, payload):
+            posted.append(payload)
+            # Kapso contesta 400 al carrusel: un título largo, un campo de más.
+            if payload.get("type") != "text":
+                raise RuntimeError("400 Bad Request")
+
+        async def fake_ask(_user, _message):
+            return answer
+
+        async def no_image(_title):
+            raise AssertionError("network")
+
+        self._start(
+            [
+                mock.patch("app.routes.whatsapp._post_message", capture),
+                mock.patch("app.routes.whatsapp._show_typing", mock.AsyncMock()),
+                mock.patch("app.routes.whatsapp.ask_prais", fake_ask),
+                mock.patch("app.agents.listing.marked_product_image", no_image),
+            ]
+        )
+        await _reply(_event())
+        self.assertEqual(posted[0]["interactive"]["type"], "carousel")
+        self.assertEqual(posted[1]["type"], "text")
+        self.assertIn("La más barata", posted[1]["text"]["body"])
+        # Y queda guardado como hecho, así el reintento de la cola reenvía el texto.
+        claim = await replies.claim("wamid.1", takeover=False)
+        self.assertEqual(claim.kind, "done")
+        self.assertEqual(claim.payload["type"], "text")
+
+
 class FollowupTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         await dialog.clear()

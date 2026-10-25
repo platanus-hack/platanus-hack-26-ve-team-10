@@ -33,7 +33,8 @@ PUBLIC="${PUBLIC:-true}"                           # true = web con --allow-unau
 WEB_MAX_INSTANCES="${WEB_MAX_INSTANCES:-2}"        # tope de costo
 API_MAX_INSTANCES="${API_MAX_INSTANCES:-4}"        # las sesiones están en Postgres, así que varias copias comparten la conversación
 MIN_INSTANCES="${MIN_INSTANCES:-0}"                # >0 cuesta de forma continua. Para la demo: MIN_INSTANCES=1
-API_MEMORY="${API_MEMORY:-1Gi}"                    # varias búsquedas a la vez no caben en 512Mi
+API_MEMORY="${API_MEMORY:-2Gi}"                    # un turno baja fotos y varios caben a la vez: con 1Gi la instancia moría por OOM
+API_CONCURRENCY="${API_CONCURRENCY:-8}"            # el default de 80 sobre 1 CPU era lo que llenaba la memoria
 WEB_MEMORY="${WEB_MEMORY:-512Mi}"
 
 # Vertex AI (Gemini): el backend usa la cuenta de servicio, sin API key.
