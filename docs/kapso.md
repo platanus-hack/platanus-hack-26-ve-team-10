@@ -4,6 +4,8 @@ El webhook y la respuesta están en `services/api/app/routes/whatsapp.py`. El ca
 
 Desde afuera la ruta es `https://usaprais.com/api/whatsapp` (la web reenvía `/api/*`), o `<url de prais-api>/whatsapp` en Cloud Run.
 
+El número de producción es +1 205-840-6181. Los botones públicos de la web abren `https://wa.me/12058406181`.
+
 ## Configurar en Kapso
 
 Kapso exige que el webhook responda en menos de 10 segundos. Por eso la ruta responde 200 y el trabajo sigue en la cola.
