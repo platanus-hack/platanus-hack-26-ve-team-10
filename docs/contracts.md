@@ -41,4 +41,4 @@ Las particularidades de cada fuente están en [sources.md](sources.md).
 
 Los componentes del design system (`RankedList`, `FichaOferta`, `MensajeCanal`) esperan el tipo `Oferta` de `docs/design-system/components/index.d.ts`: `tienda`, `canal`, `usd`, `envio`, `confianza` de 0 a 5. La API devuelve `OfferResult`, con otros nombres y la confianza de 0 a 100, y `/chat` solo devuelve texto.
 
-La propuesta es que la API devuelva ofertas con la forma `Oferta` y que `/chat` responda `{ reply, producto, ofertas, tasa, actualizado }`. Así la web pinta `RankedList` sin traducir nada. La deciden los dueños de los frentes Agente y Web ([docs/plan.md](../docs/plan.md)).
+La propuesta es que la API devuelva ofertas con la forma `Oferta` y que `/chat` responda `{ reply, producto, ofertas, tasa, actualizado }`. Así la web pinta `RankedList` sin traducir nada. Sigue abierta.

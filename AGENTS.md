@@ -25,12 +25,10 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 | Ramas, PRs, el push a los dos repos, idioma y estilo de código | [docs/conventions.md](docs/conventions.md) |
 | CI: el auto-merge y qué hay que probar antes del PR | [docs/conventions.md](docs/conventions.md) y `.github/workflows/auto-merge.yml` |
 | Infra y deploy (GCP, Cloud Build, Cloud Run, secretos) | [docs/gcp.md](docs/gcp.md) y [infra/README.md](infra/README.md) |
-| Qué hace cada frente del equipo | [docs/plan.md](docs/plan.md) |
 | Una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [docs/tools.md](docs/tools.md): su skill, su MCP o su `llms.txt` |
-| El agente o sus tools | [docs/adk.md](docs/adk.md) |
+| El agente o sus tools | `apps/api/app/agents/orchestrator.py` y `apps/api/app/agent.py` |
 | Conectar una fuente real | [docs/sources.md](docs/sources.md) |
-| El puntaje de confianza | [docs/contrato-confianza.md](docs/contrato-confianza.md) y los borradores de `resources/*_trust_score.py` |
-| Traer un producto de USA | [docs/spec-importacion.md](docs/spec-importacion.md) |
+| El puntaje de confianza | `apps/api/app/lib/prices.py` y los borradores de `resources/*_trust_score.py` |
 | WhatsApp | [docs/kapso.md](docs/kapso.md) |
 | MCP | [docs/mcp-tool.md](docs/mcp-tool.md) |
 | Páginas públicas | [docs/seo-geo.md](docs/seo-geo.md), y el detalle en [docs/ficha-producto.md](docs/ficha-producto.md), [docs/categoria.md](docs/categoria.md) y [docs/marca.md](docs/marca.md) |

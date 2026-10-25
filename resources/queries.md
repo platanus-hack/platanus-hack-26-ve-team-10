@@ -2,7 +2,7 @@
 
 Material de referencia con dos usos:
 
-1. **Probar el agente** (frente 6 de [docs/plan.md](../docs/plan.md)): qué dice una persona y qué esperamos que haga Prais.
+1. **Probar el agente**: qué dice una persona y qué esperamos que haga Prais.
 2. **Medir el juez** de coincidencias (el paso que decide si un resultado de la búsqueda es de verdad el producto pedido, de un comercio de Venezuela): 10 productos con sus criterios y trampas, para etiquetar resultados nuevos y calcular cuánto acierta.
 
 Los productos salen de lo que más se busca en Venezuela ([keywords-ve.md](keywords-ve.md)): la gente busca modelos concretos, no categorías.
@@ -72,7 +72,7 @@ Con menos de 20 candidatos por producto, un solo error mueve el porcentaje mucho
 
 ## 3. Conversaciones para el agente
 
-Qué escribe la persona y qué esperamos. Las reglas salen de [docs/adk.md](../docs/adk.md): una pregunta a la vez, nunca inventar un precio, toda cifra con su fuente, fecha y tasa.
+Qué escribe la persona y qué esperamos. Las reglas son las de `apps/api/app/agents/orchestrator.py`: una pregunta a la vez, nunca inventar un precio, toda cifra con su fuente, fecha y tasa.
 
 | # | La persona escribe | Esperamos |
 |---|---|---|

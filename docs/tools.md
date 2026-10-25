@@ -32,7 +32,7 @@ Claude Code los carga al abrir el repo. La primera vez pide aprobarlos, y los qu
 
 | MCP | Cómo | Para qué |
 |---|---|---|
-| Mercado Libre | `claude mcp add --transport http mercadolibre https://mcp.mercadolibre.com/mcp --header "Authorization: Bearer <token>"`. El token sale de la app registrada en Mercado Libre | Consultar sus APIs: frente 3 de [docs/plan.md](../docs/plan.md) |
+| Mercado Libre | `claude mcp add --transport http mercadolibre https://mcp.mercadolibre.com/mcp --header "Authorization: Bearer <token>"`. El token sale de la app registrada en Mercado Libre | Consultar sus APIs antes de escribir el adapter |
 | Google Developer Knowledge | Endpoint `https://developerknowledge.googleapis.com/mcp`. Se habilita en el proyecto de GCP y usa autenticación de Google Cloud. Está en preview | Docs oficiales de Google: ADK (`adk.dev`), Gemini (`ai.google.dev`), Cloud Run |
 | Cloud Run | MCP remoto de Google Cloud, con OAuth e IAM (no acepta API keys) | Deploy: ver [gcp.md](gcp.md) |
 
