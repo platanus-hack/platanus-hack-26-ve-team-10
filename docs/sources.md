@@ -1,6 +1,6 @@
 # Fuentes
 
-Cada fuente del registro es un archivo en `services/api/app/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). En el registro están la de ejemplo (`mock.py`), que se apaga con `USE_MOCK_SOURCE=false`, e Instagram y TikTok por Apify (`apify.py`), que se encienden con `APIFY_TOKEN`. Además de sus ofertas fijas, responde por cada modelo del catálogo (`catalogo.json`) con comercios marcados "(ejemplo)" y precios generados desde `precioEjemplo`. Apagarla deja el catálogo con solo ofertas reales: ver [seo-geo.md](seo-geo.md#catálogo-el-interruptor-de-indexación). Firecrawl no está en ese registro: `search_offers` cancela a los 8 s, y la web abierta se llama directo desde la tool y desde el MCP.
+Cada fuente del registro es un archivo en `services/api/app/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). En el registro están la de ejemplo (`mock.py`), que se apaga con `USE_MOCK_SOURCE=false`, e Instagram y TikTok por Apify (`apify.py`), que se encienden con `APIFY_TOKEN`. Además de sus ofertas fijas, responde por cada modelo del catálogo (`catalogo.json`) con comercios marcados "(ejemplo)" y precios generados desde `precioEjemplo`. Apagarla deja el catálogo con solo ofertas reales: ver [seo-geo.md](seo-geo.md#catálogo-el-interruptor-de-indexación). Firecrawl no está en ese registro: `search_offers` cancela a los 8 s, y la web abierta se llama directo desde la tool y desde el MCP. Amazon tampoco está: si entrara en esa búsqueda, el precio de la ficha competiría sin el flete. Lo llama la tool `find_listings_importacion`.
 
 ## Cadenas con tienda propia
 
@@ -23,6 +23,7 @@ Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegad
 | **Apify: TikTok** | Conectada: `tiktok_source` en el mismo archivo, actor `clockworks/tiktok-scraper` | Busca por palabras, con proxy venezolano. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
 | **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
 | **Mercado Libre** | API oficial, sitio `MLV` | Sigue **403 sin token**: no hay cliente en vivo. `score_mercadolibre` en `app/lib/trust.py` puntúa el JSON de `/items` y `/users` sin llamar a la red |
+| **Amazon + courier** | Actor `junglee/Amazon-crawler` y el cotizador de cada courier. Ver [Traerlo de USA](#traerlo-de-usa) | Sin `APIFY_TOKEN` la tool no llama a Amazon. El precio que compite es el total puesto en Venezuela |
 | **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta_ads_signals.py](../resources/meta_ads_signals.py)) |
 
 ## Reglas
@@ -46,7 +47,15 @@ El tiempo de cada lectura es el que le queda al plazo (25 s en el MCP, 45 s en e
 
 Antes de leer se descartan los dominios de otros países (`.mx`, `.pe`, `.co`, `.com.ar` y similares) y las webs de marca que no venden en Venezuela (`lenovo.com`, `nvidia.com`, `apple.com`…). Una ruta `/ve/` o un dominio `.ve` sí se lee (`apple.com/ve`). Las tiendas conocidas (`sigmatiendas.com`, `soytechno.com`, `tiendasdaka.com`, `elplazas.com`) y los dominios `.ve` van primero. De lo que queda se leen hasta 8 páginas. La búsqueda pide 15 resultados —4 créditos, porque son 2 por cada 10, redondeando hacia arriba— para que, al botar los de afuera, todavía queden tiendas de Venezuela.
 
-Si una página se leyó y otra se cortó por el tiempo, la que sí se leyó se guarda (una hora si trajo ofertas, 10 minutos si no). La consulta siguiente no vuelve a pagarla. El resultado entero no se guarda cuando alguna página quedó a medias: el MCP sigue en 25 s y el agente en 45 s. Con una sola lectura por listado, 25 s alcanza para la búsqueda y para leer la página.
+Si esas primeras páginas no traen ningún precio publicado, la búsqueda no se cierra ahí. Sigue, y se detiene en cuanto aparece una oferta con precio. No inventa el monto: sigue valiendo solo un precio que está escrito en la página.
+
+- **Más resultados.** Lee las páginas de esa misma búsqueda que no entraron en las primeras 8.
+- **El listado.** Si todavía no hay precio, lee las páginas de categoría o de anuncios que esa búsqueda trajo y que aún no se abrieron. Cada una sigue siendo una sola lectura, con JSON y markdown juntos.
+- **Una consulta más cerrada.** Si sigue sin precio y queda tiempo, busca `comprar "{producto}" precio`, otra vez desde Caracas y en Venezuela. De esos resultados abre primero los listados. Es otra búsqueda de Firecrawl y solo se paga cuando la primera tanda no trajo precio (los mismos 2 créditos por cada 10 resultados).
+
+Un aviso sin precio no entra como opción. Si esta pasada tampoco encuentra un precio publicado, la tool lo dice en una frase y no pide revisar cada opción. El orquestador repite eso y no completa el hueco con un consejo.
+
+Si una página se leyó y otra se cortó por el tiempo, la que sí se leyó se guarda (una hora si trajo ofertas, 10 minutos si no). La consulta siguiente no vuelve a pagarla. El resultado entero no se guarda cuando alguna página quedó a medias, ni cuando se acabó el tiempo antes de esa pasada que sigue buscando un precio: la próxima búsqueda puede abrir lo que esta no alcanzó. El MCP sigue en 25 s y el agente en 45 s. Con una sola lectura por listado, 25 s alcanza para la búsqueda y para leer la página.
 
 ## El precio tiene que ser del producto pedido
 
@@ -93,6 +102,43 @@ Las dos están en `app/lib/sources/apify.py`: comparten el cliente, la caché y 
 
 Muestra el input que recibe el actor, la primera publicación entera (para confirmar los nombres de los campos) y las ofertas que salen de ahí.
 
+## Traerlo de USA
+
+Cuando alguien pide un producto, el orquestador también llama a `find_listings_importacion`. La tool decide. Si el producto no se puede traer, responde sin ofertas y no llama a Amazon.
+
+No se cotiza un medicamento, un perecedero, una batería suelta, un vívere, un líquido, un arma ni un bulto que no entra en un casillero aéreo (más de 50 lb, o una nevera, un caucho, un mueble). Un teléfono no es una batería suelta.
+
+### Amazon
+
+El archivo es `app/lib/sources/amazon.py`. El actor es `junglee/Amazon-crawler`, el mismo que nombra el borrador de confianza. La búsqueda es una URL de amazon.com (`categoryOrProductUrls`). Se piden el detalle del producto y el vendedor de la oferta principal (`scrapeProductDetails`, `scrapeSellers`, `maxOffers: 0`). `useCaptchaSolver` queda en false: no saltamos el bloqueo de Amazon, y con el captcha el actor no devuelve el peso.
+
+De cada resultado se leen ASIN, precio en dólares, vendedor, quién envía (Amazon, FBA o el vendedor) y, si vienen, peso y medidas. Esos últimos están en `attributes`, `productOverview` o `manufacturerAttributes`. Un resultado de otro producto se bota con la misma regla que la web abierta. Sin precio en dólares no entra.
+
+La tool espera hasta 35 s. Si el actor no alcanzó, la corrida sigue y la próxima pregunta del mismo producto lee lo que dejó. Sin `APIFY_TOKEN` no arranca.
+
+### Peso
+
+`app/lib/importacion/peso.py`. El peso facturable es el mayor entre el real y el volumétrico. El volumétrico usa 166 pulgadas cúbicas por libra, que es la cuenta habitual de la carga aérea, porque Zoom publica kilos físicos y Liberty calcula el volumen en su propio cotizador. Si el listing no trae peso, se usa una tabla por categoría (un iPhone, 0.8 lb) y la oferta dice `weightSource: "tabla"`.
+
+### Couriers
+
+Los dos cotizan en paralelo. El que no responde se omite. Queda una sola oferta: el courier más barato. Las otras cotizaciones viajan en `landed.quotes`.
+
+| Courier | De dónde sale el número |
+|---|---|
+| **Zoom** (`cur:zoom`) | La página pública [consulta de precios](https://casilleros.zoom.red/consulta-de-precios/). El aéreo se cobra por cada ½ kg o fracción, más la protección que la misma página escribe ($1 bajo $100, o el 1 % si vale más). No se llama a `CalcularTarifa`: esa API es de envíos nacionales y el casillero no tiene el contrato publicado |
+| **Liberty Express** (`cur:liberty`) | El cotizador de su calculadora, `POST https://api.iqpackoffice.com/Cotizar`. El código de flete, la ruta Miami–Venezuela y el host salen del HTML de [la calculadora](https://iqpack.libertyexpress.com/Calculator). El token sale del script que esa página carga: es el de la calculadora pública, no una clave nuestra. Se usa el flete de casillero aéreo (`termino` COL, paquete, sin condición) |
+
+El impuesto de Liberty es el que el cotizador devuelve (`taxSource: "cotizado"`). Zoom no lo incluye. La tabla de arancel está en cero hasta confirmarla: ese cero es la tabla, no un impuesto inventado. Ninguna de las dos páginas publica un rango de días, así que la tarjeta no inventa "7-12 días".
+
+`priceUsd` es el total puesto en Venezuela: precio de Amazon + flete + impuesto + seguro. El precio de Amazon queda en `landed.productUsd`.
+
+### Confianza
+
+La oferta sale con `import-v1` en `stage: "parcial"`. Al cerrar, `price_anomaly` compara el precio de Amazon con la mediana del mismo ASIN. No mira el precio venezolano: si lo mirara, una importación más barata que las tiendas de aquí saldría con puntaje 0. Con un solo precio de ese ASIN no hay mediana y la señal queda sin dato. Vendido y enviado por Amazon usa el atajo de 95. El puntaje del courier (`courier_trust`) queda vacío: `courier-v1` no se calculó porque sus pesos siguen sin confirmar. Vacío no es cero.
+
+No se guardan las cotizaciones. Postgres hoy guarda la conversación del agente, no esta tarifa.
+
 ## Puntaje de confianza por fuente
 
 La web abierta no corre el puntaje estricto en cada búsqueda. El agente sigue [open_web_trust_skill.md](../services/api/app/agents/open_web_trust_skill.md): cada listado trae `trust_review` con las banderas que ya se ven (precio contra las otras ofertas, dominio que imita una marca, funda o copia). Antigüedad, RIF, políticas y Safe Browsing siguen en `resources/website_trust_score.py` y no se inventan.
@@ -113,7 +159,7 @@ La búsqueda (`search_offers`) sigue devolviendo `merchant.trust` como un entero
 
 Mercado Libre, de punta a punta en este código: el JSON de la publicación y del vendedor entra a `score_mercadolibre` y sale un `TrustScore`. Con la mediana, el agregador llena `price_anomaly` y deja `stage="final"`. No llama a la API.
 
-Todavía no: el hash perceptual de las fotos de Facebook (si nadie pasa el conteo, `photos_original` queda sin dato), los campos crudos en el `Merchant` de la búsqueda, y el fetch de los otros canales. El atajo de Amazon (vende y envía Amazon → 95) y el bonus de hasta +10 de Marketplace sí están en el motor. `amazon` ya es un canal en `types.py`.
+Todavía no: el hash perceptual de las fotos de Facebook (si nadie pasa el conteo, `photos_original` queda sin dato), los campos crudos en el `Merchant` de la búsqueda, y el fetch de los otros canales. El atajo de Amazon (vende y envía Amazon → 95) y el bonus de hasta +10 de Marketplace sí están en el motor. `amazon` e `importacion` ya son canales en `types.py`. En `import-v1`, `price_anomaly` no usa la mediana de Venezuela: usa la del mismo ASIN. `courier-v1` no está en el motor.
 
 El contrato pedía comprobar que el estado del agente se propaga y que hubiera un paso determinista entre los especialistas y la respuesta. Eso ya no aplica: los especialistas son tools de Python y `ask_prais` lee el JSON de cada una.
 
@@ -231,7 +277,7 @@ Actores: `junglee/Amazon-crawler` y `reefapi/amazon-seller-scraper`.
 
 ## Variables
 
-`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa `APIFY_TOKEN`. `APIFY_TOKEN` sale de [Apify Console → Settings → API & Integrations](https://console.apify.com/settings/integrations) y va en `services/api/.env`. Sin él, Instagram y TikTok quedan apagadas y la búsqueda sigue igual que antes. Las demás variables, agrégalas a `services/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
+`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa el mismo `APIFY_TOKEN`. Sale de [Apify Console → Settings → API & Integrations](https://console.apify.com/settings/integrations) y va en `services/api/.env`. Sin él, Instagram, TikTok y la importación quedan apagadas y la búsqueda sigue igual que antes. Zoom y Liberty no piden clave: se leen sus páginas públicas. Las demás variables, agrégalas a `services/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
 
 ## Docs
 

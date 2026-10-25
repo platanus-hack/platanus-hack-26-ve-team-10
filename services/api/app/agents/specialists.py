@@ -4,6 +4,7 @@ from typing import Any
 
 from app.agents.listing import cards_from_offers
 from app.agents.open_web_trust import review_listings
+from app.lib.importacion.cotizar import quote_import
 from app.lib.search import search_offers
 from app.lib.sources.firecrawl import search_open_web
 from app.lib.types import Channel, SearchQuery
@@ -61,10 +62,24 @@ PAUSED_TOOLS = [
     _listings_tool("Facebook Marketplace", "facebook"),
 ]
 
-# La web abierta (Firecrawl) y las redes (Apify). Instagram y TikTok responden vacío mientras no
-# haya APIFY_TOKEN, y en la primera búsqueda de un producto: su actor tarda más que el plazo.
+
+async def find_listings_importacion(product: str) -> dict[str, Any]:
+    """Quote buying one product on Amazon and bringing it with a Miami courier. Call once.
+
+    The tool decides if the product can be imported. Declined calls return no listings.
+
+    Args:
+        product: Product the orchestrator is comparing. Pass it unchanged.
+    """
+    return await quote_import(product)
+
+
+# La web abierta (Firecrawl), las redes (Apify) y traerlo de USA. Instagram, TikTok y Amazon
+# responden vacío mientras no haya APIFY_TOKEN. El actor de Amazon tarda más que el plazo
+# de search_offers: esta tool lo espera aparte y, si no alcanza, la siguiente búsqueda lo lee.
 SOURCE_TOOLS = [
     find_listings_open_web,
     _listings_tool("Instagram", "instagram"),
     _listings_tool("TikTok", "tiktok"),
+    find_listings_importacion,
 ]

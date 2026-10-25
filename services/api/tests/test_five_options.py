@@ -169,6 +169,12 @@ class SummaryTests(unittest.TestCase):
         self.assertNotIn("two alternatives", INSTRUCTIONS)
         self.assertIn("cinco", root_agent.instruction)
 
+    def test_orchestrator_does_not_send_the_person_to_unpriced_listings(self):
+        instruction = root_agent.instruction
+        self.assertIn("Si no hay ofertas con precio publicado, dilo en una frase", instruction)
+        self.assertIn("No le pidas que revise cada opción", instruction)
+        self.assertIn("Un aviso sin precio no es una opción", instruction)
+
 
 class ReplyTests(unittest.IsolatedAsyncioTestCase):
     async def test_whatsapp_sends_five_cards_and_still_replies_with_one(self):

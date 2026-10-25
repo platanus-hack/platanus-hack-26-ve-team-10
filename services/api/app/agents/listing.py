@@ -24,6 +24,7 @@ CHANNEL_LABEL = {
     "mercadolibre": "Mercado Libre",
     "facebook": "Facebook",
     "amazon": "Amazon",
+    "importacion": "Traerlo de USA",
 }
 
 
@@ -38,8 +39,11 @@ class ListingCard(BaseModel):
     image_url: str | None = None
     ships: bool | None = None
     example: bool = False
-    trust: int | None = None
+    trust: int | dict[str, Any] | None = None
     price_usd: float | None = None
+    price_kind: str = "publicado"
+    fulfiller: str | None = None
+    landed: dict[str, Any] | None = None
 
 
 class SpecialistReport(BaseModel):
@@ -135,10 +139,26 @@ def _short_rate(rate: Any) -> str | None:
     return text.split(" (", 1)[0]
 
 
+def _trust_points(trust: Any) -> int | None:
+    """La búsqueda trae un entero. Tras cerrar el contrato, `trust` es el puntaje completo."""
+    if isinstance(trust, bool) or trust is None:
+        return None
+    if isinstance(trust, (int, float)):
+        return int(trust)
+    if isinstance(trust, dict):
+        score = trust.get("score")
+        if isinstance(score, (int, float)) and not isinstance(score, bool):
+            return int(score)
+    return None
+
+
 def _detail_bits(card: dict[str, Any], seller: str) -> list[str]:
     bits = []
-    if card.get("trust") is not None:
-        bits.append(f"Confianza {card['trust']}")
+    if card.get("price_kind") == "estimado":
+        bits.append("estimado")
+    trust = _trust_points(card.get("trust"))
+    if trust is not None:
+        bits.append(f"Confianza {trust}")
     if card.get("ships") is True:
         bits.append("Envía")
     elif card.get("ships") is False:

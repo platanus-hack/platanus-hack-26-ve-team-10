@@ -37,6 +37,8 @@ SEARCH_TIMEOUT_MS = 20_000
 SEARCH_RESERVE_MS = 10_000
 # Do not start a scrape that has less than this left: it cannot return.
 MIN_SCRAPE_MS = 500
+# A second search still has to leave one page read inside the same budget.
+DIG_SEARCH_MS = 1_000
 # Firecrawl's timeout is milliseconds (the scrape docs use 120000). Shave a
 # little off so the response arrives before we cancel the task.
 SCRAPE_SLACK_MS = 200
@@ -256,8 +258,8 @@ def _is_listing(url: str) -> bool:
     return any(segment in _LISTING_SEGMENTS or segment in _CLASSIFIED_SEGMENTS for segment in segments)
 
 
-def _pick_urls(hits: list[Any]) -> list[tuple[str, str | None]]:
-    """Venezuelan pages only, known shops and .ve first, at most SCRAPE_LIMIT."""
+def _ranked_urls(hits: list[Any]) -> list[tuple[str, str | None]]:
+    """Venezuelan pages only, known shops and .ve first."""
     seen: set[str] = set()
     found: list[tuple[str, str | None]] = []
     for hit in hits:
@@ -267,7 +269,17 @@ def _pick_urls(hits: list[Any]) -> list[tuple[str, str | None]]:
         seen.add(url)
         found.append((url, _hit_title(hit)))
     found.sort(key=lambda item: _ve_group(item[0]))
-    return found[:SCRAPE_LIMIT]
+    return found
+
+
+def _broad_query(product: str) -> str:
+    return f"{product} precio Venezuela"
+
+
+def _tighter_query(product: str) -> str:
+    """Shop query for the exact product. Used only when the first pages have no price."""
+    name = " ".join(product.split())
+    return f'comprar "{name}" precio'
 
 
 def _web_hits(result: Any) -> list[Any]:
@@ -643,6 +655,12 @@ def _search_timeout_ms(deadline: float) -> int:
     return max(min(SEARCH_TIMEOUT_MS, remaining_ms - reserve_ms), 1)
 
 
+def _can_dig(deadline: float) -> bool:
+    """True when another search and one page read can still finish."""
+    remaining_ms = (deadline - time.monotonic()) * 1000
+    return remaining_ms >= DIG_SEARCH_MS + MIN_SCRAPE_MS + SCRAPE_SLACK_MS
+
+
 def _remember(product: str, page: _Page) -> None:
     """Keep a page that was fully read. Errors and cut-off reads are retried."""
     if not page.complete or page.outcome not in ("con_ofertas", "sin_ofertas"):
@@ -783,6 +801,94 @@ async def _read_pages(client: AsyncFirecrawl, urls: list[str], product: str, dea
     return pages
 
 
+def _has_offers(pages: list[_Page]) -> bool:
+    return any(page.offers for page in pages)
+
+
+async def _search(client: AsyncFirecrawl, query: str, deadline: float) -> list[tuple[str, str | None]]:
+    found = await client.search(
+        query,
+        limit=SEARCH_LIMIT,
+        location="Caracas,Venezuela",
+        country="VE",
+        timeout=_search_timeout_ms(deadline),
+    )
+    return _ranked_urls(_web_hits(found))
+
+
+def _fresh(items: list[tuple[str, str | None]], seen: set[str]) -> list[tuple[str, str | None]]:
+    return [item for item in items if item[0] not in seen][:SCRAPE_LIMIT]
+
+
+async def _open_unread(
+    client: AsyncFirecrawl,
+    items: list[tuple[str, str | None]],
+    product: str,
+    seen: set[str],
+    deadline: float,
+) -> tuple[list[_Page], dict[str, str | None]]:
+    """Read up to SCRAPE_LIMIT pages this search has not opened yet."""
+    batch = _fresh(items, seen)
+    if not batch or not _can_dig(deadline):
+        return [], {}
+    urls = [url for url, _title in batch]
+    pages = await _read_pages(client, urls, product, deadline)
+    seen.update(urls)
+    return pages, dict(batch)
+
+
+async def _deeper(
+    client: AsyncFirecrawl,
+    product: str,
+    ranked: list[tuple[str, str | None]],
+    seen: set[str],
+    deadline: float,
+) -> tuple[list[_Page], dict[str, str | None], bool]:
+    """Open more pages when the first ones published no price.
+
+    The hits that did not fit in the first batch, then listing pages from
+    that search that are still unread, then one tighter query. Stops at the
+    first priced offer. A price still has to be written on the page: these
+    reads use the same scrapers as the first pass.
+    """
+    extra: list[_Page] = []
+    titles: dict[str, str | None] = {}
+
+    more, more_titles = await _open_unread(client, ranked, product, seen, deadline)
+    extra.extend(more)
+    titles.update(more_titles)
+    if _has_offers(extra):
+        return extra, titles, True
+
+    listings = [item for item in ranked if _is_listing(item[0])]
+    listed, listed_titles = await _open_unread(client, listings, product, seen, deadline)
+    extra.extend(listed)
+    titles.update(listed_titles)
+    if _has_offers(extra):
+        return extra, titles, True
+
+    if not _can_dig(deadline):
+        return extra, titles, False
+    try:
+        tighter = await _search(client, _tighter_query(product), deadline)
+    except Exception:  # noqa: BLE001  the first pass still stands if the second search fails
+        return extra, titles, False
+    ordered = sorted(
+        tighter,
+        key=lambda item: (0 if _is_listing(item[0]) else 1, _ve_group(item[0])),
+    )
+    if not _fresh(ordered, seen):
+        return extra, titles, True
+    if not _can_dig(deadline):
+        return extra, titles, False
+    opened, opened_titles = await _open_unread(client, ordered, product, seen, deadline)
+    extra.extend(opened)
+    titles.update(opened_titles)
+    if _fresh(ordered, seen) and not opened:
+        return extra, titles, False
+    return extra, titles, True
+
+
 def _choose(offers: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Las 5 más baratas, con un link una sola vez y hasta 2 por tienda.
 
@@ -832,7 +938,12 @@ def _log(product: str, pages: list[_Page], seconds: float) -> None:
 
 
 async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str, Any]:
-    """Busca el producto en Venezuela y se queda con hasta 5 ofertas que traen precio."""
+    """Busca el producto en Venezuela y se queda con hasta 5 ofertas que traen precio.
+
+    Si la primera tanda no trae un precio publicado, sigue con el resto de
+    resultados, las páginas de listado y una consulta más cerrada. No inventa
+    un precio.
+    """
     if not os.environ.get("FIRECRAWL_API_KEY"):
         return {
             "source": "the open web",
@@ -847,23 +958,22 @@ async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str,
     started = time.monotonic()
     deadline = started + budget_s - MARGIN_S
 
-    async def _run() -> tuple[dict[str, Any], list[_Page]]:
+    async def _run() -> tuple[dict[str, Any], list[_Page], bool]:
         client = AsyncFirecrawl(api_key=os.environ["FIRECRAWL_API_KEY"])
-        rate, found = await asyncio.gather(
-            get_rate(),
-            client.search(
-                f"{product} precio Venezuela",
-                limit=SEARCH_LIMIT,
-                location="Caracas,Venezuela",
-                country="VE",
-                timeout=_search_timeout_ms(deadline),
-            ),
-        )
-        picked = _pick_urls(_web_hits(found))
+        rate, ranked = await asyncio.gather(get_rate(), _search(client, _broad_query(product), deadline))
+        picked = ranked[:SCRAPE_LIMIT]
         urls = [url for url, _title in picked]
         titles = dict(picked)
 
         pages = await _read_pages(client, urls, product, deadline)
+        # A priced offer is enough. Dig only when this first batch published none.
+        dug = True
+        if not _has_offers(pages):
+            extra, extra_titles, dug = await _deeper(
+                client, product, ranked, {page.url for page in pages}, deadline
+            )
+            pages.extend(extra)
+            titles.update(extra_titles)
         _log(product, pages, time.monotonic() - started)
         seen_at = datetime.now(UTC).isoformat()
         offers = []
@@ -898,9 +1008,15 @@ async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str,
                 )
                 shop_of[id(offers[-1])] = _host(page.url)
         offers = _choose(offers)
-        notice = "Open-web shops have no seller trust score yet. Prices come only from the scraped page."
-        if len(offers) < PRICED_TARGET:
-            notice += " No hubo 5 ofertas con precio publicado."
+        if not offers:
+            notice = (
+                "No hay un precio publicado. No hay opciones para comparar. "
+                "Di solo eso: no inventes un precio ni pidas revisar cada opción."
+            )
+        else:
+            notice = "Open-web shops have no seller trust score yet. Prices come only from the scraped page."
+            if len(offers) < PRICED_TARGET:
+                notice += " No hubo 5 ofertas con precio publicado."
         # Una tienda con ofertas en la respuesta no se reporta como caída por otra de sus páginas.
         with_offers = {shop_of[id(offer)] for offer in offers}
         failed = [
@@ -915,10 +1031,10 @@ async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str,
             "failedSources": list(dict.fromkeys(failed)),
             "notice": notice,
         }
-        return result, pages
+        return result, pages, dug
 
     try:
-        result, pages = await asyncio.wait_for(_run(), budget_s)
+        result, pages, dug = await asyncio.wait_for(_run(), budget_s)
     except Exception as error:  # noqa: BLE001  la web abierta no tumba al orquestador
         return {
             "source": "the open web",
@@ -931,9 +1047,11 @@ async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str,
     # 45s. Pages that did finish stay in _page_cache. A transient error with
     # offers is kept briefly; an empty error is not stored. A product page we
     # could not follow with a listing read is not finished, so it is retried.
+    # An empty result is also left uncached when the deeper pass did not run,
+    # so the next call can still open the pages this one did not reach.
     errors = any(page.outcome == "error" for page in pages)
     finished = all(page.complete for page in pages)
-    if finished and (result["offers"] or not errors):
+    if dug and finished and (result["offers"] or not errors):
         ttl = CACHE_S if result["offers"] and not errors else EMPTY_CACHE_S
         _cache[key] = (time.monotonic() + ttl, result)
     return result

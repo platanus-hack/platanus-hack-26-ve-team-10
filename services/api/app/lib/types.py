@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 Currency = Literal["USD", "VES"]
-Channel = Literal["instagram", "tiktok", "web", "mercadolibre", "facebook", "amazon"]
+Channel = Literal["instagram", "tiktok", "web", "mercadolibre", "facebook", "amazon", "importacion"]
+PriceKind = Literal["publicado", "al_dm", "estimado"]
+WeightSource = Literal["listing", "tabla"]
+TaxSource = Literal["cotizado", "tabla"]
+QuoteSource = Literal["cotizador", "tabla"]
 
 
 @dataclass(frozen=True)
@@ -32,12 +36,52 @@ class Merchant:
 
 
 @dataclass(frozen=True)
+class CourierQuote:
+    """Una cotización. `source` es el flete; `tax_source` es el impuesto, que puede no coincidir."""
+
+    courier_id: str
+    courier_name: str
+    freight_usd: float
+    tax_usd: float
+    insurance_usd: float
+    includes_tax: bool
+    quoted_at: str  # ISO 8601
+    source: QuoteSource
+    tax_source: TaxSource
+    eta_days_min: int | None = None
+    eta_days_max: int | None = None
+
+
+@dataclass(frozen=True)
+class Landed:
+    """Costo puesto en Venezuela. `total_usd` es lo que compite en el ranking."""
+
+    product_usd: float
+    freight_usd: float
+    tax_usd: float
+    insurance_usd: float
+    total_usd: float
+    billable_lb: float
+    weight_source: WeightSource
+    tax_source: TaxSource
+    asin: str
+    requirements: tuple[str, ...] = ()
+    quotes: tuple[CourierQuote, ...] = ()
+    eta_days_min: int | None = None
+    eta_days_max: int | None = None
+    asin_median_usd: float | None = None
+
+
+@dataclass(frozen=True)
 class Offer:
     merchant_id: str
     title: str  # como lo publica la fuente
     url: str
     price: Money | None  # None cuando la fuente no publica el precio ("precio al DM")
     seen_at: str  # ISO 8601
+    price_kind: PriceKind = "publicado"
+    fulfiller_id: str | None = None  # el courier, solo en channel "importacion"
+    landed: Landed | None = None
 
 
 # ── Contrato de las fuentes ──────────────────────────────────────────────────────────────
