@@ -43,6 +43,7 @@ Cómo funciona, en [gcp.md](gcp.md).
 - Cada decisión con matices va en `docs/decisions/NNNN-titulo.md`.
 - `resources/`: material de referencia, no instrucciones.
 - Si un cambio contradice un doc, actualiza ese doc en el mismo commit. El hook `.githooks/pre-commit` frena un commit de código que no toca `docs/` ni `AGENTS.md`, salvo que vaya precedido de `DOCS_REVIEWED=1`. Cursor aplica la misma regla antes de ejecutar `git commit` (`.cursor/hooks.json`).
+- En Cursor, cada turno que cambia archivos termina en su propio commit. El hook `stop` lo pide si el turno se cierra con cambios sin guardar en git.
 
 ## Archivos de la entrega
 

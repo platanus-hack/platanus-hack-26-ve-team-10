@@ -49,6 +49,7 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 8. Los secretos van en variables de entorno, listadas en el `.env.example` de cada app.
 9. No toques `README.md`, `platanus-hack-project.jsonc`, `project-description.md` ni `project-logo.png` sin que te lo pidan, porque son la entrega de la hackathon.
 10. **Docs en el mismo commit.** Si el cambio toca código o configuración (`app/` o `src/` de una app, `requirements.txt`, `package.json`, `next.config.ts`, `Dockerfile`, `.env.example`, `pnpm-workspace.yaml`, `infra/`, `cloudbuild.*.yaml` o `.github/`), el commit también tiene que tocar `AGENTS.md` o `docs/`. Antes, revisa si cambió la arquitectura, una ruta, una variable de entorno, una dependencia o el deploy, y actualiza el doc de la tabla de arriba. Si no hace falta, repite el commit con `DOCS_REVIEWED=1` delante. Lo exigen `.githooks/pre-commit` (cualquier `git commit`, después de `pnpm install`) y `.cursor/hooks.json` (Cursor, antes de ejecutar el commit).
+11. **Un commit por turno.** En Cursor, si un turno deja archivos cambiados, el hook `stop` de `.cursor/hooks.json` pide un commit antes de seguir. Un turno, un commit. No juntes el trabajo de varios turnos en uno solo.
 
 ## Comandos
 

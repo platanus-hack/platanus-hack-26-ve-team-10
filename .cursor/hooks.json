@@ -6,6 +6,12 @@
         "command": "node scripts/check-docs.mjs --cursor",
         "failClosed": true
       }
+    ],
+    "stop": [
+      {
+        "command": "node scripts/commit-turn.mjs",
+        "loop_limit": 2
+      }
     ]
   }
 }
