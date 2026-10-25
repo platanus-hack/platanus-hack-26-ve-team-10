@@ -7,7 +7,6 @@ from google.adk.agents import LlmAgent
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
 
-from app.agents.clarify import next_question, search_is_allowed
 from app.agents.specialists import ORCHESTRATOR_NAME, SOURCE_TOOLS
 
 # Una búsqueda por mensaje. El estado de la sesión no sirve: el próximo mensaje
@@ -26,34 +25,8 @@ def _search_once(tool: BaseTool, args: dict[str, Any], tool_context: ToolContext
     return None
 
 
-def _session_user(tool_context: ToolContext) -> str:
-    try:
-        session = tool_context.session
-    except (AttributeError, RuntimeError):
-        return ""
-    user_id = getattr(session, "user_id", None)
-    return user_id if isinstance(user_id, str) else ""
-
-
 def _before_search(tool: BaseTool, args: dict[str, Any], tool_context: ToolContext) -> dict[str, Any] | None:
-    """No busca si el nombre todavía deja una elección que cambia el precio."""
-    product = args.get("product")
-    if tool.name.startswith("find_listings") and isinstance(product, str):
-        user_id = _session_user(tool_context)
-        if not search_is_allowed(user_id, product):
-            question = next_question(product, frozenset())
-            if question is not None:
-                return {
-                    "listings": [],
-                    "ask": {
-                        "question": question.text,
-                        "choices": list(question.choices),
-                        "dimension": question.dimension,
-                        "section": question.section,
-                        "product": product,
-                    },
-                    "notice": "Ask this one question and stop. Do not search.",
-                }
+    """Una búsqueda por mensaje. El nombre del producto no la bloquea."""
     return _search_once(tool, args, tool_context)
 
 
@@ -67,9 +40,7 @@ root_agent = LlmAgent(
 
 Si no sabes qué producto o servicio comparar, pregunta una sola cosa y para. No llames a la tool todavía.
 
-Si el nombre todavía deja una elección que cambia el precio, pregunta solo esa y para. No llames a la tool. Esas elecciones son el modelo (regular, Pro, Pro Max u otra variante), si lo quiere nuevo o usado, y la capacidad. Una pregunta por mensaje. Si la tool responde con "ask", haz esa pregunta, con esas opciones, y para.
-
-Cuando el producto ya esté exacto, llama una sola vez a cada tool find_listings_ que tengas, todas con ese mismo texto, sin acortarlo ni cambiarlo. Ninguna se repite. Una tool que responde sin ofertas no es un error: esa fuente no tenía nada ahora. Tú eres el único que le habla a la persona.
+Cuando sepas qué comparar, llama una sola vez a cada tool find_listings_ que tengas, todas con el texto de la persona, sin acortarlo ni cambiarlo. Ninguna se repite. El nombre no tiene que coincidir con un catálogo para poder buscar. Una tool que responde sin ofertas no es un error: esa fuente no tenía nada ahora. Tú eres el único que le habla a la persona.
 
 Tu mensaje cabe en 250 caracteres. Es el veredicto: cuál opción abrir primero y por qué, con lo que dijeron las tools. No enumeres las ofertas ni repitas vendedor, canal, tasa, reseñas, envío o el link: eso va en las tarjetas. Las tarjetas son hasta cinco ofertas con precio publicado, de la más barata a la más cara. Una oferta sin precio no ocupa un lugar. Si ya hay precios reales, una de ejemplo no completa esas cinco. Si hay menos de cinco, se muestran las que hay: no inventes las que faltan. El vendedor es el comercio del listado, nunca la marca del producto, salvo que el listado nombre a esa marca como tienda. Si una oferta es de ejemplo y la mencionas, di que es de ejemplo. Si no hay ofertas con precio publicado, dilo en una frase y para. No digas que hay publicaciones para revisar. No le pidas que revise cada opción, que vaya a ver el producto ni que negocie. Un aviso sin precio no es una opción y no se rellena con consejos.
 
