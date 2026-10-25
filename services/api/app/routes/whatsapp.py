@@ -223,6 +223,28 @@ async def _show_typing(phone_number_id: str, message_id: str | None) -> None:
         log.exception("whatsapp typing failed")
 
 
+def _ack_text(product: str) -> str:
+    """Qué se entendió, antes de los 45 s de búsqueda y no después.
+
+    Promete lo que Prais hace, no lo que va a encontrar: decir "te traigo lo más
+    confiable" antes de buscar es prometer un resultado que puede no existir.
+    La segunda frase es la que vale: deja corregir mientras todavía sirve, y la
+    corrección ya la recoge el bucle, que descarta la respuesta y rehace la búsqueda.
+    """
+    if "http://" in product or "https://" in product:
+        return "Dale! Veo qué venden en esa página y comparo el precio."
+    return f"Dale! Busco *{product}* y te digo dónde está más barato. Si no es ese, dime cuál."
+
+
+def _acknowledge(phone_number_id: str, to: str):
+    """El closure que el agente llama cuando ya decidió qué va a buscar."""
+
+    async def send(product: str) -> None:
+        await _post_message(phone_number_id, _text_payload(to, _ack_text(product)))
+
+    return send
+
+
 async def _drain(sender: str) -> None:
     """Responde cuando ya no queda texto nuevo de esta persona."""
     pending_ids: list[str | None] = []
@@ -247,7 +269,10 @@ async def _drain(sender: str) -> None:
         await _show_typing(phone_number_id, last_id)
         typing = _keep_typing_alive(phone_number_id, last_id)
         try:
-            answer = await asyncio.wait_for(ask_prais(f"whatsapp:{sender}", text), TURN_TIMEOUT_S)
+            answer = await asyncio.wait_for(
+                ask_prais(f"whatsapp:{sender}", text, _acknowledge(phone_number_id, sender)),
+                TURN_TIMEOUT_S,
+            )
         except TimeoutError:
             log.warning("whatsapp turn timed out after %ss", TURN_TIMEOUT_S)
             answer = PraisAnswer(text=TIMEOUT_REPLY)

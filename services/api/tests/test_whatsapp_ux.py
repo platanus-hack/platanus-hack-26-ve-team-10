@@ -101,7 +101,7 @@ class PresenceTests(unittest.IsolatedAsyncioTestCase):
         async def typing(_phone_number_id, message_id):
             typed.append(message_id)
 
-        async def fake_ask(_user, _message):
+        async def fake_ask(_user, _message, _on_search=None):
             if delay:
                 await asyncio.sleep(delay)
             return answer
@@ -200,7 +200,7 @@ class StuckTurnTests(unittest.IsolatedAsyncioTestCase):
         async def capture(_phone_number_id, payload):
             posted.append(payload)
 
-        async def never(_user, _message):
+        async def never(_user, _message, _on_search=None):
             await asyncio.sleep(30)
             raise AssertionError("el tope tenía que cortar antes")
 
@@ -233,7 +233,7 @@ class StuckTurnTests(unittest.IsolatedAsyncioTestCase):
             if payload.get("type") != "text":
                 raise RuntimeError("400 Bad Request")
 
-        async def fake_ask(_user, _message):
+        async def fake_ask(_user, _message, _on_search=None):
             return answer
 
         async def no_image(_title):

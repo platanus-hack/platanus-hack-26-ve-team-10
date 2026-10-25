@@ -42,7 +42,8 @@ LOOKUP_TIMEOUT_S = 4
 
 ACCESSORY_FLAG = "Es una funda, una copia o un accesorio, no el producto pedido"
 
-_ACCESSORY = re.compile(
+# Lo usa también Marketplace: una funda que menciona el teléfono no es el teléfono.
+ACCESSORY = re.compile(
     r"\b(fundas?|carcasas?|forros?|cases?|covers?|replicas?|réplicas?|clones?|copias?|imitaciones?|fakes?)\b",
     re.IGNORECASE,
 )
@@ -184,7 +185,12 @@ def web_trust(
     brand = impersonated_brand(host, product)
     if brand:
         flags.append(f"El dominio imita a {brand}")
-    if _ACCESSORY.search(title) and not _ACCESSORY.search(product):
+    if is_accessory(title, product):
         flags.append(ACCESSORY_FLAG)
 
     return compute_trust("web-v1", build_signals("web-v1", values), stage="parcial", red_flags=flags, now=moment)
+
+
+def is_accessory(title: str, product: str) -> bool:
+    """El anuncio vende una funda o una copia, y lo pedido no era eso."""
+    return bool(ACCESSORY.search(title)) and not ACCESSORY.search(product)

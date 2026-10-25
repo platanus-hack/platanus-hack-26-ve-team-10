@@ -24,6 +24,20 @@ Hay dos recetas. Si el mensaje trae un link, se lee el nombre del producto en es
 
 No hay una lista de modelos armada en el código. Si el agente pregunta, la pregunta sale en texto. Cuando hay dos o más ofertas con precio, la respuesta es el carrusel. Cuando hay una sola, es una tarjeta con el botón para abrirla. El producto de la conversación queda en el estado de la sesión de ADK (`product`). Un mensaje que llega después ("el último", "el que salió") no borra ese producto y no dispara "¿cuál modelo buscas?".
 
+## El acuse: qué se entendió, antes de buscar
+
+Una búsqueda puede tardar 45 segundos. Hasta ahora, lo primero que la persona leía era el carrusel, así que si Prais entendió mal el producto se enteraba 45 segundos tarde, con el minuto ya perdido.
+
+El acuse no lo decide un regex ni un catálogo: lo decide **el modelo, y gratis**. Si va a buscar, llama a una tool `find_listings_` y el argumento `product` es su lectura del producto; si va a preguntar, no hay llamada y su pregunta ya sale rápido. Esa llamada aparece en el primer turno, a uno o dos segundos, mucho antes del scraping. `_event_search_call` la lee en el flujo de eventos y `searched_name` le quita el arranque de intención ("comprar un iphone 17pro" se acusa como "iphone 17pro"); lo que no calce pasa igual, porque no es una lista de productos.
+
+> Dale! Busco **iPhone 17 Pro** y te digo dónde está más barato. Si no es ese, dime cuál.
+
+Promete lo que Prais hace, no lo que va a encontrar: decir "te traigo lo más confiable" antes de buscar es prometer un resultado que puede no existir, y el personaje tiene prohibido exagerar ([design-system/prais.md](design-system/prais.md)). La segunda frase es la que vale: deja corregir mientras todavía sirve, y esa corrección ya la recoge el bucle, que descarta la respuesta a medio hacer y rehace la búsqueda con lo nuevo.
+
+Sale **a los 1,5 segundos de la llamada, y se cancela si la respuesta llega antes**. La web abierta cachea una hora el mismo producto, así que repetir una búsqueda vuelve instantánea: sin esa gracia se gastaría un mensaje para nada, y en WhatsApp cada mensaje cuenta contra el plan. Se acusa una sola vez aunque corran varias fuentes, y si el envío falla se sigue sin él.
+
+El canal lo pasa como `on_search` a `ask_prais`: el agente no sabe de Kapso y la web no manda acuse.
+
 ## El resultado y la salida
 
 El cuerpo lleva arriba, en negrita, **el producto con el que se buscó de verdad** (`_result_body`). Lo que la conversación fue fijando turno a turno no se veía en ningún lado: si quedó mal, la persona se enteraba al leer tarjetas de otra cosa. Solo se encabeza así cuando alguna fuente llegó a contestar: un saludo no lleva producto.
