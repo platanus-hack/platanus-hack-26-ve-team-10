@@ -5,8 +5,8 @@ export const empresa = {
   marca: "usaprais",
   sitio: "https://usaprais.com",
   correo: "hello@usaprice.com",
-  telefono: "+1 (914) 608-4742",
-  whatsapp: "https://wa.me/19146084742",
+  telefono: "+1 (205) 840-6181",
+  whatsapp: "https://wa.me/12058406181",
   actualizado: "24 de octubre de 2026", // fecha de la política de privacidad y los términos
 };
 
