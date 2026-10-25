@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ofertas de usaprais</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap">
+<style>
+/* Widget de search_prices (MCP Apps). Capa de producto del design system (docs/design-system/README.md):
+   fondo papel, precios en Outfit 700 con números tabulares, el amarillo sol solo para la oferta más barata. */
+:root {
+  --papel: #ffffff; --papel-bajo: #f4f5f7; --tinta: #15171a; --tinta-suave: #5b6270; --linea: #e5e7eb;
+  --accion: #15171a; --on-accion: #ffffff; --sol: #ffc829; --on-sol: #1f1a14; --sol-tinte: #fff6d6;
+  --ahorro: #0f6b3e; --ahorro-tinte: #e3f1e8; --caro-texto: #a8301b; --caro-tinte: #fde6e0;
+  --anil: #2a4bd7; --foco: #2a4bd7; --aviso-tinte: #fff6d6;
+  --font: "Outfit", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: light;
+}
+[data-theme="noche"] {
+  --papel: #17191c; --papel-bajo: #22252a; --tinta: #f2f3f5; --tinta-suave: #a3a9b4; --linea: #2a2d33;
+  --accion: #f2f3f5; --on-accion: #15171a; --sol-tinte: #2b2410; --ahorro: #4fd690; --ahorro-tinte: #16301f;
+  --caro-texto: #ff8a70; --caro-tinte: #3a1a14; --anil: #8fa3ff; --foco: #ffc829; --aviso-tinte: #2b2410;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: transparent; }
+body { font: 15px/1.45 var(--font); color: var(--tinta); }
+#app { background: var(--papel); border: 1px solid var(--linea); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+
+.head { display: flex; gap: 10px; align-items: center; }
+.head .avatar { width: 40px; height: 40px; flex: none; }
+.head .avatar svg { width: 100%; height: 100%; display: block; }
+.veredicto { margin: 0; font-size: 16px; font-weight: 500; text-wrap: balance; }
+.veredicto b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sub { margin: 2px 0 0; font-size: 13px; color: var(--tinta-suave); }
+
+.cifras { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.cifra { background: var(--papel-bajo); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cifra dt { font-size: 12px; color: var(--tinta-suave); }
+.cifra dd { margin: 0; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--linea); background: var(--papel); border-radius: 999px; padding: 4px 11px; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accion); color: var(--on-accion); border-color: var(--accion); }
+
+.lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.oferta { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--linea); border-radius: 12px; }
+.oferta.mejor { border-color: var(--sol); background: var(--sol-tinte); }
+.foto { width: 56px; height: 56px; border-radius: 10px; background: var(--papel-bajo); display: grid; place-items: center; overflow: hidden; font-weight: 700; color: var(--tinta-suave); }
+.foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.titulo { font-weight: 600; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.comercio { font-size: 12.5px; color: var(--tinta-suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badges { display: flex; gap: 4px; flex-wrap: wrap; }
+.badge { font-size: 11.5px; font-weight: 600; padding: 1px 7px; border-radius: 6px; background: var(--papel-bajo); color: var(--tinta-suave); }
+.badge.sol { background: var(--sol); color: var(--on-sol); }
+.badge.bien { background: var(--ahorro-tinte); color: var(--ahorro); }
+.badge.ojo { background: var(--caro-tinte); color: var(--caro-texto); }
+.precio { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.usd { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bs { font-size: 12px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ver { font-size: 13px; font-weight: 600; color: var(--anil); text-decoration: none; white-space: nowrap; }
+.ver:hover { text-decoration: underline; }
+
+details.sinprecio summary { cursor: pointer; font-size: 13px; color: var(--tinta-suave); }
+details.sinprecio .lista { margin-top: 8px; }
+.pie { font-size: 12px; color: var(--tinta-suave); display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--linea); padding-top: 10px; }
+.aviso { background: var(--aviso-tinte); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; color: var(--tinta); }
+
+.estado { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 14px 6px; }
+.estado .avatar { width: 72px; height: 72px; }
+.estado .avatar svg { width: 100%; height: 100%; display: block; }
+.estado p { margin: 0; }
+.esqueleto { height: 76px; border-radius: 12px; background: linear-gradient(90deg, var(--papel-bajo), var(--linea), var(--papel-bajo)); background-size: 200% 100%; animation: brillo 1.4s ease-in-out infinite; }
+@keyframes brillo { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .esqueleto { animation: none; } }
+@media (max-width: 380px) {
+  .oferta { grid-template-columns: 44px minmax(0, 1fr); }
+  .foto { width: 44px; height: 44px; }
+  .precio { grid-column: 2; align-items: flex-start; text-align: left; flex-direction: row; gap: 10px; flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<template id="prais-pensando">__PRAIS_PENSANDO__</template>
+<template id="prais-ganga">__PRAIS_GANGA__</template>
+<script>
+(function () {
+  "use strict";
+  var app = document.getElementById("app");
+  var state = { query: "", data: null, filtro: "todas", cargando: true, error: null };
+  var ctx = {};
+  var caps = {};
+
+  // ── Puente con el host (MCP Apps, JSON-RPC sobre postMessage) ─────────────────────────────
+  var nextId = 1;
+  var pending = {};
+  function send(msg) { window.parent.postMessage(msg, "*"); }
+  function request(method, params, timeoutMs) {
+    var id = nextId++;
+    send({ jsonrpc: "2.0", id: id, method: method, params: params || {} });
+    return new Promise(function (resolve, reject) {
+      pending[id] = { resolve: resolve, reject: reject };
+      setTimeout(function () {
+        if (pending[id]) { delete pending[id]; reject(new Error("Sin respuesta del host")); }
+      }, timeoutMs || 10000);
+    });
+  }
+  function notify(method, params) { send({ jsonrpc: "2.0", method: method, params: params || {} }); }
+  function reply(id, result) { send({ jsonrpc: "2.0", id: id, result: result || {} }); }
+
+  window.addEventListener("message", function (event) {
+    if (event.source !== window.parent) return;
+    var m = event.data;
+    if (!m || m.jsonrpc !== "2.0") return;
+    if (m.id != null && !m.method && pending[m.id]) {
+      var p = pending[m.id];
+      delete pending[m.id];
+      if (m.error) p.reject(new Error(m.error.message || "Error del host"));
+      else p.resolve(m.result);
+      return;
+    }
+    switch (m.method) {
+      case "ui/notifications/tool-input":
+        state.query = (m.params && m.params.arguments && m.params.arguments.query) || state.query;
+        render();
+        break;
+      case "ui/notifications/tool-result":
+        mostrarResultado(m.params);
+        break;
+      case "ui/notifications/tool-cancelled":
+        state.cargando = false;
+        state.error = "La búsqueda se canceló.";
+        render();
+        break;
+      case "ui/notifications/host-context-changed":
+        Object.assign(ctx, m.params || {});
+        aplicarContexto();
+        break;
+      case "ui/resource-teardown":
+      case "ping":
+        if (m.id != null) reply(m.id, {});
+        break;
+      default:
+        if (m.id != null) send({ jsonrpc: "2.0", id: m.id, error: { code: -32601, message: "Método no soportado" } });
+    }
+  });
+
+  function aplicarContexto() {
+    document.documentElement.setAttribute("data-theme", ctx.theme === "dark" ? "noche" : "papel");
+  }
+
+  var ultimoTamano = "";
+  function avisarTamano() {
+    var r = document.documentElement.getBoundingClientRect();
+    var t = Math.ceil(r.width) + "x" + Math.ceil(r.height);
+    if (t === ultimoTamano) return;
+    ultimoTamano = t;
+    notify("ui/notifications/size-changed", { width: Math.ceil(r.width), height: Math.ceil(r.height) });
+  }
+  if (window.ResizeObserver) new ResizeObserver(avisarTamano).observe(document.documentElement);
+
+  // ── Datos ─────────────────────────────────────────────────────────────────────────────────
+  function mostrarResultado(result) {
+    state.cargando = false;
+    if (!result || result.isError || !result.structuredContent) {
+      state.error = "No pude buscar ahora. Intenta de nuevo en un momento.";
+    } else {
+      state.error = null;
+      state.data = result.structuredContent;
+      state.query = state.data.query || state.query;
+      state.filtro = "todas";
+    }
+    render();
+  }
+
+  function abrir(url) {
+    if (caps.openLinks) request("ui/open-link", { url: url }).catch(function () { window.open(url, "_blank", "noopener"); });
+    else window.open(url, "_blank", "noopener");
+  }
+
+  // ── Formato ───────────────────────────────────────────────────────────────────────────────
+  var numero = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 2 });
+  function usd(v) { return "USD " + numero.format(v); }
+  function bs(v) { return "Bs. " + new Intl.NumberFormat("es-VE", { maximumFractionDigits: 0 }).format(v); }
+  function fecha(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    try {
+      return d.toLocaleString("es-VE", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: ctx.timeZone || "America/Caracas" });
+    } catch (e) { return d.toLocaleString("es-VE"); }
+  }
+  function seguro(url) { return typeof url === "string" && /^https?:\/\//i.test(url) ? url : null; }
+  var CANAL = { web: "Web", mercadolibre: "Mercado Libre", instagram: "Instagram", tiktok: "TikTok", facebook: "Marketplace", amazon: "Amazon" };
+  function canal(c) { return CANAL[c] || c || ""; }
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "text") n.textContent = attrs[k];
+      else if (k.slice(0, 2) === "on") n.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] != null) n.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function prais(nombre, clase) {
+    var t = document.getElementById("prais-" + nombre);
+    var d = el("div", { class: clase || "avatar", "aria-hidden": "true" });
+    d.appendChild(t.content.cloneNode(true));
+    return d;
+  }
+
+  // ── Vista ─────────────────────────────────────────────────────────────────────────────────
+  // Tablero de solo lectura: la búsqueda la hace el chat. Arriba, las cifras para decidir.
+  function cifras(ofertas, conPrecioTodas) {
+    var tiendas = {};
+    ofertas.forEach(function (o) { if (o.merchant) tiendas[o.merchant.name] = 1; });
+    var items = [];
+    if (conPrecioTodas.length) {
+      items.push(["Más barato", usd(conPrecioTodas[0].priceUsd)]);
+      if (conPrecioTodas.length > 1) items.push(["Más caro", usd(conPrecioTodas[conPrecioTodas.length - 1].priceUsd)]);
+    }
+    items.push(["Ofertas", String(ofertas.length)]);
+    items.push(["Tiendas", String(Object.keys(tiendas).length)]);
+    return el("dl", { class: "cifras" }, items.map(function (it) {
+      return el("div", { class: "cifra" }, [el("dt", { text: it[0] }), el("dd", { text: it[1] })]);
+    }));
+  }
+
+  function tarjeta(o, esMejor, tasa) {
+    var url = seguro(o.url);
+    var foto = el("div", { class: "foto", "aria-hidden": "true", text: (o.merchant && o.merchant.name || "?").charAt(0).toUpperCase() });
+    var img = seguro(o.imageUrl);
+    if (img) {
+      var i = el("img", { src: img, alt: "", loading: "lazy", referrerpolicy: "no-referrer" });
+      i.addEventListener("load", function () { foto.textContent = ""; foto.appendChild(i); });
+    }
+
+    var badges = el("div", { class: "badges" });
+    if (esMejor) badges.appendChild(el("span", { class: "badge sol", text: "Más barato" }));
+    if (o.example) badges.appendChild(el("span", { class: "badge ojo", text: "Ejemplo" }));
+    var t = o.merchant ? o.merchant.trust : null;
+    if (t == null) badges.appendChild(el("span", { class: "badge", text: "Sin puntaje de confianza" }));
+    else if (t >= 70) badges.appendChild(el("span", { class: "badge bien", text: "Confiable · " + t }));
+    else if (t >= 40) badges.appendChild(el("span", { class: "badge", text: "Revisa antes · " + t }));
+    else badges.appendChild(el("span", { class: "badge ojo", text: "Poca confianza · " + t }));
+
+    var zona = o.merchant && o.merchant.zone && o.merchant.zone !== "Venezuela" ? " · " + o.merchant.zone : "";
+    var info = el("div", { class: "info" }, [
+      el("span", { class: "titulo", text: o.title || "" }),
+      el("span", { class: "comercio", text: (o.merchant ? o.merchant.name : "") + " · " + canal(o.merchant && o.merchant.channel) + zona + (o.seenAt ? " · " + fecha(o.seenAt) : "") }),
+      badges
+    ]);
+
+    var precio = el("div", { class: "precio" });
+    if (o.priceUsd != null) {
+      precio.appendChild(el("span", { class: "usd", text: usd(o.priceUsd) }));
+      if (o.rate && o.price) precio.appendChild(el("span", { class: "bs", text: o.price }));
+      else if (tasa) precio.appendChild(el("span", { class: "bs", text: "≈ " + bs(o.priceUsd * tasa.usdToVes) }));
+    } else {
+      precio.appendChild(el("span", { class: "bs", text: o.price || "Precio al DM" }));
+    }
+    if (url) precio.appendChild(el("a", { class: "ver", href: url, target: "_blank", rel: "noopener noreferrer", text: "Ver oferta", onclick: function (e) { e.preventDefault(); abrir(url); } }));
+
+    return el("li", { class: "oferta" + (esMejor ? " mejor" : "") }, [foto, info, precio]);
+  }
+
+  function render() {
+    aplicarContexto();
+    app.textContent = "";
+
+    if (state.cargando) {
+      app.appendChild(el("div", { class: "estado" }, [
+        prais("pensando"),
+        el("p", { text: state.query ? "Buscando " + state.query + " en tiendas de Venezuela…" : "Buscando en tiendas de Venezuela…" }),
+        el("p", { class: "sub", text: "Puede tardar hasta 30 segundos." })
+      ]));
+      app.appendChild(el("div", { class: "esqueleto" }));
+      app.appendChild(el("div", { class: "esqueleto" }));
+      return;
+    }
+    if (state.error) {
+      app.appendChild(el("div", { class: "estado" }, [prais("pensando"), el("p", { text: state.error })]));
+      return;
+    }
+
+    var d = state.data || { offers: [] };
+    var ofertas = d.offers || [];
+    var tasa = d.exchangeRate || null;
+    var canales = [];
+    ofertas.forEach(function (o) { var c = o.merchant && o.merchant.channel; if (c && canales.indexOf(c) < 0) canales.push(c); });
+    var visibles = ofertas.filter(function (o) { return state.filtro === "todas" || (o.merchant && o.merchant.channel === state.filtro); });
+    var conPrecio = visibles.filter(function (o) { return o.priceUsd != null; });
+    var sinPrecio = visibles.filter(function (o) { return o.priceUsd == null; });
+    // El veredicto y "Más barato" miran todas las ofertas, no solo las del filtro.
+    var mejor = ofertas.filter(function (o) { return o.priceUsd != null; })[0];
+
+    if (!ofertas.length) {
+      app.appendChild(el("div", { class: "estado" }, [
+        prais("pensando"),
+        el("p", { text: "No encontré ofertas de " + (d.query || state.query) + "." }),
+        el("p", { class: "sub", text: "Prueba con la marca y el modelo exacto, por ejemplo «Redmi 15C 128 GB»." })
+      ]));
+    } else {
+      var veredicto = mejor
+        ? el("p", { class: "veredicto" }, ["Lo más barato: ", el("b", { text: usd(mejor.priceUsd) }), " en " + (mejor.merchant ? mejor.merchant.name : "")])
+        : el("p", { class: "veredicto", text: "Ninguna oferta publica su precio" });
+      var visto = mejor && mejor.seenAt ? " · visto " + fecha(mejor.seenAt) : "";
+      app.appendChild(el("div", { class: "head" }, [
+        prais("ganga"),
+        el("div", {}, [veredicto, el("p", { class: "sub", text: (d.query || "") + visto })])
+      ]));
+      app.appendChild(cifras(ofertas, ofertas.filter(function (o) { return o.priceUsd != null; })));
+    }
+
+    if (canales.length > 1) {
+      var chips = el("div", { class: "chips", role: "group", "aria-label": "Filtrar por canal" });
+      ["todas"].concat(canales).forEach(function (c) {
+        chips.appendChild(el("button", { class: "chip", type: "button", "aria-pressed": String(state.filtro === c), text: c === "todas" ? "Todas" : canal(c), onclick: function () { state.filtro = c; render(); } }));
+      });
+      app.appendChild(chips);
+    }
+
+    if (conPrecio.length) {
+      var lista = el("ol", { class: "lista" });
+      conPrecio.forEach(function (o) { lista.appendChild(tarjeta(o, o === mejor, tasa)); });
+      app.appendChild(lista);
+    }
+    if (sinPrecio.length) {
+      var listaSin = el("ul", { class: "lista" });
+      sinPrecio.forEach(function (o) { listaSin.appendChild(tarjeta(o, false, tasa)); });
+      var det = el("details", { class: "sinprecio" }, [el("summary", { text: "Sin precio publicado (" + sinPrecio.length + ")" }), listaSin]);
+      if (!conPrecio.length) det.open = true;
+      app.appendChild(det);
+    }
+
+    var pie = el("div", { class: "pie" });
+    pie.appendChild(el("span", { text: "Precios tal como los publica cada tienda. usaprais no vende nada." }));
+    if (tasa) pie.appendChild(el("span", { text: "Bs. calculados a " + numero.format(tasa.usdToVes) + " Bs/USD (" + tasa.source + (tasa.observedAt ? ", " + fecha(tasa.observedAt) : "") + ")." }));
+    if (d.failedSources && d.failedSources.length) {
+      pie.appendChild(el("span", { text: "No respondieron: " + d.failedSources.map(function (s) { return s.replace(/^firecrawl:/, ""); }).join(", ") + "." }));
+    }
+    if (d.notice) pie.appendChild(el("span", { class: "aviso", text: d.notice }));
+    app.appendChild(pie);
+  }
+
+  // ── Arranque ──────────────────────────────────────────────────────────────────────────────
+  render();
+  request("ui/initialize", {
+    appInfo: { name: "usaprais-ofertas", version: "1.0.0" },
+    appCapabilities: { availableDisplayModes: ["inline"] },
+    protocolVersion: "2026-01-26"
+  }).then(function (result) {
+    ctx = (result && result.hostContext) || {};
+    caps = (result && result.hostCapabilities) || {};
+    render();
+    notify("ui/notifications/initialized", {});
+  }).catch(function () {
+    state.cargando = false;
+    state.error = "Este widget se abre dentro de un chat compatible con MCP Apps.";
+    render();
+  });
+})();
+</script>
+</body>
+</html>
