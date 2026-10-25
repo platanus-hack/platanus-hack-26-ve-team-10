@@ -29,6 +29,18 @@
   --font-display: var(--font-bungee), "Arial Black", Impact, sans-serif;
 }
 
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Rebote leve: solo para stickers de la capa de marca. */
+  --ease-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   background: var(--papel);
   color: var(--tinta);
@@ -79,8 +91,8 @@ h3 {
     border: var(--grosor-cartel) solid var(--trazo);
     box-shadow: var(--sombra-sticker);
     transition:
-      transform 80ms,
-      box-shadow 80ms;
+      transform 100ms var(--ease-out),
+      box-shadow 100ms var(--ease-out);
   }
   .btn-cartel:active {
     transform: translate(3px, 3px);
@@ -99,5 +111,105 @@ h3 {
     border: var(--grosor-cartel) solid var(--trazo);
     border-radius: var(--radius-sm);
     box-shadow: var(--sombra-sticker);
+  }
+
+  /* Grano de papel kraft, dibujado en SVG: sin imágenes que descargar. */
+  .grano {
+    position: relative;
+    isolation: isolate;
+  }
+  .grano::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .34 0 0 0 0 .2 1.4 0 0 0 -.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  }
+
+  /* Botones del producto: se hunden un poco al presionar, para confirmar el toque. */
+  .presion {
+    transition:
+      transform 160ms var(--ease-out),
+      background-color 150ms ease;
+  }
+  .presion:active {
+    transform: scale(0.97);
+  }
+
+  /* Entradas de la landing: una vez, al cargar. --i escalona los elementos de una lista. */
+  .entra {
+    animation: entra 600ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+  .sticker-entra {
+    animation: sticker-entra 450ms var(--ease-rebote) both;
+    animation-delay: var(--retraso, 0ms);
+  }
+  .marcador {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: marcador 700ms var(--ease-out) 300ms forwards;
+  }
+  .mensaje {
+    transition:
+      opacity 250ms var(--ease-out),
+      translate 250ms var(--ease-out);
+    @starting-style {
+      opacity: 0;
+      translate: 0 6px;
+    }
+  }
+  .barra-carga {
+    animation: barra-carga 1.1s linear infinite;
+  }
+}
+
+@keyframes entra {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+@keyframes sticker-entra {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+@keyframes marcador {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes barra-carga {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 250% 0;
+  }
+}
+
+/* Menos movimiento: se quedan los cambios de opacidad, se va el desplazamiento. */
+@media (prefers-reduced-motion: reduce) {
+  .entra,
+  .sticker-entra {
+    animation: none;
+  }
+  .marcador {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .mensaje {
+    transition: opacity 200ms ease;
+    @starting-style {
+      translate: 0;
+    }
+  }
+  .barra-carga {
+    animation: none;
+    translate: 75% 0;
   }
 }

@@ -2,15 +2,8 @@
 
 import { useState } from "react";
 import type { Condicion, Oferta } from "@/lib/catalogo";
-import { bs, fecha, usd } from "@/lib/formato";
+import { bs, CANALES, fecha, usd } from "@/lib/formato";
 
-const CANALES: Record<string, string> = {
-  web: "Web",
-  instagram: "Instagram",
-  mercadolibre: "Mercado Libre",
-  facebook: "Marketplace",
-  tiktok: "TikTok",
-};
 const PESTANAS: { id: Condicion; nombre: string }[] = [
   { id: "nuevo", nombre: "Nuevo" },
   { id: "usado", nombre: "Usado" },

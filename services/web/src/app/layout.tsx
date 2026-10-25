@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Bungee, Outfit } from "next/font/google";
 import Link from "next/link";
-import { empresa } from "@/lib/empresa";
+import { empresa, whatsappPrais } from "@/lib/empresa";
 import { guias } from "@/lib/guias";
 import "./globals.css";
+import { Icono } from "./icono";
 
 const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
 const bungee = Bungee({ variable: "--font-bungee", subsets: ["latin"], weight: "400" });
@@ -19,28 +20,42 @@ export const metadata: Metadata = {
   openGraph: { siteName: "usaprais", locale: "es_VE", type: "website" },
 };
 
+// Las secciones clave de la landing; desde otras páginas, el enlace vuelve a la landing.
+const secciones = [
+  { nombre: "Cómo funciona", href: "/#como-funciona" },
+  { nombre: "Dónde usarlo", href: "/#donde-usarlo" },
+  { nombre: "De tu lado", href: "/#de-tu-lado" },
+];
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es-VE" className={`${outfit.variable} ${bungee.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <header className="border-b-[2.5px] border-trazo bg-kraft">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-            <Link href="/" className="wordmark" aria-label="usaprais, inicio">
+          <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
+            <Link href="/" className="wordmark mr-auto" aria-label="usaprais, inicio">
               usa<span>prais</span>
             </Link>
-            <nav aria-label="Secciones" className="hidden gap-5 font-medium sm:flex">
-              <Link href="/#como-funciona" className="hover:underline">
-                Cómo funciona
-              </Link>
-              <Link href="/#empresa" className="hover:underline">
-                Empresa
-              </Link>
+            <nav aria-label="Secciones" className="hidden items-center gap-1 font-medium md:flex">
+              {secciones.map((s) => (
+                <Link
+                  key={s.href}
+                  href={s.href}
+                  className="rounded-[8px] px-3 py-2 transition-colors duration-150 hover:bg-trazo/[0.06]"
+                >
+                  {s.nombre}
+                </Link>
+              ))}
             </nav>
+            <a href={whatsappPrais} className="btn-cartel px-4 py-2 text-[15px]">
+              Escríbele a Prais
+              <Icono nombre="flecha" size={16} />
+            </a>
           </div>
         </header>
         {children}
         <footer className="mt-auto border-t-[2.5px] border-trazo bg-kraft">
-          <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 text-[15px] sm:grid-cols-2 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
+          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-[15px] sm:grid-cols-2 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
             <div className="flex flex-col gap-3">
               <span className="wordmark" aria-label="usaprais">
                 usa<span>prais</span>
@@ -51,7 +66,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <strong>Contacto</strong>
               <span>{empresa.correo}</span>
               <span>{empresa.telefono}</span>
-              <a href={empresa.whatsapp} className="underline underline-offset-2">
+              <a href={whatsappPrais} className="underline underline-offset-2">
                 WhatsApp
               </a>
             </div>
