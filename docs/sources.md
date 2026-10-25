@@ -21,7 +21,7 @@ Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegad
 | **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | Su puntaje (`web-v1`) lo arma `app/lib/sources/web_trust.py` con RDAP y DNS: ver [abajo](#la-confianza-de-una-tienda-web). Safe Browsing sigue sin conectar |
 | **Apify: Instagram** | Conectada: `instagram_source` en `app/lib/sources/apify.py`, actor `apify/instagram-scraper` | Se entra por la página del hashtag del producto. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
 | **Apify: TikTok** | Conectada: `tiktok_source` en el mismo archivo, actor `clockworks/tiktok-scraper` | Busca por palabras, con proxy venezolano. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
-| **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
+| **Facebook Marketplace** | Conectada: `facebook_source` en `app/lib/sources/facebook.py`, actor `curious_coder/facebook-marketplace` | Marketplace está detrás de un login, no de un anti-bots: ver [abajo](#facebook-marketplace-y-la-moneda-que-miente) |
 | **Mercado Libre** | Conectada: `mercadolibre_source` en `app/lib/sources/mercadolibre.py`, actor `sourabhbgp/mercadolibre-scraper` con `country: "VE"` | Es un puente hasta tener la API oficial: ver [abajo](#mercado-libre-por-ahora-con-un-actor) |
 | **Amazon + courier** | Actor `junglee/Amazon-crawler` y el cotizador de cada courier. Ver [Traerlo de USA](#traerlo-de-usa) | Sin `APIFY_TOKEN` la tool no llama a Amazon. El precio que compite es el total puesto en Venezuela |
 | **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta_ads_signals.py](../resources/meta_ads_signals.py)) |
@@ -232,6 +232,56 @@ de terceros no cambia eso. La API es la vía sancionada: para una demo el riesgo
 esto va a producción de verdad, registrar la app deja de ser opcional.
 
 No necesita variable nueva: usa `APIFY_TOKEN`, el mismo de Instagram y TikTok.
+
+## Facebook Marketplace y la moneda que miente
+
+Marketplace **no se puede leer directo**: la página redirige a `/login/`. No es un muro anti-bots
+como el de Mercado Libre, es autenticación. Entrar con las cookies de una cuenta real queda
+descartado: expone esa cuenta a bloqueo y va contra los términos de Meta. El canal entra por
+`curious_coder/facebook-marketplace` (4,2 M de corridas), que **no pide sesión ni proxy
+residencial**, acepta `searchKeyword` más `location` en formato "Ciudad, Estado, País" y cobra
+USD 0,0005 por aviso. Una corrida real de Caracas: 21 avisos en 43 segundos por USD 0,013.
+
+Se buscan tres ciudades (Caracas, Maracaibo y Valencia) con 60 km de radio, porque Marketplace
+busca por ciudad y no por país. Las tres corridas se solapan y el deduplicado por link las junta.
+
+### La trampa de la moneda
+
+Facebook etiqueta como **VEF** —el bolívar anterior a 2018, que ya no circula— casi todos los
+avisos venezolanos: 19 de 21 en esa corrida, con descripciones que decían "440$". Nadie pone
+precios en una moneda muerta hace siete años: el aviso está en dólares.
+
+El lector resuelve así, y el orden importa:
+
+1. **Manda lo que escriba el vendedor en el texto.** Es la única fuente de verdad, y además
+   reconoce un precio en bolívares de verdad ("Bs. 5.000").
+2. Si el texto no dice nada, la etiqueta `VEF` se lee como dólares.
+
+Lo segundo es lo seguro, aunque parezca lo contrario: equivocarse hacia el dólar **sobreestima** el
+precio unas 900 veces, y esa oferta se hunde al fondo de la lista. Leerlo como bolívares volvería
+440 en medio dólar y lo pondría primero, anunciado como el mejor precio del mercado. **El error
+peligroso es el otro.**
+
+### Qué mide
+
+| Señal | Peso | ¿Se puede hoy? |
+|---|---|---|
+| `fb_age` | 15 | Sí, `joined_at` del vendedor |
+| `location` | 5 | Sí |
+| `completeness` | 5 | Sí: fotos y palabras de la descripción |
+| `risk_language` | 5 | Sí |
+| `history` | 20 | No: pide otra corrida sobre el perfil del vendedor, que trae su `url` |
+| `photos_original` | 20 | No: es del agregador y el hash perceptual no está |
+
+30 % de cobertura, 50 % con `price_anomaly`. Las calificaciones del vendedor no son una señal: van
+como bonus de hasta +10 (`facebook_rating_bonus`), porque en Marketplace casi nadie califica y la
+ausencia no debe restar. Dos banderas rojas propias: perfil creado hace menos de un mes y menos de
+3★ con 5 calificaciones o más.
+
+**Marketplace es entre personas, no tiendas.** Los vendedores son "Betty Rumbos", no "Daka". Son
+los precios más bajos de todos los canales y donde más riesgo de estafa hay. En la corrida real
+aparecieron un iPhone 15 a 45 dólares y otro a 5.000: al primero lo caza la bandera de "más de
+50 % bajo el mercado" del agregador y el segundo se hunde solo.
 
 ## Puntaje de confianza por fuente
 
