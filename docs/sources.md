@@ -57,6 +57,29 @@ Un aviso sin precio no entra como opción. Si esta pasada tampoco encuentra un p
 
 Si una página se leyó y otra se cortó por el tiempo, la que sí se leyó se guarda (una hora si trajo ofertas, 10 minutos si no). La consulta siguiente no vuelve a pagarla. El resultado entero no se guarda cuando alguna página quedó a medias, ni cuando se acabó el tiempo antes de esa pasada que sigue buscando un precio: la próxima búsqueda puede abrir lo que esta no alcanzó. El MCP sigue en 25 s y el agente en 45 s. Con una sola lectura por listado, 25 s alcanza para la búsqueda y para leer la página.
 
+## El reloj de una búsqueda
+
+**Las páginas se leen en paralelo, así que el reloj lo fija la más lenta, no cuántas son.** Medido sobre 119 páginas reales: «apple watch se» leyó 8 páginas que sumaban 185 s de trabajo y terminó en 33,8 s; «una macbook air m4» leyó 13 que sumaban 113,9 s y terminó en 22,8 s. Leer menos tiendas no acorta la búsqueda: solo trae menos precios.
+
+Lo que sí la acorta es cortar la cola, y hay un punto donde eso deja de costar datos:
+
+| Tope por página | Ofertas que se conservan |
+|---|---|
+| 15 s | 40 % |
+| 20 s | 70 % |
+| 25 s | 93 % |
+| 30 s | 97 % |
+
+Por eso `PAGE_BUDGET_S` son 28 s. Bajarlo a 15 s tiraría el 60 % de los precios: la página pesada de renderizar suele ser justo la que trae producto y precio, y las rápidas son en su mayoría las que no sirven.
+
+### El cupo del plan
+
+Firecrawl limita **por equipo y por plan**: Hobby da 5 navegadores concurrentes y 100 scrapes por minuto; Standard, 25 y 500 ([rate limits](https://docs.firecrawl.dev/rate-limits)). Pedir más de lo que da el plan no trae más datos: lo que sobra vuelve como `RateLimitError` y esa página se pierde entera, después de haber gastado unos 5 s. De 119 páginas medidas, 56 fueron error y **39 de esas fueron rate limit**.
+
+`SCRAPE_CONCURRENCY` (variable `FIRECRAWL_CONCURRENCY`, 5 por defecto) mantiene los scrapes a la vez dentro de ese cupo: las páginas que sobran esperan su turno en vez de que Firecrawl las rechace. Como el límite es del equipo, el MCP y otra búsqueda en paralelo también lo gastan, así que un 429 se reintenta una vez tras `RATE_RETRY_S`.
+
+**Subir el paralelismo es un cambio de plan, no de código.** Con el plan actual, el techo ya está tocado: `SCRAPE_LIMIT` son 8 páginas y el cupo son 5. Al contratar más, se sube `FIRECRAWL_CONCURRENCY` y es lo único que hay que tocar.
+
 ## El precio tiene que ser del producto pedido
 
 Una oferta entra solo si el artículo que trae el precio es el que se buscó. Eso se decide al leer la página, antes de armar las tarjetas. El texto con el que el asistente resume la búsqueda no agrega ni quita ofertas.
@@ -421,7 +444,7 @@ Actores: `junglee/Amazon-crawler` y `reefapi/amazon-seller-scraper`.
 
 ## Variables
 
-`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa el mismo `APIFY_TOKEN`. Sale de [Apify Console → Settings → API & Integrations](https://console.apify.com/settings/integrations) y va en `services/api/.env`. Sin él, Instagram, TikTok y la importación quedan apagadas y la búsqueda sigue igual que antes. Zoom y Liberty no piden clave: se leen sus páginas públicas. Las demás variables, agrégalas a `services/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
+`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. `FIRECRAWL_CONCURRENCY` (opcional, 5) fija los scrapes a la vez y tiene que seguir al cupo del plan: ver [el cupo del plan](#el-cupo-del-plan). El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa el mismo `APIFY_TOKEN`. Sale de [Apify Console → Settings → API & Integrations](https://console.apify.com/settings/integrations) y va en `services/api/.env`. Sin él, Instagram, TikTok y la importación quedan apagadas y la búsqueda sigue igual que antes. Zoom y Liberty no piden clave: se leen sus páginas públicas. Las demás variables, agrégalas a `services/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
 
 ## Docs
 

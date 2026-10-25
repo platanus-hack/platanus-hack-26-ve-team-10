@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import unquote, urljoin, urlparse
 
-from firecrawl import AsyncFirecrawl
+from firecrawl import AsyncFirecrawl, RateLimitError
 from pydantic import BaseModel, Field, ValidationError
 
 from app.lib.prices import format_money, to_usd
@@ -43,6 +43,18 @@ DIG_SEARCH_MS = 1_000
 # little off so the response arrives before we cancel the task.
 SCRAPE_SLACK_MS = 200
 BUDGET_S = 45
+# Tope por página. Medido sobre 119 páginas reales: a los 25 s ya entró el 93 % de las
+# ofertas y a los 30 s el 97 %, así que esperar más solo alarga el turno. Cortar más abajo
+# sí cuesta datos: en 15 s solo entra el 40 %. La página pesada es justo la que trae precio.
+PAGE_BUDGET_S = 28
+# Scrapes a la vez. Firecrawl limita por equipo y por plan (Hobby: 5 navegadores
+# concurrentes, Standard: 25). Pedir más de lo que da el plan no trae más datos: lo que
+# sobra vuelve como RateLimitError y esa página se pierde entera. Al subir de plan, se
+# sube esta variable; es el único punto donde se nota.
+SCRAPE_CONCURRENCY = int(os.environ.get("FIRECRAWL_CONCURRENCY", "5"))
+# El límite es del equipo, así que el MCP y otra búsqueda en paralelo también lo gastan.
+# Un 429 falla en ~5 s y deja presupuesto de sobra: se reintenta una vez.
+RATE_RETRY_S = 2
 # Margin for building the response. Pages still running at the deadline are errors.
 MARGIN_S = 1
 # One search is cached for an hour. An empty result, or one with a page error,
@@ -70,7 +82,20 @@ _SKIP_HOSTS = (
     "google.",
     "youtube.com",
     "youtu.be",
+    # Foros: Firecrawl responde WebsiteNotSupportedError y el cupo se pierde igual.
+    "reddit.com",
 )
+
+# Un semáforo por loop: el proceso tiene uno solo, y las pruebas abren el suyo por test.
+_gates: dict[asyncio.AbstractEventLoop, asyncio.Semaphore] = {}
+
+
+def _gate() -> asyncio.Semaphore:
+    loop = asyncio.get_running_loop()
+    gate = _gates.get(loop)
+    if gate is None:
+        gate = _gates[loop] = asyncio.Semaphore(SCRAPE_CONCURRENCY)
+    return gate
 
 # What Firecrawl extracts from a page that is not one product: a classifieds
 # portal, a category listing, or a product page whose structured data has no
@@ -700,10 +725,20 @@ def _recall(product: str, url: str) -> _Page | None:
 
 
 async def _scrape(client: AsyncFirecrawl, url: str, formats: list[Any], deadline: float) -> Any | None:
-    timeout = _timeout_ms(deadline)
-    if timeout is None:
-        return None
-    return await client.scrape(url, formats=formats, only_main_content=True, timeout=timeout)
+    """Un scrape, dentro del cupo del plan. El 429 se reintenta una vez si queda tiempo."""
+    for last in (False, True):
+        timeout = _timeout_ms(deadline)
+        if timeout is None:
+            return None
+        async with _gate():
+            try:
+                return await client.scrape(url, formats=formats, only_main_content=True, timeout=timeout)
+            except RateLimitError:
+                if last:
+                    raise
+        # Fuera del semáforo: esperar con el cupo tomado se lo quita a otra página.
+        await asyncio.sleep(RATE_RETRY_S)
+    return None
 
 
 def _apply_listing(page: _Page, listing: Any, product: str) -> None:
@@ -722,6 +757,9 @@ async def _read_page(client: AsyncFirecrawl, page: _Page, product: str, deadline
     is left, and a read that cannot finish is not started.
     """
     started = time.monotonic()
+    # El reloj de la búsqueda es el de la página más lenta, no la suma: recortar la cola
+    # aquí es lo único que la acorta sin mirar menos tiendas.
+    deadline = min(deadline, started + PAGE_BUDGET_S)
     try:
         if _is_listing(page.url):
             listing = await _scrape(client, page.url, _listing_formats(product), deadline)
