@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from app.lib.contracts import CAUTION_MIN, RELIABLE_MIN
 from app.lib.rate import get_rate
 from app.lib.search import search_offers
 from app.lib.types import SearchQuery
@@ -73,9 +74,10 @@ def _condicion(titulo: str) -> str:
 
 
 def _confianza_texto(trust: int) -> str:
-    if trust >= 70:
+    # Mismos cortes que el veredicto: 75 confiable, 50 precaución.
+    if trust >= RELIABLE_MIN:
         return "Vendedor confiable"
-    if trust >= 50:
+    if trust >= CAUTION_MIN:
         return "Buenas referencias"
     return "Pocas referencias"
 

@@ -28,7 +28,7 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 | Una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [docs/tools.md](docs/tools.md): su skill, su MCP o su `llms.txt` |
 | El agente o sus tools | `apps/api/app/agents/orchestrator.py` y `apps/api/app/agent.py` |
 | Conectar una fuente real | [docs/sources.md](docs/sources.md) |
-| El puntaje de confianza | `apps/api/app/lib/prices.py` y los borradores de `resources/*_trust_score.py` |
+| El puntaje de confianza | `apps/api/app/lib/trust.py`, `apps/api/app/lib/contracts.py` y los borradores de `resources/*_trust_score.py` |
 | WhatsApp | [docs/kapso.md](docs/kapso.md) |
 | MCP | [docs/mcp-tool.md](docs/mcp-tool.md) |
 | Páginas públicas | [docs/seo-geo.md](docs/seo-geo.md), y el detalle en [docs/ficha-producto.md](docs/ficha-producto.md), [docs/categoria.md](docs/categoria.md) y [docs/marca.md](docs/marca.md) |

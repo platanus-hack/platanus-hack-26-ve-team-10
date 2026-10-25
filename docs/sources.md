@@ -18,11 +18,11 @@ Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegad
 
 | Fuente | Cómo se consulta | Ojo |
 |---|---|---|
-| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | El puntaje de tiendas web todavía no se calcula. El borrador está en [resources/website_trust_score.py](../resources/website_trust_score.py) |
+| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | La web abierta sigue sin puntaje (`trust` null). El motor ya puede cerrar una tienda si llegan sus señales; RDAP, DNS y Safe Browsing no están conectados |
 | **Apify: Instagram** | Conectada: `instagram_source` en `app/lib/sources/apify.py`, actor `apify/instagram-scraper` | Se entra por la página del hashtag del producto. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
 | **Apify: TikTok** | Conectada: `tiktok_source` en el mismo archivo, actor `clockworks/tiktok-scraper` | Busca por palabras, con proxy venezolano. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
 | **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
-| **Mercado Libre** | API oficial, sitio `MLV` | Responde **403 sin token**: hay que registrar una app. Plan B: un actor de Apify. El puntaje de confianza usa `/items` y `/users` (ver [resources/mercadolibre_trust_score.py](../resources/mercadolibre_trust_score.py)) |
+| **Mercado Libre** | API oficial, sitio `MLV` | Sigue **403 sin token**: no hay cliente en vivo. `score_mercadolibre` en `app/lib/trust.py` puntúa el JSON de `/items` y `/users` sin llamar a la red |
 | **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta_ads_signals.py](../resources/meta_ads_signals.py)) |
 
 ## Reglas
@@ -87,7 +87,25 @@ Muestra el input que recibe el actor, la primera publicación entera (para confi
 
 ## Puntaje de confianza por fuente
 
-Cada fuente tiene un borrador de su puntaje de confianza en `resources/`, en Python. Ahí están las señales, los pesos, las banderas rojas y los actores o APIs que usa. La implementación va en `apps/api/app/lib/prices.py`: los borradores no se importan desde el backend. Antes de llevarlo, corre el actor con casos reales y confirma los nombres de sus campos.
+Cada canal mide cosas distintas. Para poder compararlos, todos entregan la misma caja: una lista de señales. Cada señal tiene un peso fijo (los de un canal suman 100) y un valor de 0 a 1.
+
+El motor está en `apps/api/app/lib/trust.py`. Los modelos (`TrustSignal`, `TrustScore`, `Adjustment`, `MerchantIdentity`) están en `apps/api/app/lib/contracts.py`. Los borradores de `resources/` no se importan: son la referencia de las fórmulas y de los nombres de campo. Antes de escribir un adapter, corre el actor con casos reales y confirma esos nombres.
+
+Cómo se calcula:
+
+- **Sin dato no es cero.** `null` significa que no hay dato y esa señal no entra en la cuenta. `0` significa que el dato está y es malo. `"pending"` es un hueco que el agregador va a llenar; al cerrar, si no pudo, lo baja a `null`. Un puntaje `final` no puede conservar un `"pending"`.
+- **Cobertura.** Es el peso medido dividido entre 100. El puntaje divide solo entre el peso medido: quien tiene menos datos no es castigado, solo se mide con menos certeza.
+- **Veredicto.** En `stage="parcial"` el puntaje queda en `null` y el veredicto en `sin_datos`: el especialista no cierra. Al pasar a `final`, una bandera roja deja el puntaje en 0 y el veredicto en `riesgosa`. Si se midió menos del 40 % del peso, no hay puntaje (`sin_datos`). De 75 para arriba es `confiable`; de 50 a 74, `precaucion`; por debajo, `riesgosa`.
+- **Estrellas.** `to_stars()` convierte el 0–100 a 0–5. Los cortes coinciden con el veredicto (90, 75, 60 y 50). Sin puntaje, no hay estrellas. El texto del catálogo usa los mismos 75 y 50.
+- **Agregador.** `ask_prais` junta el JSON de cada tool y llama a `close_listings`. Ahí corren cuatro pasadas: mediana de precio e identidad del comercio, cierre de Instagram, TikTok, Facebook, Mercado Libre y Amazon, cierre de la tienda web (su señal `linked_socials` usa los puntajes de Instagram y TikTok del mismo vendedor) y los ajustes de Meta Ads. Hace falta un grupo de al menos 5 precios publicados del mismo producto y la misma condición (nuevo, usado o reacondicionado). Una oferta cuyo `evidence_id` no está en la oferta se descarta con error `parseo`.
+
+La búsqueda (`search_offers`) sigue devolviendo `merchant.trust` como un entero. Esa fórmula provisional está en `prices.trust_score` (seguidores, comentarios y tiempo de respuesta, con piso de 40). Cambiar el `Merchant` de `types.py` para guardar los datos crudos de cada fuente cambia el contrato de la búsqueda: hay que avisarlo antes de mergear. Hasta entonces, las pasadas solo actúan si el listado trae `contractOffer` y `contractMerchant`.
+
+Mercado Libre, de punta a punta en este código: el JSON de la publicación y del vendedor entra a `score_mercadolibre` y sale un `TrustScore`. Con la mediana, el agregador llena `price_anomaly` y deja `stage="final"`. No llama a la API.
+
+Todavía no: el hash perceptual de las fotos de Facebook (si nadie pasa el conteo, `photos_original` queda sin dato), los campos crudos en el `Merchant` de la búsqueda, y el fetch de los otros canales. El atajo de Amazon (vende y envía Amazon → 95) y el bonus de hasta +10 de Marketplace sí están en el motor. `amazon` ya es un canal en `types.py`.
+
+El contrato pedía comprobar que el estado del agente se propaga y que hubiera un paso determinista entre los especialistas y la respuesta. Eso ya no aplica: los especialistas son tools de Python y `ask_prais` lee el JSON de cada una.
 
 | Fuente | Borrador | Qué pesa más |
 |---|---|---|
@@ -103,7 +121,7 @@ Todos comparten la misma salida: puntaje de 0 a 100, cobertura, veredicto (`conf
 
 ## Datos que el puntaje necesita
 
-Hoy `Merchant` solo trae `followers`, `comments` y `response_time_min`. El puntaje de confianza solo cuenta las señales cuyo dato trae la fuente: las demás no se cuentan y su peso se reparte entre las que sí hay. Por eso, **cada dato de esta lista que traiga tu fuente suma una señal al puntaje** sin tocar nada más.
+El `Merchant` de la búsqueda solo trae `followers`, `comments` y `response_time_min`. El puntaje del contrato no usa esos tres campos: cuenta las señales cuyo dato trae la fuente. Las demás no entran en la cuenta. El puntaje divide solo entre el peso medido, y la cobertura dice cuánto quedó afuera. **Cada dato de esta lista que traiga tu fuente suma una señal**, pero guardarlo en `types.py` cambia el contrato: avisa antes de mergear.
 
 Cómo guardarlo:
 

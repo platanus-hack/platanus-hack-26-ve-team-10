@@ -25,6 +25,7 @@ CHANNEL_LABEL = {
     "web": "Web",
     "mercadolibre": "Mercado Libre",
     "facebook": "Facebook",
+    "amazon": "Amazon",
 }
 
 
@@ -199,15 +200,27 @@ def _price_key(item: dict[str, Any]) -> float:
     return value if isinstance(value, (int, float)) else float("inf")
 
 
+def _published_price(item: dict[str, Any]) -> bool:
+    """Un precio publicado es un texto no vacío. None y el espacio no ocupan un lugar."""
+    price = item.get("price")
+    if price is None or isinstance(price, bool):
+        return False
+    return bool(str(price).strip())
+
+
 def choose_options(listings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Hasta 5 ofertas con precio. Primero las reales, de menor a mayor."""
-    priced = [item for item in listings if item.get("price") and _https(item.get("url"))]
+    """Hasta 5 ofertas con precio publicado, de la más barata a la más cara.
+
+    Una fila sin precio no cuenta. Si hay precios reales, los de ejemplo no
+    completan las cinco: siguen siendo ejemplo y solo entran cuando no hay
+    ninguno real. Si hay menos de cinco, se devuelven las que hay. No se inventan.
+    """
+    priced = [item for item in listings if _published_price(item) and _https(item.get("url"))]
     real = sorted((item for item in priced if not item.get("example")), key=_price_key)
+    if real:
+        return real[:TARGET_OPTIONS]
     sample = sorted((item for item in priced if item.get("example")), key=_price_key)
-    chosen = real[:TARGET_OPTIONS]
-    if len(chosen) < TARGET_OPTIONS:
-        chosen.extend(sample[: TARGET_OPTIONS - len(chosen)])
-    return chosen
+    return sample[:TARGET_OPTIONS]
 
 
 # Lista de WhatsApp (Kapso, misma forma que la API de Meta):
@@ -300,6 +313,8 @@ async def carousel_message(to: str, listings: list[dict[str, Any]], summary: str
         cards.append({**item, "image_url": image})
         if len(cards) == TARGET_OPTIONS:
             break
+    # WhatsApp exige al menos dos tarjetas. Con una, o con ninguna, quien llama
+    # manda el texto: la respuesta no falla por no llegar a cinco.
     if len(cards) < MIN_CARDS:
         return None
     return {

@@ -294,8 +294,8 @@ details.sinprecio .lista { margin-top: 8px; }
     if (o.example) badges.appendChild(el("span", { class: "badge ojo", text: "Ejemplo" }));
     var t = o.merchant ? o.merchant.trust : null;
     if (t == null) badges.appendChild(el("span", { class: "badge", text: "Sin puntaje de confianza" }));
-    else if (t >= 70) badges.appendChild(el("span", { class: "badge bien", text: "Confiable · " + t }));
-    else if (t >= 40) badges.appendChild(el("span", { class: "badge", text: "Revisa antes · " + t }));
+    else if (t >= 75) badges.appendChild(el("span", { class: "badge bien", text: "Confiable · " + t }));
+    else if (t >= 50) badges.appendChild(el("span", { class: "badge", text: "Revisa antes · " + t }));
     else badges.appendChild(el("span", { class: "badge ojo", text: "Poca confianza · " + t }));
 
     var zona = o.merchant && o.merchant.zone && o.merchant.zone !== "Venezuela" ? " · " + o.merchant.zone : "";
