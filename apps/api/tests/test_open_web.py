@@ -55,15 +55,19 @@ class FakeFirecrawl:
     con el SDK 4.54.0, el formato JSON como objeto JsonFormat responde 400.
     """
 
-    def __init__(self, pages, slow=(), delays=None, use_full_timeout=()):
+    def __init__(self, pages, slow=(), delays=None, use_full_timeout=(), results=None):
         self.pages = pages
         self.slow = set(slow)
         self.delays = dict(delays or {})
         self.use_full_timeout = set(use_full_timeout)
+        self.results = results
         self.scraped = []
+        self.queries = []
 
     async def search(self, query, **_):
-        return SimpleNamespace(web=[SimpleNamespace(url=url, title=f"Título de {url}") for url in self.pages])
+        self.queries.append(query)
+        urls = self.pages if self.results is None else self.results.get(query, [])
+        return SimpleNamespace(web=[SimpleNamespace(url=url, title=f"Título de {url}") for url in urls])
 
     async def scrape(self, url, *, formats, only_main_content, timeout):
         assert only_main_content is True and timeout > 0
@@ -146,6 +150,7 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
         result = await self.run_search(client, product="iPhone 15 128 GB")
         self.assertEqual(result["offers"][0]["priceUsd"], 789)
         self.assertEqual(client.scraped, [(url, "product")])
+        self.assertEqual(client.queries, ["iPhone 15 128 GB precio Venezuela"])
 
     async def test_related_product_falls_through_to_the_listing(self):
         url = "https://www.farmadon.com.ve/producto/mary-arroz-superior-tipo-i-900gr/"
@@ -467,9 +472,122 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
         )
         result = await self.run_search(client, budget_s=3, product="MSI Katana")
         self.assertEqual(client.scraped, [(url, "product")])
+        self.assertEqual(client.queries, ["MSI Katana precio Venezuela"])
         self.assertEqual(result["offers"], [])
         self.assertEqual(result["failedSources"], [])
         self.assertNotIn("msi katana", firecrawl._cache)
+
+    async def test_priced_first_pass_does_not_open_later_pages(self):
+        product = "Tissot PRX correa negra"
+        urls = [f"https://shop{n}.example.com/tissot-prx-correa-negra" for n in range(8)]
+        late = "https://catalog.example.com/categoria/tissot-prx"
+        pages = {
+            url: product_page(url, 600.0 + n, title="Tissot PRX correa negra", brand="Tissot")
+            for n, url in enumerate(urls)
+        }
+        pages[late] = listing_page(
+            late,
+            [{"title": "Tissot PRX correa negra", "price": 100, "currency": "USD"}],
+            "Tissot PRX correa negra USD 100",
+        )
+        client = FakeFirecrawl(pages)
+        result = await self.run_search(client, product=product)
+        self.assertNotIn(100, [offer["priceUsd"] for offer in result["offers"]])
+        self.assertNotIn(late, {url for url, _kind in client.scraped})
+        self.assertEqual(client.queries, [f"{product} precio Venezuela"])
+        self.assertEqual([kind for _url, kind in client.scraped], ["product"] * 8)
+
+    async def test_unread_results_then_the_listing_when_the_first_pages_have_no_price(self):
+        product = "Tissot PRX correa negra"
+        unpriced = [f"https://shop{n}.example.com/categoria/reloj" for n in range(16)]
+        priced = "https://catalog.example.com/categoria/tissot-prx"
+        pages = {
+            url: listing_page(url, [{"title": "Tissot PRX correa negra", "price": None}], "Tissot PRX correa negra")
+            for url in unpriced
+        }
+        pages[priced] = listing_page(
+            priced,
+            [
+                {"title": "Tissot PRX correa negra", "price": 625, "currency": "USD"},
+                {"title": "Tissot PRX correa negra", "price": 50, "currency": "USD"},
+                {"title": "Samsung Galaxy Watch", "price": 199, "currency": "USD"},
+                {"title": "Tissot PRX correa negra", "price": None},
+            ],
+            "Tissot PRX correa negra USD 625. Samsung Galaxy Watch USD 199.",
+        )
+        client = FakeFirecrawl(pages)
+        result = await self.run_search(client, product=product)
+        self.assertEqual([offer["url"] for offer in result["offers"]], [priced])
+        self.assertEqual(result["offers"][0]["priceUsd"], 625)
+        self.assertNotIn("samsung", result["offers"][0]["title"].lower())
+        self.assertEqual(client.queries, [f"{product} precio Venezuela"])
+        self.assertTrue(all(kind == "json" for _url, kind in client.scraped))
+        scraped_urls = [url for url, _kind in client.scraped]
+        self.assertEqual(scraped_urls[:8], unpriced[:8])
+        self.assertEqual(scraped_urls[8:16], unpriced[8:])
+        self.assertEqual(scraped_urls[16:], [priced])
+
+    async def test_tighter_query_keeps_only_a_price_written_on_the_page(self):
+        product = "Tissot PRX correa negra"
+        broad = f"{product} precio Venezuela"
+        tight = firecrawl._tighter_query(product)
+        first = "https://blog.example.com/tissot-prx-correa-negra"
+        second = "https://relojeria.example.com/categoria/tissot-prx"
+        client = FakeFirecrawl(
+            {
+                first: listing_page(
+                    first,
+                    [{"title": "Tissot PRX correa negra", "price": 999, "currency": "USD"}],
+                    "Tissot PRX correa negra consultar",
+                ),
+                second: listing_page(
+                    second,
+                    [
+                        {"title": "Tissot PRX correa negra", "price": 610, "currency": "USD"},
+                        {"title": "Tissot PRX correa negra", "price": 450, "currency": "USD"},
+                    ],
+                    "Tissot PRX correa negra USD 610",
+                ),
+            },
+            results={broad: [first], tight: [second]},
+        )
+        result = await self.run_search(client, product=product)
+        self.assertEqual([offer["priceUsd"] for offer in result["offers"]], [610])
+        self.assertEqual(result["offers"][0]["url"], second)
+        self.assertEqual(client.queries, [broad, tight])
+        self.assertEqual(client.scraped, [(first, "product"), (first, "json"), (second, "json")])
+
+    async def test_deeper_pass_with_no_published_price_does_not_invent_one(self):
+        product = "Tissot PRX correa negra"
+        broad = f"{product} precio Venezuela"
+        tight = firecrawl._tighter_query(product)
+        first = "https://blog.example.com/tissot-prx-correa-negra"
+        second = "https://relojeria.example.com/categoria/tissot-prx"
+        client = FakeFirecrawl(
+            {
+                first: listing_page(
+                    first,
+                    [{"title": "Tissot PRX correa negra", "price": 999, "currency": "USD"}],
+                    "Tissot PRX correa negra consultar",
+                ),
+                second: listing_page(
+                    second,
+                    [{"title": "Tissot PRX correa negra", "price": 450, "currency": "USD"}],
+                    "Tissot PRX correa negra sin monto",
+                ),
+            },
+            results={broad: [first], tight: [second]},
+        )
+        result = await self.run_search(client, product=product)
+        self.assertEqual(result["offers"], [])
+        self.assertEqual(result["failedSources"], [])
+        self.assertEqual(client.queries, [broad, tight])
+        self.assertEqual(client.scraped, [(first, "product"), (first, "json"), (second, "json")])
+        notice = result["notice"].lower()
+        self.assertIn("no hay un precio publicado", notice)
+        self.assertIn("revisar cada opción", notice)
+        self.assertNotIn("999", notice)
+        self.assertNotIn("450", notice)
 
 
 class ParsingTest(unittest.TestCase):
@@ -517,6 +635,15 @@ class ParsingTest(unittest.TestCase):
         self.assertEqual(firecrawl._ve_group("https://soytechno.com/laptops-gamer/"), 0)
         self.assertEqual(firecrawl._ve_group("https://www.autocosmos.com.ve/aveo"), 1)
         self.assertEqual(firecrawl._ve_group("https://other.example.com/item"), 2)
+
+    def test_tighter_query_names_the_exact_product(self):
+        self.assertEqual(firecrawl._broad_query("Tissot PRX"), "Tissot PRX precio Venezuela")
+        self.assertEqual(firecrawl._tighter_query("  Tissot PRX  "), 'comprar "Tissot PRX" precio')
+        self.assertNotEqual(firecrawl._tighter_query("Tissot PRX"), firecrawl._broad_query("Tissot PRX"))
+
+    def test_deeper_search_needs_time_for_a_page_read(self):
+        self.assertFalse(firecrawl._can_dig(time.monotonic()))
+        self.assertTrue(firecrawl._can_dig(time.monotonic() + 30))
 
     def test_search_timeout_leaves_time_to_read_pages(self):
         deadline = time.monotonic() + 24
