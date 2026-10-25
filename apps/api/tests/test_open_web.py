@@ -105,28 +105,39 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_listing_offers_with_u_s_prices(self):
         url = "https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo"
-        client = FakeFirecrawl(
-            {
-                url: listing_page(
-                    url,
-                    [
-                        {"title": "Chevrolet Aveo", "variant": "2007", "price": 6600, "currency": "u$s",
-                         "city": "Libertador", "url": "/auto/usado/chevrolet/aveo/16l-aut/db4f"},
-                        {"title": "Chevrolet Aveo", "variant": "2008", "price": 6000, "currency": "U$S",
-                         "url": "https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo/x/175596"},
-                        {"title": "Chevrolet Aveo", "price": None, "currency": "Consultar precio"},
-                    ],
-                    "Chevrolet Aveo 2007 u$s6.600 Libertador. Chevrolet Aveo 2008 u$s6.000 San Diego.",
-                )
-            }
+        page = listing_page(
+            url,
+            [
+                {"title": "Chevrolet Aveo", "variant": "2007", "price": 6600, "currency": "u$s",
+                 "city": "Libertador", "url": "/auto/usado/chevrolet/aveo/16l-aut/db4f"},
+                {"title": "Chevrolet Aveo", "variant": "2008", "price": 6000, "currency": "U$S",
+                 "url": "https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo/x/175596"},
+                {"title": "Chevrolet Aveo", "variant": "2009", "price": 7000, "currency": "u$s",
+                 "city": "Colina", "url": "/auto/usado/chevrolet/aveo/16l-mt/a91c"},
+                {"title": "Chevrolet Aveo", "price": None, "currency": "Consultar precio"},
+            ],
+            "Chevrolet Aveo 2007 u$s6.600 Libertador. Chevrolet Aveo 2008 u$s6.000 San Diego. "
+            "Chevrolet Aveo 2009 u$s7.000 Colina.",
         )
+        # The product format would stop at one price. A classifieds page must not.
+        page["product"] = product_page(url, 1.0, title="Chevrolet Aveo")["product"]
+        client = FakeFirecrawl({url: page})
         result = await self.run_search(client)
         offers = result["offers"]
-        self.assertEqual([offer["priceUsd"] for offer in offers], [6000, 6600])
+        self.assertEqual(client.scraped, [(url, "json")])
+        self.assertEqual([offer["priceUsd"] for offer in offers], [6000, 6600, 7000])
+        self.assertEqual(
+            [offer["url"] for offer in offers],
+            [
+                "https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo/x/175596",
+                "https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo/16l-aut/db4f",
+                "https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo/16l-mt/a91c",
+            ],
+        )
         self.assertEqual(offers[1]["title"], "Chevrolet Aveo 2007")
-        self.assertEqual(offers[1]["url"], "https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo/16l-aut/db4f")
         self.assertEqual(offers[1]["merchant"]["zone"], "Libertador")
         self.assertEqual(offers[0]["merchant"]["zone"], "Venezuela")
+        self.assertEqual(offers[2]["merchant"]["zone"], "Colina")
         self.assertEqual(result["failedSources"], [])
 
     async def test_product_page_skips_the_listing_extraction(self):
@@ -190,7 +201,8 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
             },
             slow=[slow],
         )
-        result = await self.run_search(client, budget_s=2)
+        with self.assertLogs("prais.firecrawl", level="INFO") as logs:
+            result = await self.run_search(client, budget_s=2)
         self.assertEqual([offer["priceUsd"] for offer in result["offers"]], [7000])
         self.assertEqual(
             result["failedSources"],
@@ -198,6 +210,11 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
         )
         # Una página bloqueada no paga la extracción de ofertas.
         self.assertNotIn((blocked, "json"), client.scraped)
+        logged = " ".join(logs.output)
+        self.assertIn('"outcome": "bloqueada"', logged)
+        self.assertIn('"outcome": "error"', logged)
+        self.assertIn("autos.example.com.ve", logged)
+        self.assertIn("broken.example.com", logged)
 
     async def test_result_cut_by_the_deadline_is_not_cached(self):
         good = "https://www.autocosmos.com.ve/aveo"
@@ -429,6 +446,11 @@ class ParsingTest(unittest.TestCase):
         self.assertTrue(firecrawl._is_listing("https://listado.example.com/portatiles"))
         self.assertFalse(firecrawl._is_listing("https://soytechno.com/apple-iphone-15/"))
         self.assertFalse(firecrawl._is_listing("https://www.farmadon.com.ve/producto/mary-arroz/"))
+        self.assertTrue(firecrawl._is_listing("https://www.autocosmos.com.ve/auto/usado/chevrolet/aveo"))
+        self.assertTrue(firecrawl._is_listing("https://example.com.ve/motos/usadas"))
+        self.assertTrue(firecrawl._is_listing("https://example.com.ve/inmuebles/caracas"))
+        self.assertFalse(firecrawl._is_listing("https://www.autocosmos.com.ve/aveo"))
+        self.assertFalse(firecrawl._is_listing("https://soytechno.com/iphone-15-usado"))
         self.assertFalse(firecrawl._sells_in_venezuela("https://www.cyberpuerta.mx/laptops"))
         self.assertFalse(firecrawl._sells_in_venezuela("https://www.lenovo.com/laptops"))
         self.assertFalse(firecrawl._sells_in_venezuela("https://www.nvidia.com/geforce"))
