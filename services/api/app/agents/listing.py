@@ -79,7 +79,13 @@ def cards_from_offers(offers: list[dict[str, Any]]) -> list[dict[str, Any]]:
             trust=merchant.get("trust"),
             price_usd=offer.get("priceUsd"),
         )
-        cards.append(card.model_dump())
+        data = card.model_dump()
+        # El contrato viaja con la tarjeta sin que ningún modelo lo reescriba: close_listings lo
+        # lee al final del turno para cerrar el puntaje con la mediana de todas las fuentes.
+        for key in ("contractOffer", "contractMerchant"):
+            if offer.get(key) is not None:
+                data[key] = offer[key]
+        cards.append(data)
     return cards
 
 

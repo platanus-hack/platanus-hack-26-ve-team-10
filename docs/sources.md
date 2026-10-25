@@ -82,6 +82,23 @@ Las dos están en `app/lib/sources/apify.py`: comparten el cliente, la caché y 
 
 `searchType: "hashtag"` **no** sirve para esto: devuelve el volumen del hashtag y los relacionados, no sus publicaciones. Por eso se usa la URL del hashtag.
 
+**Dos corridas, no una.** La búsqueda devuelve una publicación por cuenta, y con una sola no se
+pueden medir proporciones ni ritmo: el puntaje se quedaría bajo el 40 % de cobertura. Por eso, con
+los comercios que **sí dieron oferta**, el especialista hace una segunda corrida sobre sus perfiles
+(`profiles` en TikTok, `directUrls` de perfil en Instagram) y pide `PROFILE_POSTS` publicaciones de
+cada uno. Solo se paga por quien ya aportó algo, y las dos corridas caben en la misma tarea de
+fondo: la búsqueda sigue sin esperarlas.
+
+**El puntaje de confianza.** `apify_trust.py` arma el `TrustScore` `parcial` de cada comercio con
+los catálogos `ig-v1` y `tiktok-v1`, portando las fórmulas de los borradores. Lo cierra el
+agregador al final del turno. El contrato y por qué funciona así están en
+[contracts.md](contracts.md#el-puntaje-de-confianza-de-una-fuente). Qué alcanza a medir hoy:
+
+| | Mide | Le falta |
+|---|---|---|
+| TikTok | Antigüedad (del id numérico), región, likes/vistas, consistencia, corazones por seguidor, compartidos y guardados, ritmo, lenguaje de riesgo | `comment_quality`, que necesita `clockworks/tiktok-comments-scraper` |
+| Instagram | Consistencia de likes, comentarios/likes, ritmo, calidad de comentarios, lenguaje de riesgo | `engagement` (necesita seguidores, que una publicación no trae) y antigüedad, cambios de usuario y país, que están en el bloque "about", una opción de pago del actor |
+
 **El precio sale del caption**, con las mismas funciones que la web abierta (`published_prices` y `matches_product`, en `firecrawl.py`: esa lógica vive en un solo lugar). Las reglas:
 
 - El monto tiene que estar escrito **con su moneda** ($, USD, Bs). Un número suelto, como un teléfono, no es un precio.

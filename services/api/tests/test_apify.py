@@ -137,7 +137,9 @@ class ApifyTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_without_a_token_the_source_is_off(self):
         with mock.patch.dict(os.environ, {}, clear=True):
-            self.assertFalse(apify.ApifySource("x", "instagram", "a", apify._instagram_input, apify._instagram_offers).enabled)
+            self.assertFalse(apify.ApifySource(
+                "x", "instagram", "a", apify._instagram_input, apify._instagram_offers, apify._instagram_profiles
+            ).enabled)
 
 
 if __name__ == "__main__":

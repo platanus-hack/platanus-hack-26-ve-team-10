@@ -1,11 +1,31 @@
 import asyncio
+import re
 from typing import Any
 
+from app.lib.contracts import (
+    CanonicalProduct,
+    Condition,
+    Location,
+    MerchantLink,
+    RateRef,
+    TrustScore,
+)
+from app.lib.contracts import Merchant as ContractMerchant
+from app.lib.contracts import Money as ContractMoney
+from app.lib.contracts import Offer as ContractOffer
 from app.lib.prices import format_money, to_usd, trust_score
 from app.lib.rate import get_rate
 from app.lib.sources import sources
-from app.lib.sources.firecrawl import search_open_web
-from app.lib.types import Merchant, SearchQuery, Source, SourceResult
+from app.lib.sources.firecrawl import plain, search_open_web
+from app.lib.trust import entity_id_for
+from app.lib.types import (
+    ExchangeRate,
+    Merchant,
+    Offer,
+    SearchQuery,
+    Source,
+    SourceResult,
+)
 
 SOURCE_TIMEOUT_S = 8
 
@@ -19,6 +39,73 @@ async def _run_source(source: Source, query: SearchQuery) -> SourceResult | None
         return await asyncio.wait_for(source.search(query), SOURCE_TIMEOUT_S)
     except Exception:  # noqa: BLE001  la fuente falló o tardó demasiado: la búsqueda sigue sin ella
         return None
+
+
+_USED = re.compile(r"\b(usado|usada|second\s*hand|de\s+uso)\b")
+_REFURBISHED = re.compile(r"\b(reacondicionado|refurbished|renewed)\b")
+_HANDLE_OF: dict[str, str] = {"instagram": "instagram", "tiktok": "tiktok", "facebook": "facebook"}
+
+
+def product_key(text: str) -> str:
+    """Agrupa las ofertas comparables para la mediana. Todas las fuentes buscan el mismo texto."""
+    return "-".join(plain(text).split()) or "sin-producto"
+
+
+def _condition(*texts: str) -> Condition:
+    joined = plain(" ".join(texts))
+    if _REFURBISHED.search(joined):
+        return "reacondicionado"
+    if _USED.search(joined):
+        return "usado"
+    return "nuevo"
+
+
+def _contract(
+    card: dict[str, Any],
+    offer: Offer,
+    merchant: Merchant,
+    trust: TrustScore,
+    rate: ExchangeRate,
+    product: str,
+) -> tuple[ContractOffer, ContractMerchant]:
+    """La oferta y el comercio en el contrato de trust.py, con el puntaje parcial de la fuente.
+
+    El precio, la tasa y la conversión no los repite la fuente: salen de lo que ya calculó la
+    búsqueda, que es el único lugar donde viven.
+    """
+    evidence = entity_id_for(offer.url)
+    kind = _HANDLE_OF.get(merchant.channel)
+    links = [MerchantLink(kind=kind, value=merchant.id.split(":", 1)[-1])] if kind else []
+    contract_merchant = ContractMerchant(
+        id=merchant.id,
+        name=merchant.name,
+        channel=merchant.channel,
+        url=merchant.url,
+        location=Location(city=merchant.zone),
+        delivers=merchant.delivers,
+        links=links,
+    )
+    priced = offer.price is not None
+    contract_offer = ContractOffer(
+        id=evidence,
+        merchant_id=merchant.id,
+        product=CanonicalProduct(key=product_key(product), label=product),
+        condition=_condition(offer.title, product),
+        title=offer.title,
+        url=offer.url,
+        seen_at=offer.seen_at,
+        evidence_ids=[evidence],
+        trust=trust,
+        price=ContractMoney(amount=offer.price.amount, currency=offer.price.currency) if priced else None,
+        price_kind="publicado" if priced else "al_dm",
+        price_usd=card["priceUsd"],
+        rate_used=(
+            RateRef(source=rate.source, usd_to_ves=rate.usd_to_ves, observed_at=rate.observed_at)
+            if priced and offer.price.currency == "VES"
+            else None
+        ),
+    )
+    return contract_offer, contract_merchant
 
 
 # Único punto de búsqueda: lo usan el agente y MCP. Llama a todas las fuentes en paralelo.
@@ -39,10 +126,10 @@ async def search_offers(query: SearchQuery) -> dict[str, Any]:
         for offer in result.offers:
             merchant = merchants.get(offer.merchant_id)
             if merchant:
-                found.append((source.id, offer, merchant))
+                found.append((source.id, offer, merchant, result.trust.get(offer.merchant_id)))
 
     offers = []
-    for source_id, offer, merchant in found:
+    for source_id, offer, merchant, trust in found:
         # Con envío vale cualquier comercio que envíe; sin envío, solo los de la zona.
         if not (merchant.delivers if query.needs_delivery else _same_zone(merchant, query.zone)):
             continue
@@ -73,6 +160,12 @@ async def search_offers(query: SearchQuery) -> dict[str, Any]:
                 },
             }
         )
+        # La fuente que puntúa su canal manda además el contrato. close_listings (en el agente)
+        # cierra esos puntajes con la mediana de todas las fuentes; el resto sigue con el entero.
+        if trust is not None:
+            contract_offer, contract_merchant = _contract(offers[-1], offer, merchant, trust, rate, query.text)
+            offers[-1]["contractOffer"] = contract_offer.model_dump(mode="json", by_alias=True)
+            offers[-1]["contractMerchant"] = contract_merchant.model_dump(mode="json", by_alias=True)
     offers.sort(key=lambda o: o["priceUsd"] if o["priceUsd"] is not None else float("inf"))
 
     response: dict[str, Any] = {"query": query.text, "failedSources": failed_sources, "offers": offers}

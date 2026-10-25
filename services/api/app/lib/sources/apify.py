@@ -19,10 +19,12 @@ import os
 import re
 import time
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any
 
 from apify_client import ApifyClientAsync
 
+from app.lib.sources.apify_trust import instagram_trust, tiktok_trust
 from app.lib.sources.firecrawl import matches_product, plain, published_prices
 from app.lib.types import Channel, Merchant, Money, Offer, SearchQuery, SourceResult
 
@@ -34,6 +36,9 @@ TIKTOK_ACTOR = "clockworks/tiktok-scraper"
 # y además en max_items, que la API respeta aunque el actor pida más.
 RESULTS = 20
 POSTS_SINCE = "3 months"
+# Publicaciones por comercio en la segunda corrida. Con menos de 3 el puntaje no puede medir
+# proporciones ni ritmo, y la cobertura se queda bajo el 40 %.
+PROFILE_POSTS = 10
 # Lo que la búsqueda espera a un actor recién arrancado. search_offers corta a los 8 s.
 LIVE_WAIT_S = 6
 CACHE_S = 6 * 60 * 60
@@ -113,6 +118,24 @@ def _instagram_input(product: str) -> dict[str, Any] | None:
     }
 
 
+def _moment() -> datetime:
+    return datetime.now(UTC)
+
+
+def _by_owner(items: list[dict[str, Any]], key: str, owner: str) -> list[dict[str, Any]]:
+    return [item for item in items if item.get(key) == owner]
+
+
+def _instagram_profiles(handles: list[str]) -> dict[str, Any]:
+    return {
+        "directUrls": [f"https://www.instagram.com/{handle}/" for handle in handles],
+        "resultsType": "posts",
+        "resultsLimit": PROFILE_POSTS,
+        "onlyPostsNewerThan": POSTS_SINCE,
+        "addParentData": False,
+    }
+
+
 def _instagram_offers(items: list[dict[str, Any]], product: str, now: str) -> SourceResult:
     offers, merchants = [], {}
     for item in items:
@@ -135,7 +158,13 @@ def _instagram_offers(items: list[dict[str, Any]], product: str, now: str) -> So
                 comments=_count(item.get("commentsCount")),
             )
         offers.append(Offer(merchant_id, _title(caption, product), url, price, _seen_at(item.get("timestamp"), now)))
-    return SourceResult(offers=offers, merchants=list(merchants.values()))
+    # El puntaje es de la cuenta, así que lo mide con todas sus publicaciones, no solo con las
+    # que coincidieron con el producto.
+    trust = {
+        merchant_id: instagram_trust({}, _by_owner(items, "ownerUsername", merchant_id[3:]), now=_moment())
+        for merchant_id in merchants
+    }
+    return SourceResult(offers=offers, merchants=list(merchants.values()), trust=trust)
 
 
 def _tiktok_input(product: str) -> dict[str, Any] | None:
@@ -144,6 +173,20 @@ def _tiktok_input(product: str) -> dict[str, Any] | None:
         "searchSection": "/video",
         "resultsPerPage": RESULTS,
         # Sin proxy venezolano TikTok responde con lo que se ve desde el centro de datos.
+        "proxyCountryCode": "VE",
+        "shouldDownloadVideos": False,
+        "shouldDownloadCovers": False,
+        "shouldDownloadSlideshowImages": False,
+        "shouldDownloadAvatars": False,
+        "shouldDownloadMusicCovers": False,
+    }
+
+
+def _tiktok_profiles(handles: list[str]) -> dict[str, Any]:
+    return {
+        "profiles": handles,
+        "resultsPerPage": PROFILE_POSTS,
+        "profileScrapeSections": ["videos"],
         "proxyCountryCode": "VE",
         "shouldDownloadVideos": False,
         "shouldDownloadCovers": False,
@@ -177,7 +220,11 @@ def _tiktok_offers(items: list[dict[str, Any]], product: str, now: str) -> Sourc
                 comments=_count(item.get("commentCount")),
             )
         offers.append(Offer(merchant_id, _title(text, product), url, price, _seen_at(item.get("createTimeISO"), now)))
-    return SourceResult(offers=offers, merchants=list(merchants.values()))
+    trust = {}
+    for merchant_id in merchants:
+        videos = [item for item in items if (item.get("authorMeta") or {}).get("name") == merchant_id[3:]]
+        trust[merchant_id] = tiktok_trust(videos[0].get("authorMeta") or {}, videos, now=_moment())
+    return SourceResult(offers=offers, merchants=list(merchants.values()), trust=trust)
 
 
 async def run_actor(actor: str, run_input: dict[str, Any]) -> list[dict[str, Any]]:
@@ -201,6 +248,7 @@ class ApifySource:
         actor: str,
         run_input: Callable[[str], dict[str, Any] | None],
         read: Callable[[list[dict[str, Any]], str, str], SourceResult],
+        profiles: Callable[[list[str]], dict[str, Any]],
     ) -> None:
         self.id = id
         self.channel = channel
@@ -208,6 +256,7 @@ class ApifySource:
         self.enabled = bool(os.environ.get("APIFY_TOKEN"))
         self._run_input = run_input
         self._read = read
+        self._profiles = profiles
 
     async def search(self, query: SearchQuery) -> SourceResult:
         key = (self.id, " ".join(query.text.lower().split()))
@@ -235,6 +284,21 @@ class ApifySource:
         except Exception as error:  # noqa: BLE001  una fuente que falla no tumba la búsqueda
             detail = f"{type(error).__name__}: {error}"
         result = self._read(items, product, now) if items else SourceResult(offers=[], merchants=[])
+        # Segunda corrida: las publicaciones recientes de los comercios que sí dieron oferta. La
+        # búsqueda deja una publicación por cuenta, y con una sola no se pueden medir las
+        # proporciones ni el ritmo que pide el puntaje. Solo se paga por quien ya aportó algo.
+        deepened = 0
+        if result.merchants:
+            handles = [merchant.id.split(":", 1)[-1] for merchant in result.merchants]
+            try:
+                extra = await run_actor(self.actor, self._profiles(handles))
+            except Exception as error:  # noqa: BLE001  sin la segunda corrida el puntaje queda con menos cobertura
+                detail = f"{type(error).__name__}: {error}"
+                extra = []
+            if extra:
+                deepened = len(extra)
+                items = items + extra
+                result = self._read(items, product, now)
         # Lo vacío también se recuerda un rato: si no, cada búsqueda vuelve a pagar una corrida.
         _cache[key] = (time.monotonic() + (CACHE_S if result.offers else EMPTY_CACHE_S), result)
         _runs.pop(key, None)
@@ -247,6 +311,7 @@ class ApifySource:
                     "seconds": round(time.monotonic() - started, 2),
                     "items": len(items),
                     "offers": len(result.offers),
+                    "deepened": deepened,
                     **({"input": run_input} if run_input else {"skipped": "sin hashtag"}),
                     **({"detail": detail} if detail else {}),
                 },
@@ -255,5 +320,7 @@ class ApifySource:
         )
 
 
-instagram_source = ApifySource("apify-instagram", "instagram", INSTAGRAM_ACTOR, _instagram_input, _instagram_offers)
-tiktok_source = ApifySource("apify-tiktok", "tiktok", TIKTOK_ACTOR, _tiktok_input, _tiktok_offers)
+instagram_source = ApifySource(
+    "apify-instagram", "instagram", INSTAGRAM_ACTOR, _instagram_input, _instagram_offers, _instagram_profiles
+)
+tiktok_source = ApifySource("apify-tiktok", "tiktok", TIKTOK_ACTOR, _tiktok_input, _tiktok_offers, _tiktok_profiles)
