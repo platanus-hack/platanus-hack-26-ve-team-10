@@ -8,5 +8,6 @@ Producto y decisiones: el porqué de Prais. Para saber cómo se construye cada p
 | `marca.md` | La página de marca y el índice de marcas: cuándo se activa o redirige, bloques y datos |
 | `ficha-producto.md` | La página de producto: URL, bloques, schema, ciclo de vida y datos que necesita |
 | `contrato-confianza.md` | El contrato del puntaje de confianza: qué entrega cada especialista y qué calcula el orquestador |
+| `spec-importacion.md` | Traerlo de USA: comprar en Amazon y traerlo con un courier como una oferta más del ranking |
 | `decisions/` | Una decisión por archivo: `NNNN-titulo.md`, con contexto, opciones consideradas y la decisión |
 | `design-system/` | Sistema de diseño de usaprais: tokens, componentes, personaje Prais, canales y capturas |
