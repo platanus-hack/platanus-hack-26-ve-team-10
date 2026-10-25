@@ -29,12 +29,12 @@ Cómo funciona, en [gcp.md](gcp.md).
 
 ## Código
 
-- `apps/web`: TypeScript en modo `strict`, y `@/` apunta a `src/`.
-- `apps/api`: Python 3.12, con `ruff` (`pnpm lint`). Los imports internos son `app.*`.
-- Pruebas de `apps/api`: `unittest` de la librería estándar, en `apps/api/tests/` (`pnpm test`). Sin red ni créditos: las APIs externas se reemplazan por un cliente falso.
-- Toda entrada externa se valida: en `apps/api` con pydantic (bodies de las rutas y argumentos de tools); los webhooks, con la firma y el JSON esperado.
+- `services/web`: TypeScript en modo `strict`, y `@/` apunta a `src/`.
+- `services/api`: Python 3.12, con `ruff` (`pnpm lint`). Los imports internos son `app.*`.
+- Pruebas de `services/api`: `unittest` de la librería estándar, en `services/api/tests/` (`pnpm test`). Sin red ni créditos: las APIs externas se reemplazan por un cliente falso.
+- Toda entrada externa se valida: en `services/api` con pydantic (bodies de las rutas y argumentos de tools); los webhooks, con la firma y el JSON esperado.
 - Los secretos van en `.env`, que nunca se sube, y se listan en `.env.example`. En GCP van en Secret Manager.
-- Fija versiones exactas en `apps/api/requirements.txt` (`google-adk`, `mcp`, los SDKs de las fuentes): cambian rápido.
+- Fija versiones exactas en `services/api/requirements.txt` (`google-adk`, `mcp`, los SDKs de las fuentes): cambian rápido.
 - Lo simple primero: nada de paquetes, servicios o capas nuevas hasta que la demo los necesite.
 
 ## Docs

@@ -31,9 +31,10 @@ DOMAIN="${DOMAIN:-usaprais.com}"
 # Cloud Run
 PUBLIC="${PUBLIC:-true}"                           # true = web con --allow-unauthenticated (la API siempre es pública)
 WEB_MAX_INSTANCES="${WEB_MAX_INSTANCES:-2}"        # tope de costo
-API_MAX_INSTANCES="${API_MAX_INSTANCES:-1}"        # 1: las sesiones del agente viven en memoria
-MIN_INSTANCES="${MIN_INSTANCES:-0}"                # >0 cuesta de forma continua
-MEMORY="${MEMORY:-512Mi}"
+API_MAX_INSTANCES="${API_MAX_INSTANCES:-4}"        # las sesiones están en Postgres, así que varias copias comparten la conversación
+MIN_INSTANCES="${MIN_INSTANCES:-0}"                # >0 cuesta de forma continua. Para la demo: MIN_INSTANCES=1
+API_MEMORY="${API_MEMORY:-1Gi}"                    # varias búsquedas a la vez no caben en 512Mi
+WEB_MEMORY="${WEB_MEMORY:-512Mi}"
 
 # Vertex AI (Gemini): el backend usa la cuenta de servicio, sin API key.
 # Los Gemini vigentes solo están en "global" (en us-east1 no hay 3.x) y el alias -latest no existe en Vertex.
@@ -44,15 +45,23 @@ PRAIS_MODEL="${PRAIS_MODEL:-gemini-3.8-flash}"
 # (/internal/whatsapp-task) con reintentos. TASKS_MAX_ATTEMPTS debe coincidir con la cola.
 TASKS_QUEUE="${TASKS_QUEUE:-prais-jobs}"
 TASKS_MAX_ATTEMPTS="${TASKS_MAX_ATTEMPTS:-5}"
+TASKS_MAX_CONCURRENT="${TASKS_MAX_CONCURRENT:-20}"          # turnos del agente a la vez
+TASKS_MAX_DISPATCHES="${TASKS_MAX_DISPATCHES:-20}"          # cuántos arranca por segundo
 
 # Secretos: UN secreto JSON para el backend, montado como UNA variable de entorno APP_SECRETS
 # (la app lo carga a variables de entorno al arrancar). La web no tiene secretos.
 # Las claves vacías se omiten al crearlo; 40-secrets.sh las pide por prompt.
 API_SECRET="${API_SECRET:-prais-api-secrets}"
-API_SECRET_KEYS=(KAPSO_API_KEY KAPSO_WEBHOOK_SECRET FIRECRAWL_API_KEY APIFY_TOKEN)
+API_SECRET_KEYS=(KAPSO_API_KEY KAPSO_WEBHOOK_SECRET FIRECRAWL_API_KEY APIFY_TOKEN SESSION_DATABASE_URL)
 
 # Bucket de archivos (subidas, reportes, imágenes). Privado: el acceso es por IAM, nunca público.
 BUCKET="${BUCKET:-${PROJECT_ID}-files}"
+
+# Postgres de las sesiones del agente (infra/33-postgres.sh). La URL entra al secreto como
+# SESSION_DATABASE_URL. Parar la instancia cuando no hay demo: activation-policy=never.
+SQL_INSTANCE="${SQL_INSTANCE:-prais-pg}"
+SQL_DATABASE="${SQL_DATABASE:-prais}"
+SQL_USER="${SQL_USER:-prais}"
 
 # Presupuesto (solo avisa, no corta el gasto)
 BUDGET_USD="${BUDGET_USD:-10}"
@@ -69,6 +78,7 @@ APIS=(
   aiplatform.googleapis.com
   cloudtasks.googleapis.com
   secretmanager.googleapis.com
+  sqladmin.googleapis.com
   iam.googleapis.com
   cloudresourcemanager.googleapis.com
   billingbudgets.googleapis.com

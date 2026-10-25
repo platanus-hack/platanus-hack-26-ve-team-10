@@ -45,7 +45,7 @@ next-env.d.ts
 !.env.example
 
 # configuración personal de Claude Code
-# python (apps/api)
+# python (services/api)
 .venv/
 __pycache__/
 *.pyc

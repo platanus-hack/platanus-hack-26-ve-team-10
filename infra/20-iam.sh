@@ -35,6 +35,7 @@ ensure_sa "$BUILD_SA_NAME" "$BUILD_SA" "Cloud Build de prais"
 log "Roles del runtime de la API"
 bind "$API_SA" roles/datastore.user
 bind "$API_SA" roles/aiplatform.user   # Gemini en Vertex AI
+bind "$API_SA" roles/cloudsql.client   # sesiones en Cloud SQL, por el socket de Cloud Run
 
 log "Roles de Cloud Build"
 bind "$BUILD_SA" roles/run.admin

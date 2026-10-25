@@ -5,7 +5,8 @@ source "$(dirname "$0")/config.sh"
 require_gcloud
 
 QUEUE_FLAGS=(--max-attempts="$TASKS_MAX_ATTEMPTS" --min-backoff=10s --max-backoff=300s
-             --max-dispatches-per-second=5 --max-concurrent-dispatches=5)
+             --max-dispatches-per-second="$TASKS_MAX_DISPATCHES"
+             --max-concurrent-dispatches="$TASKS_MAX_CONCURRENT")
 
 log "Cola ${TASKS_QUEUE}"
 if gcloud tasks queues describe "$TASKS_QUEUE" --location="$REGION" >/dev/null 2>&1; then

@@ -15,7 +15,7 @@ concretadas en la plataforma.
   - En Venezuela muchas ventas se pagan fuera de la plataforma; aun así la calificación
     existe y es la mejor señal disponible.
 
-Solo usa httpx, que ya está en apps/api/requirements.txt.
+Solo usa httpx, que ya está en services/api/requirements.txt.
 """
 
 import asyncio

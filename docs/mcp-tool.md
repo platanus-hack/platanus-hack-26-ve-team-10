@@ -1,6 +1,6 @@
 # MCP
 
-El servidor está en `apps/api/app/routes/mcp.py`, montado en `/mcp`. Desde afuera queda en `https://usaprais.com/api/mcp`.
+El servidor está en `services/api/app/routes/mcp.py`, montado en `/mcp`. Desde afuera queda en `https://usaprais.com/api/mcp`.
 
 ## Conectarlo
 
@@ -20,4 +20,4 @@ pnpm dev
 npx @modelcontextprotocol/inspector   # conectar a http://localhost:4000/mcp
 ```
 
-El tablero (`apps/api/app/ui/ofertas.html`) se ve en el inspector, pestaña Apps, o en Claude y ChatGPT con el conector apuntando a la URL pública.
+El tablero (`services/api/app/ui/ofertas.html`) se ve en el inspector, pestaña Apps, o en Claude y ChatGPT con el conector apuntando a la URL pública.

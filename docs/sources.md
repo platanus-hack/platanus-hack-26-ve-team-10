@@ -1,10 +1,10 @@
 # Fuentes
 
-Cada fuente del registro es un archivo en `apps/api/app/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). En el registro están la de ejemplo (`mock.py`), que se apaga con `USE_MOCK_SOURCE=false`, e Instagram y TikTok por Apify (`apify.py`), que se encienden con `APIFY_TOKEN`. Además de sus ofertas fijas, responde por cada modelo del catálogo (`catalogo.json`) con comercios marcados "(ejemplo)" y precios generados desde `precioEjemplo`. Apagarla deja el catálogo con solo ofertas reales: ver [seo-geo.md](seo-geo.md#catálogo-el-interruptor-de-indexación). Firecrawl no está en ese registro: `search_offers` cancela a los 8 s, y la web abierta se llama directo desde la tool y desde el MCP.
+Cada fuente del registro es un archivo en `services/api/app/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). En el registro están la de ejemplo (`mock.py`), que se apaga con `USE_MOCK_SOURCE=false`, e Instagram y TikTok por Apify (`apify.py`), que se encienden con `APIFY_TOKEN`. Además de sus ofertas fijas, responde por cada modelo del catálogo (`catalogo.json`) con comercios marcados "(ejemplo)" y precios generados desde `precioEjemplo`. Apagarla deja el catálogo con solo ofertas reales: ver [seo-geo.md](seo-geo.md#catálogo-el-interruptor-de-indexación). Firecrawl no está en ese registro: `search_offers` cancela a los 8 s, y la web abierta se llama directo desde la tool y desde el MCP.
 
 ## Cadenas con tienda propia
 
-La lista curada está en `apps/api/app/lib/cadenas.py`. Son comercios que venden ellos mismos, tienen sucursales y su web es el canal oficial. Es una señal de respaldo comercial del comercio, no del precio y no de que la oferta sea el producto buscado. `trust_score` todavía no suma puntos por ella: quien calcule la confianza compara el dominio con `chain_for_host`.
+La lista curada está en `services/api/app/lib/cadenas.py`. Son comercios que venden ellos mismos, tienen sucursales y su web es el canal oficial. Es una señal de respaldo comercial del comercio, no del precio y no de que la oferta sea el producto buscado. `trust_score` todavía no suma puntos por ella: quien calcule la confianza compara el dominio con `chain_for_host`.
 
 La comparación es por dominio exacto. Se ignora un `www` al principio. No se compara por nombre: `tiendas-daka.com` no hereda la confianza de `tiendasdaka.com`. Otro subdominio tampoco. `ve.epaenlinea.com` es EPA Venezuela; `epaenlinea.com` solo elige país, y Costa Rica, Guatemala y El Salvador no entran.
 
@@ -85,7 +85,7 @@ Las dos están en `app/lib/sources/apify.py`: comparten el cliente, la caché y 
 
 **Lo que falta.** El hashtag de Instagram es global: para "iPhone 15" trae publicaciones de todo el mundo y solo quedan las que nombran precio y producto. Una lista de cuentas de comercios venezolanos (`directUrls` de perfiles) daría mucha mejor cobertura, y es el siguiente paso. Tampoco se guarda todavía lo que pide el puntaje de confianza: para eso hay que sumar campos a `Merchant` (ver [Datos que el puntaje necesita](#datos-que-el-puntaje-necesita)).
 
-**Probar que el token sirve**, con una corrida de verdad (gasta créditos), desde `apps/api`:
+**Probar que el token sirve**, con una corrida de verdad (gasta créditos), desde `services/api`:
 
 ```bash
 .venv/bin/python scripts/apify_prueba.py "iPhone 15 128 GB" instagram
@@ -97,7 +97,7 @@ Muestra el input que recibe el actor, la primera publicación entera (para confi
 
 Cada canal mide cosas distintas. Para poder compararlos, todos entregan la misma caja: una lista de señales. Cada señal tiene un peso fijo (los de un canal suman 100) y un valor de 0 a 1.
 
-El motor está en `apps/api/app/lib/trust.py`. Los modelos (`TrustSignal`, `TrustScore`, `Adjustment`, `MerchantIdentity`) están en `apps/api/app/lib/contracts.py`. Los borradores de `resources/` no se importan: son la referencia de las fórmulas y de los nombres de campo. Antes de escribir un adapter, corre el actor con casos reales y confirma esos nombres.
+El motor está en `services/api/app/lib/trust.py`. Los modelos (`TrustSignal`, `TrustScore`, `Adjustment`, `MerchantIdentity`) están en `services/api/app/lib/contracts.py`. Los borradores de `resources/` no se importan: son la referencia de las fórmulas y de los nombres de campo. Antes de escribir un adapter, corre el actor con casos reales y confirma esos nombres.
 
 Cómo se calcula:
 
@@ -229,7 +229,7 @@ Actores: `junglee/Amazon-crawler` y `reefapi/amazon-seller-scraper`.
 
 ## Variables
 
-`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa `APIFY_TOKEN`. `APIFY_TOKEN` sale de [Apify Console → Settings → API & Integrations](https://console.apify.com/settings/integrations) y va en `apps/api/.env`. Sin él, Instagram y TikTok quedan apagadas y la búsqueda sigue igual que antes. Las demás variables, agrégalas a `apps/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
+`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa `APIFY_TOKEN`. `APIFY_TOKEN` sale de [Apify Console → Settings → API & Integrations](https://console.apify.com/settings/integrations) y va en `services/api/.env`. Sin él, Instagram y TikTok quedan apagadas y la búsqueda sigue igual que antes. Las demás variables, agrégalas a `services/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
 
 ## Docs
 
