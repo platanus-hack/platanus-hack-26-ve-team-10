@@ -75,12 +75,16 @@ Las dos están en `app/lib/sources/apify.py`: comparten el cliente, la caché y 
 
 | | Instagram | TikTok |
 |---|---|---|
-| Entrada | `directUrls` con `https://www.instagram.com/explore/tags/<hashtag>/` y `resultsType: posts` | `searchQueries` con el producto, `searchSection: /video` |
+| Entrada | **Dos puertas en paralelo**: la búsqueda por publicaciones (`scraping_solutions/instagram-boolean-search-scraper-posts-reels`, con `searchQuery` booleana) y la página del hashtag (`directUrls`, `resultsType: posts`) | `searchQueries` con el producto, `searchSection: /video` |
 | Hashtag | `_hashtag()` arma el tag del producto: "Harina PAN 1 kg" es `#harinapan`, "iPhone 15 128 GB" es `#iphone15`. Una cifra seguida de su unidad se cae: es la presentación, no el modelo | — |
 | Zona | `proxyCountryCode` no aplica: el hashtag es global y se filtra por el caption | `proxyCountryCode: "VE"` |
 | Seguidores | No vienen en una publicación: `followers` va en `None` | `authorMeta.fans` |
 
-`searchType: "hashtag"` **no** sirve para esto: devuelve el volumen del hashtag y los relacionados, no sus publicaciones. Por eso se usa la URL del hashtag.
+`searchType: "hashtag"` del actor oficial **no** sirve para esto: devuelve el volumen del hashtag y los relacionados, no sus publicaciones. Por eso esa puerta usa la URL del hashtag.
+
+**Por qué dos puertas.** El actor oficial no busca publicaciones por frase, y la página de un hashtag es global: una corrida real de `#iphone15` trajo 18 publicaciones de India, Tailandia, Brasil y Japón, y **ninguna** de un vendedor venezolano. El buscador booleano sí acepta `"iPhone 15" AND (Venezuela OR Caracas OR ...)`, así que el país entra en la consulta en vez de filtrarse después de pagar los resultados: la misma prueba devolvió 10 publicaciones y las 10 eran de tiendas venezolanas, 8 con su ciudad. El hashtag se queda porque alcanza publicaciones que el buscador no indexa. Las dos corren a la vez y son independientes: si una falla, la otra sigue, y sus publicaciones se leen igual porque `_from_search` les pone los nombres de campo del actor oficial.
+
+**La ciudad.** La búsqueda por publicaciones trae `locationName`, así que `merchant.zone` deja de ser "Venezuela" a secas y pasa a ser la ciudad real cuando la publicación la tiene.
 
 **Dos corridas, no una.** La búsqueda devuelve una publicación por cuenta, y con una sola no se
 pueden medir proporciones ni ritmo: el puntaje se quedaría bajo el 40 % de cobertura. Por eso, con
@@ -104,6 +108,8 @@ agregador al final del turno. El contrato y por qué funciona así están en
 - El monto tiene que estar escrito **con su moneda** ($, USD, Bs). Un número suelto, como un teléfono, no es un precio.
 - Si la publicación nombra el precio en dólares y en bolívares, manda el de dólares.
 - Si nombra **varios precios** en la misma moneda (un post con tres modelos), no se usa ninguno.
+- **Una cuota o una inicial no es un precio.** Media tienda venezolana publica "Con Cashea desde 230$ de inicial" de un equipo que cuesta el triple. Antes de buscar montos se cae toda línea que hable de pagar a plazos (`inicial`, `cuota`, `crédito`, `financia`, `abono`, `reserva`, `desde`, `Cashea`). Leer esa cifra como el precio es peor que no mostrar nada.
+- **La condición la declara la fuente**, porque ve el caption entero y a la búsqueda solo le llega el título: `Pre-Owned`, `preowned`, `seminuevo` y `usado` son usado; `reacondicionado` y `refurbished`, reacondicionado.
 - Sin precio, la oferta solo se guarda si el caption dice "precio al DM" (o inbox, interno, privado, whatsapp), y va con `price=None`.
 - La publicación tiene que nombrar el producto pedido (`matches_product` sobre el caption), si no, se descarta.
 

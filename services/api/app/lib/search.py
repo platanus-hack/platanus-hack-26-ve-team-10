@@ -51,7 +51,10 @@ def product_key(text: str) -> str:
     return "-".join(plain(text).split()) or "sin-producto"
 
 
-def _condition(*texts: str) -> Condition:
+def _condition(declared: Condition | None, *texts: str) -> Condition:
+    """Lo que diga la fuente manda: ella vio la publicación entera, aquí solo llega el título."""
+    if declared is not None:
+        return declared
     joined = plain(" ".join(texts))
     if _REFURBISHED.search(joined):
         return "reacondicionado"
@@ -90,7 +93,7 @@ def _contract(
         id=evidence,
         merchant_id=merchant.id,
         product=CanonicalProduct(key=product_key(product), label=product),
-        condition=_condition(offer.title, product),
+        condition=_condition(offer.condition, offer.title, product),
         title=offer.title,
         url=offer.url,
         seen_at=offer.seen_at,

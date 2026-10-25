@@ -96,7 +96,8 @@ class ApifyTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(offer.seen_at, "2026-10-20T14:00:00.000Z")
         self.assertEqual((merchant.id, merchant.channel, merchant.delivers), ("ig:tiendave", "instagram", True))
         self.assertEqual(merchant.comments, 12)
-        self.assertEqual(actor.inputs[0][1]["directUrls"], ["https://www.instagram.com/explore/tags/iphone15/"])
+        hashtag = next(run for run, _ in [(i, a) for a, i in actor.inputs] if "directUrls" in run)
+        self.assertEqual(hashtag["directUrls"], ["https://www.instagram.com/explore/tags/iphone15/"])
 
     async def test_a_post_about_another_product_is_left_out(self):
         actor = FakeActor([ig_post("iPhone 14 Pro Max 256 GB $900")])
@@ -129,7 +130,8 @@ class ApifyTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await self.search(apify.instagram_source, actor)).offers, [])
         await asyncio.sleep(0.3)  # la corrida sigue aunque la búsqueda ya no la espere
         self.assertEqual(len((await self.search(apify.instagram_source, actor)).offers), 1)
-        self.assertEqual(len(actor.inputs), 1)  # la segunda búsqueda sale de la caché
+        # Dos entradas en la primera búsqueda (búsqueda y hashtag) y ninguna en la segunda: la caché.
+        self.assertEqual(len(actor.inputs), 2)
 
     async def test_a_failed_run_does_not_break_the_search(self):
         actor = FakeActor(RuntimeError("apify caído"))
@@ -138,8 +140,70 @@ class ApifyTest(unittest.IsolatedAsyncioTestCase):
     async def test_without_a_token_the_source_is_off(self):
         with mock.patch.dict(os.environ, {}, clear=True):
             self.assertFalse(apify.ApifySource(
-                "x", "instagram", "a", apify._instagram_input, apify._instagram_offers, apify._instagram_profiles
+                "x", "instagram", "a", apify._instagram_entries, apify._instagram_offers, apify._instagram_profiles
             ).enabled)
+
+
+    # ── Financiamiento y condición ─────────────────────────────────────────────────────────
+
+    def test_an_installment_is_not_the_price(self):
+        caption = "LIQUIDACIÓN iPhone 15\n💳 Con Cashea desde 230$ de inicial\nPre-Owned en buen estado"
+        self.assertIsNone(apify._price(caption))
+
+    def test_the_price_survives_a_caption_that_also_offers_credit(self):
+        caption = "iPhone 15 128 GB\n💰 Precio: $390\n💳 También en cuotas desde 120$ de inicial"
+        price = apify._price(caption)
+        self.assertEqual((price.amount, price.currency), (390, "USD"))
+
+    def test_pre_owned_is_a_used_phone(self):
+        self.assertEqual(apify._condition("iPhone 15 Pre-Owned en excelente estado"), "usado")
+        self.assertEqual(apify._condition("iPhone 15 reacondicionado"), "reacondicionado")
+        self.assertIsNone(apify._condition("iPhone 15 sellado en caja"))
+
+    # ── Las dos puertas de Instagram ───────────────────────────────────────────────────────
+
+    def test_instagram_enters_by_search_and_by_hashtag(self):
+        entries = apify._instagram_entries("iPhone 15 128 GB")
+        self.assertEqual([actor for actor, _ in entries], [apify.SEARCH_ACTOR, apify.INSTAGRAM_ACTOR])
+        query = entries[0][1]["searchQuery"]
+        self.assertIn('"iPhone 15 128 GB"', query)
+        self.assertIn("Caracas", query)
+        self.assertEqual(entries[1][1]["directUrls"], ["https://www.instagram.com/explore/tags/iphone15/"])
+
+    def test_a_product_without_a_hashtag_still_searches(self):
+        entries = apify._instagram_entries("kg")
+        self.assertEqual([actor for actor, _ in entries], [apify.SEARCH_ACTOR])
+
+    def test_the_search_post_is_read_like_any_other(self):
+        found = apify._from_search(
+            {
+                "username": "tiendave",
+                "fullName": "Tienda VE",
+                "caption": "iPhone 15 128 GB\nPrecio: $390",
+                "url": "https://www.instagram.com/p/A1/",
+                "likeCount": 30,
+                "commentCount": 4,
+                "publishedAt": "2026-10-20T14:00:00.000Z",
+                "locationName": "Caracas, Venezuela",
+            }
+        )
+        result = apify._instagram_offers([found], "iPhone 15 128 GB", "2026-10-25T00:00:00-04:00")
+        offer, merchant = result.offers[0], result.merchants[0]
+        self.assertEqual((offer.price.amount, offer.price.currency), (390, "USD"))
+        self.assertEqual(merchant.zone, "Caracas, Venezuela")  # la ciudad real, no "Venezuela"
+        self.assertEqual(merchant.id, "ig:tiendave")
+
+    def test_a_used_phone_from_the_search_is_marked_used(self):
+        found = apify._from_search(
+            {
+                "username": "tiendave",
+                "caption": "iPhone 15 128 GB Pre-Owned\nPrecio: $390",
+                "url": "https://www.instagram.com/p/A2/",
+                "publishedAt": "2026-10-20T14:00:00.000Z",
+            }
+        )
+        offer = apify._instagram_offers([found], "iPhone 15 128 GB", "2026-10-25T00:00:00-04:00").offers[0]
+        self.assertEqual(offer.condition, "usado")
 
 
 if __name__ == "__main__":
