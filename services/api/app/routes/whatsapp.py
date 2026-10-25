@@ -12,8 +12,8 @@ from fastapi.responses import PlainTextResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-from app.agent import FALLBACK_REPLY, ask_prais, drop_product_dialog
-from app.agents.listing import carousel_message, clamp_summary, list_message
+from app.agent import FALLBACK_REPLY, ask_prais
+from app.agents.listing import carousel_message, clamp_summary
 from app.lib import replies
 from app.lib.replies import ReplyInProgress
 from app.lib.tasks import enqueue_whatsapp_event, queue_enabled
@@ -102,25 +102,6 @@ async def _send_saved(phone_number_id: str, message_id: str | None, payload: dic
         await replies.complete(message_id, payload)
 
 
-_GREETINGS = {
-    "hola",
-    "hello",
-    "hi",
-    "hey",
-    "buenas",
-    "buen dia",
-    "buenos dias",
-    "buenas tardes",
-    "buenas noches",
-}
-_GREETING_REPLY = "Hola. Dime qué producto quieres comparar."
-
-
-def _is_greeting(text: str) -> bool:
-    cleaned = "".join(char for char in text.lower() if char.isalnum() or char.isspace()).strip()
-    return cleaned in _GREETINGS
-
-
 async def _reply(event: dict[str, Any], *, takeover: bool = False) -> None:
     parsed = _inbound_text(event)
     if not parsed:
@@ -134,26 +115,7 @@ async def _reply(event: dict[str, Any], *, takeover: bool = False) -> None:
             return
         if claim.kind == "in_progress":
             raise ReplyInProgress()
-    if _is_greeting(text):
-        drop_product_dialog(f"whatsapp:{sender}")
-        await _send_saved(phone_number_id, message_id, _text_payload(sender, _GREETING_REPLY))
-        return
     answer = await ask_prais(f"whatsapp:{sender}", text)
-    if answer.choices:
-        listing = list_message(
-            sender, answer.list_body or answer.text, answer.choices, section=answer.list_section or "Opciones"
-        )
-        if listing is not None:
-            try:
-                await _post_message(phone_number_id, listing)
-            except Exception:
-                log.exception("whatsapp list failed")
-            else:
-                if message_id:
-                    await replies.complete(message_id, listing)
-                return
-        await _send_saved(phone_number_id, message_id, _text_payload(sender, answer.text))
-        return
     carousel = await carousel_message(sender, answer.listings, answer.text)
     if carousel is not None:
         try:

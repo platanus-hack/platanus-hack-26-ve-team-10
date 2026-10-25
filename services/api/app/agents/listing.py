@@ -1,7 +1,5 @@
 """Misma forma de listado para todos los especialistas, y las tarjetas de WhatsApp."""
 
-import re
-import unicodedata
 from typing import Any
 from urllib.parse import urlparse
 
@@ -221,84 +219,6 @@ def choose_options(listings: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return real[:TARGET_OPTIONS]
     sample = sorted((item for item in priced if item.get("example")), key=_price_key)
     return sample[:TARGET_OPTIONS]
-
-
-# Lista de WhatsApp (Kapso, misma forma que la API de Meta):
-# https://docs.kapso.ai/docs/whatsapp/send-messages/lists.md
-# body 1024, botón 20, título de sección 24, título de fila 24, id 188, hasta 10 filas.
-_LIST_BODY = 1024
-_LIST_BUTTON = 20
-_LIST_SECTION = 24
-_LIST_ROW = 24
-_LIST_ID = 188
-_LIST_ROWS = 10
-
-
-def _row_id(title: str, used: set[str]) -> str:
-    plain = unicodedata.normalize("NFKD", title)
-    plain = "".join(char for char in plain if not unicodedata.combining(char))
-    base = re.sub(r"[^a-z0-9]+", "-", plain.lower()).strip("-")[:_LIST_ID] or "opcion"
-    candidate = base
-    number = 2
-    while candidate in used:
-        suffix = f"-{number}"
-        candidate = f"{base[: _LIST_ID - len(suffix)]}{suffix}"
-        number += 1
-    used.add(candidate)
-    return candidate
-
-
-def _list_rows(rows: list[str]) -> list[str]:
-    chosen: list[str] = []
-    for row in rows:
-        title = " ".join(str(row).split())
-        if not title or len(title) > _LIST_ROW or title in chosen:
-            continue
-        chosen.append(title)
-    if len(chosen) <= _LIST_ROWS:
-        return chosen
-    if "Me da igual" in chosen:
-        head = [title for title in chosen if title != "Me da igual"][: _LIST_ROWS - 1]
-        return head + ["Me da igual"]
-    return chosen[:_LIST_ROWS]
-
-
-def list_message(
-    to: str,
-    body: str,
-    rows: list[str],
-    *,
-    button: str = "Ver opciones",
-    section: str = "Opciones",
-) -> dict[str, Any] | None:
-    """Arma la lista tappable. La persona también puede contestar con texto."""
-    body = " ".join(body.split())
-    button = " ".join(button.split())
-    section = " ".join(section.split())
-    titles = _list_rows(rows)
-    if not body or not button or not section or not titles:
-        return None
-    if len(body) > _LIST_BODY or len(button) > _LIST_BUTTON or len(section) > _LIST_SECTION:
-        return None
-    used: set[str] = set()
-    return {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "interactive",
-        "interactive": {
-            "type": "list",
-            "body": {"text": body},
-            "action": {
-                "button": button,
-                "sections": [
-                    {
-                        "title": section,
-                        "rows": [{"id": _row_id(title, used), "title": title} for title in titles],
-                    }
-                ],
-            },
-        },
-    }
 
 
 async def carousel_message(to: str, listings: list[dict[str, Any]], summary: str) -> dict[str, Any] | None:
