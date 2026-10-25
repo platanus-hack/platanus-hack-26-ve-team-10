@@ -7,6 +7,7 @@ if TYPE_CHECKING:  # contracts.py importa Channel de aquí: la anotación va ent
 Currency = Literal["USD", "VES"]
 Channel = Literal["instagram", "tiktok", "web", "mercadolibre", "facebook", "amazon", "importacion"]
 PriceKind = Literal["publicado", "al_dm", "estimado"]
+Condition = Literal["nuevo", "usado", "reacondicionado"]
 WeightSource = Literal["listing", "tabla"]
 TaxSource = Literal["cotizado", "tabla"]
 QuoteSource = Literal["cotizador", "tabla"]
@@ -83,6 +84,8 @@ class Offer:
     price: Money | None  # None cuando la fuente no publica el precio ("precio al DM")
     seen_at: str  # ISO 8601
     price_kind: PriceKind = "publicado"
+    # Nuevo, usado o reacondicionado, cuando la fuente lo sabe. None: que lo deduzca la búsqueda.
+    condition: Condition | None = None
     fulfiller_id: str | None = None  # el courier, solo en channel "importacion"
     landed: Landed | None = None
 
