@@ -75,6 +75,32 @@ class AgentReceivesTheMessageTests(unittest.IsolatedAsyncioTestCase):
                 await ask_prais(f"person-{message}", message)
         self.assertEqual(self.heard, list(messages))
 
+    async def test_a_link_is_compared_by_the_product_on_the_page(self):
+        async def name(_url: str) -> str:
+            return "iPhone 15 128 GB"
+
+        with self._runner(), self._no_network(), mock.patch("app.agent.product_name_at", name):
+            await ask_prais("link-person", "mira https://tienda.example/iphone")
+        self.assertIn("iPhone 15 128 GB", self.heard[0])
+        self.assertIn("No preguntes cuál modelo es", self.heard[0])
+
+    async def test_the_same_question_is_not_asked_twice(self):
+        searched: list[str] = []
+
+        async def run_async(**_kwargs):
+            yield _Final("¿Cuál iPhone buscas?")
+
+        async def search(product: str, budget_s: float = 45):
+            searched.append(product)
+            return {"offers": []}
+
+        with mock.patch("app.agent.runner.run_async", run_async), mock.patch("app.agent.search_open_web", search):
+            first = await ask_prais("twice", "un iphone")
+            second = await ask_prais("twice", "el normal")
+        self.assertEqual(first.text, "¿Cuál iPhone buscas?")
+        self.assertEqual(second.text, "Sigo con lo que ya me dijiste.")
+        self.assertEqual(searched, ["el normal"])
+
 
 class SearchGateTests(unittest.TestCase):
     def test_the_product_name_does_not_block_the_search(self):

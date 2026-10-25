@@ -14,7 +14,11 @@ Kapso exige que el webhook responda en menos de 10 segundos. Por eso la ruta res
 
 ## Qué lee el agente
 
-El texto de la persona llega al agente tal cual. Un toque en una lista vieja también: Kapso lo manda como `interactive` con `list_reply.title` (y `button_reply.title` para un botón). Ese título es el mensaje. No hay una lista de modelos armada en el código. Si el agente pregunta, la pregunta sale en texto.
+El texto de la persona llega al agente. Un toque en una lista vieja también: Kapso lo manda como `interactive` con `list_reply.title` (y `button_reply.title` para un botón). Ese título es el mensaje.
+
+Hay dos recetas. Si el mensaje trae un link, se lee el nombre del producto en esa página y se compara ese nombre: no se vuelve a preguntar cuál modelo es. Si la persona empieza de cero y el nombre ya se puede buscar, se busca. Si es vago, el agente pregunta una sola cosa, en una frase. La misma pregunta no se manda dos veces: a la segunda, se busca con lo que la persona ya dijo.
+
+No hay una lista de modelos armada en el código. Si el agente pregunta, la pregunta sale en texto. Cuando hay ofertas con precio, la respuesta es el carrusel.
 
 ## Carrusel de la comparación
 

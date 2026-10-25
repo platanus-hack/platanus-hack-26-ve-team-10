@@ -151,6 +151,9 @@ def _detail_bits(card: dict[str, Any], seller: str) -> list[str]:
         bits.append(rate)
     if card.get("example") and "ejemplo" not in seller.lower():
         bits.append("ejemplo")
+    review = card.get("trust_review") or {}
+    if review.get("verdict") in {"riesgosa", "precaucion"}:
+        bits.insert(0, "Ojo")
     return bits
 
 

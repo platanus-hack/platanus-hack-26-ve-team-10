@@ -27,6 +27,7 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 | Infra y deploy (GCP, Cloud Build, Cloud Run, secretos) | [docs/gcp.md](docs/gcp.md) y [infra/README.md](infra/README.md) |
 | Una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [docs/tools.md](docs/tools.md): su skill, su MCP o su `llms.txt` |
 | El agente o sus tools | `services/api/app/agents/orchestrator.py` y `services/api/app/agent.py` |
+| Si una tienda de la web abierta se puede recomendar | `services/api/app/agents/open_web_trust_skill.md`. El cálculo estricto sigue en `resources/website_trust_score.py` |
 | Conectar una fuente real | [docs/sources.md](docs/sources.md) |
 | El puntaje de confianza | `services/api/app/lib/trust.py`, `services/api/app/lib/contracts.py` y los borradores de `resources/*_trust_score.py` |
 | WhatsApp | [docs/kapso.md](docs/kapso.md) |

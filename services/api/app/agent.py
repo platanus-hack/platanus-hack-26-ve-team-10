@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 
 from google.adk.agents.run_config import RunConfig
@@ -9,8 +10,10 @@ from google.adk.models import Gemini
 from google.adk.runners import Runner
 from google.genai import types
 
-from app.agents.listing import listings_from_tool_response
+from app.agents.listing import cards_from_offers, listings_from_tool_response
+from app.agents.open_web_trust import review_listings
 from app.agents.orchestrator import root_agent
+from app.lib.sources.firecrawl import product_name_at, search_open_web
 from app.lib.trust import close_listings
 from app.runtime import session_service
 
@@ -55,6 +58,65 @@ _RUN = RunConfig(max_llm_calls=4)
 
 runner = Runner(app=build_app(), session_service=session_service(), auto_create_session=True)
 
+_URL = re.compile(r"https?://[^\s<>]+")
+_last_question: dict[str, str] = {}
+
+
+def _question_key(text: str) -> str:
+    folded = "".join(char for char in text.lower() if char.isalnum() or char.isspace())
+    return " ".join(folded.split())
+
+
+def _is_question(text: str) -> bool:
+    return "?" in text
+
+
+def _same_question(one: str, other: str) -> bool:
+    if not one or not other:
+        return False
+    return one == other or one in other or other in one
+
+
+def _link(message: str) -> str | None:
+    match = _URL.search(message)
+    if not match:
+        return None
+    return match.group(0).rstrip(").,]>\"'")
+
+
+async def _for_the_agent(message: str) -> tuple[str, str | None]:
+    """El texto que lee el modelo, y el nombre del producto si el mensaje era un link."""
+    url = _link(message)
+    if url is None:
+        return message, None
+    name = await product_name_at(url)
+    if not name:
+        note = (
+            "La persona mandó un link y no se pudo leer el nombre del producto. "
+            "Pregunta una sola vez qué es, en una frase. No armes un menú."
+        )
+        return f"{message}\n\n{note}", None
+    note = (
+        f"La persona mandó un link para comparar. En la página el producto se llama «{name}». "
+        "Busca ese nombre en las fuentes. No preguntes cuál modelo es."
+    )
+    return f"{message}\n\n{note}", name
+
+
+def _search_text(message: str, named: str | None) -> str:
+    if named:
+        return named
+    without_link = _URL.sub(" ", message)
+    text = " ".join(without_link.split())
+    return text or message
+
+
+async def _search_instead(product: str) -> list[dict]:
+    found = await search_open_web(product)
+    listings = cards_from_offers(found.get("offers") or [])
+    review_listings(product, listings)
+    return close_listings(listings)
+
 
 def _event_parts(event: object) -> list[object]:
     content = getattr(event, "content", None)
@@ -95,5 +157,22 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
 
 
 async def ask_prais(user_id: str, message: str) -> PraisAnswer:
-    """El agente lee el mensaje tal como llegó y decide si pregunta o busca."""
-    return await _run_agent(user_id, message)
+    """El agente lee el mensaje. Un link se compara. Una pregunta ya hecha no se repite."""
+    brief, named = await _for_the_agent(message)
+    answer = await _run_agent(user_id, brief)
+    key = _question_key(answer.text)
+    previous = _last_question.get(user_id)
+    if _is_question(answer.text) and _same_question(key, previous or ""):
+        product = _search_text(message, named)
+        if not answer.listings and product:
+            try:
+                answer.listings = await _search_instead(product)
+            except Exception:
+                log.exception("repeat question fell back to search")
+        answer.text = "Sigo con lo que ya me dijiste."
+        return answer
+    if _is_question(answer.text) and key:
+        _last_question[user_id] = key
+        if len(_last_question) > 500:
+            _last_question.pop(next(iter(_last_question)))
+    return answer
