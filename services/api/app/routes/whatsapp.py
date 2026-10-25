@@ -122,13 +122,16 @@ async def _drain(sender: str) -> None:
     """Responde cuando ya no queda texto nuevo de esta persona."""
     pending_ids: list[str | None] = []
     phone_number_id = ""
+    said: list[str] = []
     while True:
         batch = _inbox.pop(sender, [])
-        if not batch:
+        if not batch and not said:
             return
-        phone_number_id = batch[-1][0]
-        pending_ids.extend(item[1] for item in batch)
-        text = "\n".join(item[2] for item in batch)
+        if batch:
+            phone_number_id = batch[-1][0]
+            pending_ids.extend(item[1] for item in batch)
+            said.extend(item[2] for item in batch)
+        text = "\n".join(said)
         answer = await ask_prais(f"whatsapp:{sender}", text)
         if _inbox.get(sender):
             continue

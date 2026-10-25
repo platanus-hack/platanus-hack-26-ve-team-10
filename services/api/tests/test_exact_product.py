@@ -7,7 +7,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from app.agent import ask_prais
+from app.agent import ask_prais, track_product
 from app.agents.orchestrator import _before_search
 from app.routes.whatsapp import _inbound_text, _reply
 
@@ -73,7 +73,9 @@ class AgentReceivesTheMessageTests(unittest.IsolatedAsyncioTestCase):
         with self._runner(), self._no_network():
             for message in messages:
                 await ask_prais(f"person-{message}", message)
-        self.assertEqual(self.heard, list(messages))
+        self.assertIn("comprar un iphone 17pro", self.heard[0])
+        self.assertIn("Producto ya fijado", self.heard[0])
+        self.assertEqual(self.heard[1:], list(messages[1:]))
 
     async def test_a_link_is_compared_by_the_product_on_the_page(self):
         async def name(_url: str) -> str:
@@ -100,6 +102,28 @@ class AgentReceivesTheMessageTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first.text, "¿Cuál iPhone buscas?")
         self.assertEqual(second.text, "Sigo con lo que ya me dijiste.")
         self.assertEqual(searched, ["el normal"])
+
+    async def test_latest_model_does_not_ask_which_model(self):
+        searched: list[str] = []
+
+        async def run_async(**_kwargs):
+            yield _Final("¿Cuál modelo de iPhone buscas?")
+
+        async def search(product: str, budget_s: float = 45):
+            searched.append(product)
+            return {"offers": []}
+
+        with mock.patch("app.agent.runner.run_async", run_async), mock.patch("app.agent.search_open_web", search):
+            answer = await ask_prais("known-18", "Hola! Quiero un iphone 18\nel ultimo modelo que salio")
+        self.assertEqual(answer.text, "Busco iphone 18.")
+        self.assertEqual(searched, ["iphone 18"])
+
+
+class ProductMemoryTests(unittest.TestCase):
+    def test_the_latest_model_keeps_the_phone_already_named(self):
+        named = track_product(None, "Hola! Quiero un iphone 18")
+        self.assertEqual(named, "iphone 18")
+        self.assertEqual(track_product(named, "el ultimo modelo que salio"), "iphone 18")
 
 
 class SearchGateTests(unittest.TestCase):
@@ -151,13 +175,9 @@ class WhatsAppTests(unittest.IsolatedAsyncioTestCase):
             await _reply(_text_event("5800", "toyota corolla en valencia"))
             await _reply(_list_reply("5800", "iPhone 17 Pro", "iphone-17-pro"))
 
-        self.assertEqual(
-            heard,
-            [
-                "comprar un iphone 17pro",
-                "toyota corolla en valencia",
-                "iPhone 17 Pro",
-            ],
-        )
+        self.assertIn("comprar un iphone 17pro", heard[0])
+        self.assertIn("iphone 17pro", heard[0])
+        self.assertEqual(heard[1], "toyota corolla en valencia")
+        self.assertIn("iPhone 17 Pro", heard[2])
         self.assertEqual([item["type"] for item in posted], ["text", "text", "text"])
         self.assertEqual(posted[0]["text"]["body"], "Listo.")

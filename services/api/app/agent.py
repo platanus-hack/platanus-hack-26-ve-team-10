@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from google.adk.agents.run_config import RunConfig
 from google.adk.apps.app import App, EventsCompactionConfig
 from google.adk.apps.llm_event_summarizer import LlmEventSummarizer
+from google.adk.events import Event, EventActions
 from google.adk.models import Gemini
 from google.adk.runners import Runner
 from google.genai import types
@@ -59,7 +60,58 @@ _RUN = RunConfig(max_llm_calls=4)
 runner = Runner(app=build_app(), session_service=session_service(), auto_create_session=True)
 
 _URL = re.compile(r"https?://[^\s<>]+")
+_MODEL = re.compile(r"\b(iphone\s*\d+\s*(?:pro\s*max|pro|plus|mini|e)?)\b", re.IGNORECASE)
+_LATEST = re.compile(
+    r"\b((?:el\s+)?[uú]ltim[oa]s?|m[aá]s nuev[oa]s?|acaba de salir|que sali[oó])\b",
+    re.IGNORECASE,
+)
+_WHICH_MODEL = re.compile(r"cu[aá]l modelo|qu[eé] modelo", re.IGNORECASE)
+_APP = "prais"
 _last_question: dict[str, str] = {}
+
+
+def track_product(previous: str | None, message: str) -> str | None:
+    """Lo que esta conversación ya sabe que hay que buscar. Vive en la sesión."""
+    match = _MODEL.search(message)
+    if match:
+        return " ".join(match.group(1).split())
+    if _LATEST.search(message):
+        if previous:
+            return previous
+        if re.search(r"iphone", message, re.IGNORECASE):
+            return "el último iPhone"
+        return previous
+    words = re.findall(r"[a-z0-9]+", message.lower())
+    if previous and len(words) <= 3:
+        return previous
+    return None
+
+
+async def _session(user_id: str):
+    service = runner.session_service
+    session = await service.get_session(app_name=_APP, user_id=user_id, session_id=user_id)
+    if session is None:
+        session = await service.create_session(app_name=_APP, user_id=user_id, session_id=user_id)
+    return session
+
+
+async def _remember(user_id: str, message: str) -> str | None:
+    """Guarda el producto en session.state, que es el cuaderno de este hilo."""
+    session = await _session(user_id)
+    previous = session.state.get("product")
+    previous = previous if isinstance(previous, str) and previous else None
+    product = track_product(previous, message)
+    stored = product or ""
+    if stored != (previous or ""):
+        await runner.session_service.append_event(
+            session,
+            Event(
+                invocation_id="product",
+                author="system",
+                actions=EventActions(state_delta={"product": stored}),
+            ),
+        )
+    return product
 
 
 def _question_key(text: str) -> str:
@@ -157,9 +209,20 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
 
 
 async def ask_prais(user_id: str, message: str) -> PraisAnswer:
-    """El agente lee el mensaje. Un link se compara. Una pregunta ya hecha no se repite."""
+    """El agente lee el mensaje. El producto queda en la sesión. Una pregunta ya hecha no se repite."""
+    product = await _remember(user_id, message)
     brief, named = await _for_the_agent(message)
+    if product:
+        brief = f"{brief}\n\nProducto ya fijado en la sesión: {product}. Búscalo. No preguntes cuál modelo."
     answer = await _run_agent(user_id, brief)
+    if product and _WHICH_MODEL.search(answer.text):
+        if not answer.listings:
+            try:
+                answer.listings = await _search_instead(product)
+            except Exception:
+                log.exception("known product fell back to search")
+        answer.text = f"Busco {product}."
+        return answer
     key = _question_key(answer.text)
     previous = _last_question.get(user_id)
     if _is_question(answer.text) and _same_question(key, previous or ""):

@@ -85,6 +85,6 @@ class WhatsappRetryTests(unittest.IsolatedAsyncioTestCase):
         await whatsapp._reply(_event("b", "el ultimo modelo"))
         release.set()
         await first
-        self.assertEqual(self.asked, ["17", "el ultimo modelo"])
+        self.assertEqual(self.asked, ["17", "17\nel ultimo modelo"])
         self.assertEqual(len(self.sent), 1)
-        self.assertEqual(self.sent[0]["text"]["body"], "el ultimo modelo")
+        self.assertEqual(self.sent[0]["text"]["body"], "17 el ultimo modelo")
