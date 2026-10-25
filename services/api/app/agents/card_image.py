@@ -1,10 +1,21 @@
-"""Foto de la tarjeta. Si el anuncio no trae imagen, se usa una del producto con la marca de Prais."""
+"""Foto de la tarjeta. Si el anuncio no trae imagen, se usa una del producto con la marca de Prais.
+
+Esta foto no la abre la persona: la descarga WhatsApp desde la URL que le damos, y esa
+descarga vuelve a entrar por cualquiera de las copias de prais-api (infra/config.sh). Si los
+bytes viven en el diccionario de una copia, las demás responden 404, y una tarjeta de carrusel
+sin imagen no se envía. Por eso van al bucket (``STORAGE_BUCKET``), y el nombre del objeto sale
+del producto: la copia que la genera y la que la sirve llegan al mismo nombre sin hablarse.
+
+La memoria del proceso queda delante, como caché: la copia que acaba de hacer la foto la sirve
+sin tocar el bucket. Sin bucket (el caso local) todo vive en memoria, como antes.
+"""
 
 import asyncio
+import hashlib
 import io
 import logging
 import os
-import secrets
+import re
 from typing import Any
 
 import httpx
@@ -15,13 +26,104 @@ log = logging.getLogger("prais.card_image")
 WIDTH = 1200
 HEIGHT = 630
 MARK = "imagen de Prais"
+# El token es lo único que llega de afuera: 16 hexadecimales, nada más, nunca una ruta.
+TOKEN = re.compile(r"[0-9a-f]{16}")
 _MAX_BYTES = 3_000_000
+_PREFIX = "cards/"
+_LOCAL_MAX = 40
+_UNSET = object()
 _store: dict[str, bytes] = {}
-_ready: dict[str, str] = {}
+_bucket: Any = _UNSET
 
 
-def read_card_image(token: str) -> bytes | None:
-    return _store.get(token)
+def _key(title: str) -> str:
+    return " ".join(title.lower().split()) or "producto"
+
+
+def _token(title: str) -> str:
+    """El nombre del objeto sale del producto, así que no hace falta acordarlo entre copias."""
+    return hashlib.sha256(_key(title).encode()).hexdigest()[:16]
+
+
+def _remember(token: str, data: bytes) -> None:
+    _store[token] = data
+    while len(_store) > _LOCAL_MAX:
+        _store.pop(next(iter(_store)))
+
+
+def _open_bucket() -> Any:
+    name = os.environ.get("STORAGE_BUCKET", "").strip()
+    if not name:
+        return None
+    try:
+        from google.cloud import storage
+
+        return storage.Client().bucket(name)
+    except Exception:  # noqa: BLE001  sin bucket se sigue con la memoria de esta copia
+        log.warning("no storage bucket: card images only work while this instance lives")
+        return None
+
+
+def bucket() -> Any:
+    """El bucket, una sola vez. None en local y si el cliente no arranca."""
+    global _bucket
+    if _bucket is _UNSET:
+        _bucket = _open_bucket()
+    return _bucket
+
+
+def _blob(token: str) -> Any:
+    return bucket().blob(f"{_PREFIX}{token}.jpg")
+
+
+async def _in_bucket(token: str) -> bool:
+    """Si ya está hecha, ninguna copia vuelve a pagar la búsqueda de la foto."""
+    if bucket() is None:
+        return False
+    try:
+        return await asyncio.to_thread(lambda: _blob(token).exists())
+    except Exception:  # noqa: BLE001  el bucket no responde: se genera de nuevo
+        log.info("card image lookup failed")
+        return False
+
+
+async def _from_bucket(token: str) -> bytes | None:
+    if bucket() is None:
+        return None
+
+    def read() -> bytes | None:
+        blob = _blob(token)
+        return blob.download_as_bytes() if blob.exists() else None
+
+    try:
+        return await asyncio.to_thread(read)
+    except Exception:  # noqa: BLE001  una foto que no baja no tumba la respuesta
+        log.info("card image read failed")
+        return None
+
+
+async def _to_bucket(token: str, data: bytes) -> bool:
+    if bucket() is None:
+        return False
+    try:
+        await asyncio.to_thread(lambda: _blob(token).upload_from_string(data, content_type="image/jpeg"))
+    except Exception:  # noqa: BLE001  se queda en esta copia: peor sería no mandar la tarjeta
+        log.warning("card image upload failed")
+        return False
+    return True
+
+
+async def read_card_image(token: str) -> bytes | None:
+    """La foto, de la memoria de esta copia o del bucket. La pide WhatsApp, no la persona."""
+    if not TOKEN.fullmatch(token):
+        return None
+    data = _store.get(token)
+    if data is not None:
+        return data
+    data = await _from_bucket(token)
+    if data is not None:
+        _remember(token, data)
+    return data
 
 
 def public_base() -> str | None:
@@ -78,18 +180,6 @@ def _stamp(image: Image.Image) -> bytes:
     out = io.BytesIO()
     framed.save(out, format="JPEG", quality=82, optimize=True)
     return out.getvalue()
-
-
-def _save(data: bytes) -> str | None:
-    base = public_base()
-    if base is None:
-        log.warning("card image has no public https base")
-        return None
-    token = secrets.token_urlsafe(9)
-    _store[token] = data
-    while len(_store) > 40:
-        _store.pop(next(iter(_store)))
-    return f"{base}/card-images/{token}.jpg"
 
 
 async def _download(url: str) -> bytes | None:
@@ -155,22 +245,26 @@ async def _product_photo(title: str) -> bytes | None:
 
 async def marked_product_image(title: str) -> str | None:
     """URL pública de una foto del producto con «imagen de Prais» encima."""
-    key = " ".join(title.lower().split()) or "producto"
-    ready = _ready.get(key)
-    if ready:
-        return ready
+    base = public_base()
+    if base is None:
+        log.warning("card image has no public https base")
+        return None
+    token = _token(title)
+    url = f"{base}/card-images/{token}.jpg"
+    if token in _store or await _in_bucket(token):
+        return url
     try:
-        photo = await asyncio.wait_for(_product_photo(key), 20)
+        photo = await asyncio.wait_for(_product_photo(_key(title)), 20)
     except Exception:  # noqa: BLE001  sin foto pública no se inventa una
         log.info("product image search failed")
         return None
     if not photo:
         return None
     try:
-        url = _save(_stamp(Image.open(io.BytesIO(photo))))
+        data = _stamp(Image.open(io.BytesIO(photo)))
     except (OSError, ValueError):
         log.info("product image stamp failed")
         return None
-    if url:
-        _ready[key] = url
+    _remember(token, data)
+    await _to_bucket(token, data)
     return url

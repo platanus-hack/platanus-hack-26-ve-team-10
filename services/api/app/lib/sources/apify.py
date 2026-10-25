@@ -131,11 +131,11 @@ def _title(text: str, product: str) -> str:
     return line[:90] if len(line) >= 3 else product
 
 
-def _count(value: Any) -> int | None:
+def count_of(value: Any) -> int | None:
     return value if isinstance(value, int) and value >= 0 else None
 
 
-def _seen_at(value: Any, default: str) -> str:
+def seen_at_of(value: Any, default: str) -> str:
     return value if isinstance(value, str) and value else default
 
 
@@ -224,7 +224,7 @@ def _instagram_offers(items: list[dict[str, Any]], product: str, now: str) -> So
                 url=f"https://www.instagram.com/{user}/",
                 zone=item.get("locationName") or ZONE,
                 delivers=bool(_DELIVERS.search(plain(caption))),
-                comments=_count(item.get("commentsCount")),
+                comments=count_of(item.get("commentsCount")),
             )
         offers.append(
             Offer(
@@ -232,7 +232,7 @@ def _instagram_offers(items: list[dict[str, Any]], product: str, now: str) -> So
                 _title(caption, product),
                 url,
                 price,
-                _seen_at(item.get("timestamp"), now),
+                seen_at_of(item.get("timestamp"), now),
                 condition=_condition(caption),
             )
         )
@@ -299,8 +299,8 @@ def _tiktok_offers(items: list[dict[str, Any]], product: str, now: str) -> Sourc
                 url=author.get("profileUrl") or f"https://www.tiktok.com/@{user}",
                 zone=ZONE,
                 delivers=bool(_DELIVERS.search(plain(text))),
-                followers=_count(author.get("fans")),
-                comments=_count(item.get("commentCount")),
+                followers=count_of(author.get("fans")),
+                comments=count_of(item.get("commentCount")),
             )
         offers.append(
             Offer(
@@ -308,7 +308,7 @@ def _tiktok_offers(items: list[dict[str, Any]], product: str, now: str) -> Sourc
                 _title(text, product),
                 url,
                 price,
-                _seen_at(item.get("createTimeISO"), now),
+                seen_at_of(item.get("createTimeISO"), now),
                 condition=_condition(text),
             )
         )
@@ -340,7 +340,7 @@ class ApifySource:
         actor: str,
         entries: Callable[[str], list[tuple[str, dict[str, Any]]]],
         read: Callable[[list[dict[str, Any]], str, str], SourceResult],
-        profiles: Callable[[list[str]], dict[str, Any]],
+        profiles: Callable[[list[str]], dict[str, Any]] | None = None,
     ) -> None:
         self.id = id
         self.channel = channel
@@ -384,7 +384,7 @@ class ApifySource:
         # búsqueda deja una publicación por cuenta, y con una sola no se pueden medir las
         # proporciones ni el ritmo que pide el puntaje. Solo se paga por quien ya aportó algo.
         deepened = 0
-        if result.merchants:
+        if result.merchants and self._profiles is not None:
             handles = [merchant.id.split(":", 1)[-1] for merchant in result.merchants]
             try:
                 extra = await run_actor(self.actor, self._profiles(handles))
