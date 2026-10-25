@@ -12,7 +12,6 @@ se reparte. Si se mide menos del 40 % del peso, el veredicto es `sin_datos`, que
 honesta y no un número inventado.
 """
 
-import math
 import statistics
 from datetime import UTC, datetime
 from typing import Any
@@ -20,12 +19,12 @@ from typing import Any
 from app.lib.contracts import TrustScore
 from app.lib.trust import (
     Measured,
+    age_curve,
     build_signals,
     clamp,
     compute_trust,
     fmt_int,
     risk_language,
-    round_half_up,
 )
 
 # Una cuenta recién creada es la bandera roja de los dos canales.
@@ -168,12 +167,8 @@ def tiktok_trust(author: dict[str, Any], videos: list[dict[str, Any]], *, now: d
     created = tiktok_created_at(author.get("id"))
     if created is not None:
         months = _months_since(created, now)
-        value = 0.0 if months < 3 else clamp(math.log(months / 3) / math.log(12))
-        values["age"] = Measured(
-            value,
-            f"Cuenta desde {created.year}" if value >= 0.6 else f"Cuenta reciente ({round_half_up(months)} meses)",
-            value >= 0.6,
-        )
+        value, reason = age_curve(created, now, noun="Cuenta creada")
+        values["age"] = Measured(value, reason, value >= 0.6)
         if months < 1:
             flags.append(NEW_ACCOUNT_FLAG)
 

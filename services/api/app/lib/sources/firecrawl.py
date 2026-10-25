@@ -989,6 +989,10 @@ async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str,
                         "url": found_offer.url,
                         "price": format_money(price),
                         "priceUsd": to_usd(price, rate),
+                        # El monto como lo publica la tienda: lo necesita el contrato de confianza,
+                        # que no puede deshacer el formateo ni volver a convertir desde los dólares.
+                        "priceAmount": price.amount,
+                        "priceCurrency": price.currency,
                         "rate": (
                             f"{rate.usd_to_ves:g} Bs/USD ({rate.source}, {rate.observed_at})"
                             if price.currency == "VES"

@@ -174,6 +174,18 @@ def anomaly_from_deviation(deviation: float) -> tuple[float, str, bool]:
     return value, f"Precio {percent}% bajo el mercado", value == 1
 
 
+def age_curve(created: datetime, now: datetime, *, noun: str) -> tuple[float, str]:
+    """Antigüedad de una cuenta o un dominio: menos de 3 meses vale 0, tres años vale 1.
+
+    La misma curva en TikTok y en una tienda web, como piden los dos borradores de resources/.
+    """
+    months = max((now - created).days, 0) / 30.44
+    value = 0.0 if months < 3 else clamp(math.log(months / 3) / math.log(12))
+    if value >= 0.6:
+        return value, f"{noun} en {created.year}"
+    return value, f"{noun} hace poco ({round_half_up(months)} meses)"
+
+
 def risk_language(*texts: str | None) -> Measured:
     """La señal `risk_language`, igual en los seis canales.
 

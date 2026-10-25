@@ -21,7 +21,7 @@ from app.agents.listing import (
     narrowed,
     says_condition,
 )
-from app.agents.open_web_trust import review_listings
+from app.agents.open_web_trust import review_offers
 from app.agents.orchestrator import root_agent
 from app.lib import dialog
 from app.lib.sources.firecrawl import product_name_at, search_open_web
@@ -182,9 +182,9 @@ async def _for_the_agent(message: str) -> tuple[str, str | None]:
 
 async def _search_instead(product: str) -> list[dict]:
     found = await search_open_web(product)
-    listings = cards_from_offers(found.get("offers") or [])
-    review_listings(product, listings)
-    return close_listings(listings)
+    offers = found.get("offers") or []
+    await review_offers(product, offers)
+    return close_listings(cards_from_offers(offers))
 
 
 def _event_parts(event: object) -> list[object]:
