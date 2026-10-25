@@ -53,8 +53,10 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 
 ```bash
 pnpm install                             # también configura git: hooks y push en paralelo a Platanus y usaprais.com
-cp services/api/.env.example services/api/.env   # pon GOOGLE_GENAI_API_KEY
+./infra/env-local.sh                     # arma services/api/.env con las claves de fuentes de prod
+gcloud auth application-default login    # el modelo va por Vertex; sin esto contesta «Falló la búsqueda»
 pnpm dev                                 # api en :4000, web en :3000 (la primera vez crea services/api/.venv: pide python3)
+#   el chat en localhost:3000/chat llama al mismo ask_prais que WhatsApp: sirve para probar el agente
 git pull origin main                     # antes del PR: trae lo último de main a tu rama
 pnpm build && pnpm lint && pnpm test     # y vuelve a probar: no hay checks antes del auto-merge
 pnpm sync                                # después del merge: copia main de Platanus a usaprais.com
