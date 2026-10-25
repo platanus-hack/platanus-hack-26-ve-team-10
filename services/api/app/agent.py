@@ -21,6 +21,7 @@ from app.agents.clarify import (
 )
 from app.agents.listing import listings_from_tool_response
 from app.agents.orchestrator import root_agent
+from app.lib.trust import close_listings
 from app.runtime import session_service
 
 FALLBACK_REPLY = "Algo falló de mi lado. Inténtalo otra vez en un momento."
@@ -161,10 +162,10 @@ async def _run_agent(user_id: str, message: str) -> PraisAnswer:
                 reply += "".join(part.text or "" for part in event.content.parts if not part.function_call)
     except Exception:
         log.exception("agent run failed")
-        return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=listings)
+        return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings))
     if asked is not None:
         return _answer_from_ask(user_id, asked)
-    return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=listings)
+    return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings))
 
 
 async def ask_prais(user_id: str, message: str) -> PraisAnswer:

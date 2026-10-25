@@ -47,6 +47,12 @@ La forma del envío es la de [Enviar listas](https://docs.kapso.ai/docs/whatsapp
 }
 ```
 
+## Carrusel de la comparación
+
+Cuando el producto ya está exacto, la respuesta es un carrusel (`carousel_message` en `services/api/app/agents/listing.py`). WhatsApp acepta de 2 a 10 tarjetas. Prais manda hasta cinco: las más baratas que publican un precio.
+
+Una fila sin precio no ocupa un lugar. Si hay ofertas reales con precio, las de ejemplo no se usan para llegar a cinco. Siguen marcadas como ejemplo y solo entran cuando no hay ninguna real con precio. Si hay menos de cinco, salen las que hay. Con una sola, o con ninguna, no se arma el carrusel, porque WhatsApp exige al menos dos tarjetas, y se manda el texto. No se inventan precios para completar las cinco.
+
 ## Pendiente
 
 - Si un mensaje no trae `from` (los payloads nuevos pueden traer solo `business_scoped_user_id`), hoy se ignora.

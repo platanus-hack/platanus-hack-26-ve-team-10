@@ -22,10 +22,10 @@ def _metadata(url, final=None, status=200, credits=1):
     return SimpleNamespace(url=final or url, status_code=status, og_site_name=None, og_image=None, credits_used=credits)
 
 
-def product_page(url, amount, currency="USD", title="iPhone 15 128 GB", product_url=None):
+def product_page(url, amount, currency="USD", title="iPhone 15 128 GB", product_url=None, brand="Apple"):
     price = SimpleNamespace(amount=amount, currency=currency)
     product = SimpleNamespace(
-        title=title, brand="Apple", url=product_url or url, variants=[SimpleNamespace(price=price, images=[])]
+        title=title, brand=brand, url=product_url or url, variants=[SimpleNamespace(price=price, images=[])]
     )
     return {"product": SimpleNamespace(product=product, metadata=_metadata(url), images=None)}
 
@@ -168,6 +168,63 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
         result = await self.run_search(client)
         self.assertEqual(result["offers"], [])
         self.assertEqual(result["failedSources"], [])
+
+    async def test_iphone_query_drops_a_samsung_offer(self):
+        url = "https://soytechno.com/samsung-galaxy-s24/"
+        client = FakeFirecrawl({url: product_page(url, 499.0, title="Samsung Galaxy S24", brand="Samsung")})
+        result = await self.run_search(client, product="iPhone 14")
+        self.assertEqual(result["offers"], [])
+        self.assertEqual(result["failedSources"], [])
+        self.assertEqual(client.scraped, [(url, "product")])
+
+    async def test_comparison_page_drops_the_other_product(self):
+        listing = "https://vallearriba.elplazas.com/categoria/telefonos"
+        samsung_vs = "https://soytechno.com/iphone-14-vs-samsung-galaxy-s24/"
+        client = FakeFirecrawl(
+            {
+                listing: listing_page(
+                    listing,
+                    [
+                        {"title": "iPhone 14 128GB", "price": 520, "currency": "$"},
+                        {"title": "Samsung Galaxy S24", "price": 499, "currency": "$"},
+                        {"title": "iPhone 14 vs Samsung Galaxy S24", "price": 90, "currency": "$"},
+                        {"title": "iPhone 14 Pro 128 GB", "price": 300, "currency": "$"},
+                    ],
+                    "iPhone 14 128GB $520. Samsung Galaxy S24 $499. "
+                    "iPhone 14 vs Samsung Galaxy S24 $90. iPhone 14 Pro 128 GB $300.",
+                ),
+                samsung_vs: product_page(
+                    samsung_vs,
+                    40.0,
+                    title="iPhone 14 vs Samsung Galaxy S24",
+                    brand="Samsung",
+                ),
+            }
+        )
+        result = await self.run_search(client, product="iPhone 14")
+        self.assertEqual([offer["priceUsd"] for offer in result["offers"]], [520])
+        self.assertEqual(result["offers"][0]["title"], "iPhone 14 128GB")
+        self.assertNotIn("samsung", result["offers"][0]["title"].lower())
+        self.assertEqual(result["failedSources"], [])
+        self.assertEqual([kind for url, kind in client.scraped if url == listing], ["json"])
+        self.assertEqual([kind for url, kind in client.scraped if url == samsung_vs], ["product"])
+
+    async def test_real_match_stays_when_the_priced_item_is_the_query(self):
+        plain = "https://soytechno.com/apple-iphone-14/"
+        compared = "https://tiendasdaka.com/iphone-14-vs-samsung/"
+        client = FakeFirecrawl(
+            {
+                plain: product_page(plain, 550.0, title="iPhone 14 128 GB"),
+                compared: product_page(
+                    compared, 480.0, title="iPhone 14 vs Samsung Galaxy S24", brand="Apple"
+                ),
+            }
+        )
+        result = await self.run_search(client, product="iPhone 14")
+        self.assertEqual([offer["priceUsd"] for offer in result["offers"]], [480, 550])
+        self.assertEqual([offer["title"] for offer in result["offers"]], ["iPhone 14", "iPhone 14 128 GB"])
+        self.assertTrue(all("samsung" not in offer["title"].lower() for offer in result["offers"]))
+        self.assertEqual(client.scraped, [(plain, "product"), (compared, "product")])
 
     async def test_other_brands_and_models_on_a_listing_are_dropped(self):
         url = "https://vallearriba.elplazas.com/harina-de-maiz.html"
@@ -417,7 +474,7 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
 
 class ParsingTest(unittest.TestCase):
     def test_published_prices_keep_the_currency_next_to_them(self):
-        prices = firecrawl._published_prices("u$s6.600 · Bs.S 1.039,96 · $1,039.96 · REF 0,81 · 84,20 · 6.600.000 Bs")
+        prices = firecrawl.published_prices("u$s6.600 · Bs.S 1.039,96 · $1,039.96 · REF 0,81 · 84,20 · 6.600.000 Bs")
         self.assertEqual(prices[6600], {"USD"})
         self.assertEqual(prices[1039.96], {"VES", "USD"})
         self.assertEqual(prices[0.81], {"USD"})
@@ -427,10 +484,10 @@ class ParsingTest(unittest.TestCase):
 
     def test_a_symbol_belongs_to_the_amount_after_it(self):
         # Un título que termina en cifra, o dos precios seguidos, no se quedan con el símbolo ajeno.
-        self.assertEqual(firecrawl._published_prices("### Samsung Galaxy A15\n\nRef. 150")[150], {"USD"})
-        self.assertEqual(firecrawl._published_prices("Bs. 5.200,00 REF 26,00"), {5200: {"VES"}, 26: {"USD"}})
-        self.assertEqual(firecrawl._published_prices("Bs. 9.125,00\n$25,00")[25], {"USD"})
-        self.assertEqual(firecrawl._published_prices("179,00$-209,00$"), {179: {"USD"}, 209: {"USD"}})
+        self.assertEqual(firecrawl.published_prices("### Samsung Galaxy A15\n\nRef. 150")[150], {"USD"})
+        self.assertEqual(firecrawl.published_prices("Bs. 5.200,00 REF 26,00"), {5200: {"VES"}, 26: {"USD"}})
+        self.assertEqual(firecrawl.published_prices("Bs. 9.125,00\n$25,00")[25], {"USD"})
+        self.assertEqual(firecrawl.published_prices("179,00$-209,00$"), {179: {"USD"}, 209: {"USD"}})
 
     def test_currencies(self):
         labels = ("u$s", "U$S", "US$", "$", "REF", "Ref.", "USD$", "Bs.", "Bs.S", "Bs.:", "Bs.D", "EUR", "Consultar")
@@ -467,6 +524,19 @@ class ParsingTest(unittest.TestCase):
         self.assertLessEqual(timeout, firecrawl.SEARCH_TIMEOUT_MS)
         self.assertGreaterEqual(24_000 - timeout, 9_000)
 
+    def test_priced_item_must_be_the_product_asked_for(self):
+        same = firecrawl._matching_title
+        self.assertIsNone(same("iPhone 14", "Samsung Galaxy S24", "Samsung"))
+        self.assertIsNone(same("iPhone 14", "iPhone 14 vs Samsung Galaxy S24", "Samsung"))
+        self.assertEqual(same("iPhone 14", "iPhone 14 vs Samsung Galaxy S24", "Apple"), "iPhone 14")
+        self.assertIsNone(same("iPhone 14", "iPhone 14 vs Samsung Galaxy S24"))
+        self.assertIsNone(same("iPhone 14", "iPhone 14 Pro 128 GB", "Apple"))
+        self.assertEqual(same("iPhone 14", "iPhone 14 128 GB", "Apple"), "iPhone 14 128 GB")
+        self.assertEqual(same("iPhone 14 Pro", "iPhone 14 Pro 128 GB", "Apple"), "iPhone 14 Pro 128 GB")
+        self.assertIsNone(same("iPhone 14 Pro", "iPhone 14 Pro Max", "Apple"))
+        self.assertIsNone(same("Harina PAN 1 kg", "HARINA KALY BLANCO 1KG"))
+        self.assertEqual(same("Harina PAN 1 kg", "HARINA P.A.N. MAIZ BLANCO 1 KG"), "HARINA P.A.N. MAIZ BLANCO 1 KG")
+
     def test_matches(self):
         cases = [
             ("Harina PAN 1 kg", "HARINA P.A.N. MAIZ BLANCO 1 KG", True),
@@ -487,14 +557,17 @@ class ParsingTest(unittest.TestCase):
         ]
         for product, title, expected in cases:
             with self.subTest(product=product, title=title):
-                self.assertEqual(firecrawl._matches(product, title), expected)
+                self.assertEqual(firecrawl.matches_product(product, title), expected)
 
 
 class SearchNoticeTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        patcher = mock.patch.object(mock_source, "enabled", True)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        for patcher in (
+            mock.patch.object(mock_source, "enabled", True),
+            mock.patch.object(search, "get_rate", mock.AsyncMock(return_value=RATE)),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     async def test_example_notice_only_with_example_offers(self):
         with_examples = await search.search_offers(SearchQuery(text="Harina PAN 1 kg"))
