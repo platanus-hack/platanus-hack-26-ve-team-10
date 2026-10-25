@@ -9,7 +9,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import CallToolResult, Icon, TextContent, ToolAnnotations
 from pydantic import AliasChoices, BaseModel, Field
 
-from app.agents.listing import _https, _published_price, choose_options
+from app.agents.listing import _https, choose_options, has_published_price
 from app.lib.rate import get_rate
 from app.lib.search import search_all
 from app.lib.types import SearchQuery
@@ -116,7 +116,7 @@ def _comparison(offers: list[Offer]) -> list[Offer]:
 def _summary(result: PriceSearch) -> str:
     """Texto para el modelo y para los clientes sin widget: hasta cinco precios, con fuente y fecha."""
     shown = _comparison(result.offers)
-    unpriced = sum(1 for offer in result.offers if not _published_price({"price": offer.price}))
+    unpriced = sum(1 for offer in result.offers if not has_published_price({"price": offer.price}))
     if not result.offers:
         lines = [f'"{result.query}": no offers found. Suggest searching with the exact brand and model.']
     elif shown:
@@ -149,7 +149,7 @@ def _summary(result: PriceSearch) -> str:
     real_priced = [
         offer
         for offer in result.offers
-        if not offer.example and _published_price({"price": offer.price}) and _https(offer.url)
+        if not offer.example and has_published_price({"price": offer.price}) and _https(offer.url)
     ]
     if len(real_priced) > len(shown):
         lines.append(f"…and {len(real_priced) - len(shown)} more with a price.")

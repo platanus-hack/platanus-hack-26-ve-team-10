@@ -1,11 +1,15 @@
 """Misma forma de listado para todos los especialistas, y las tarjetas de WhatsApp."""
 
+import re
+import unicodedata
+from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field
 
 from app.agents.card_image import marked_product_image
+from app.lib.trust import to_stars
 
 # Límites del carrusel de WhatsApp (Kapso / Meta): 2 a 10 tarjetas, imagen
 # obligatoria, cuerpo de tarjeta de 160 caracteres y como mucho 2 saltos de línea.
@@ -15,6 +19,9 @@ TARGET_OPTIONS = 5
 MAX_CARDS = 10
 MAX_CARD_CHARS = 160
 MAX_SUMMARY = 250
+# El cuerpo de arriba llega listo de quien llama: ya acortado y con el producto
+# encima, así que aquí solo se topa en el límite duro de WhatsApp.
+_CARD_BODY = 1024
 MAX_BUTTON = 20
 
 CHANNEL_LABEL = {
@@ -44,6 +51,7 @@ class ListingCard(BaseModel):
     price_kind: str = "publicado"
     fulfiller: str | None = None
     landed: dict[str, Any] | None = None
+    seen_at: str | None = None  # cuándo se vio ese precio: con esta inflación, uno sin fecha no es un precio
 
 
 class SpecialistReport(BaseModel):
@@ -78,6 +86,7 @@ def cards_from_offers(offers: list[dict[str, Any]]) -> list[dict[str, Any]]:
             example=bool(offer.get("example")),
             trust=merchant.get("trust"),
             price_usd=offer.get("priceUsd"),
+            seen_at=offer.get("seenAt"),
         )
         data = card.model_dump()
         # El contrato viaja con la tarjeta sin que ningún modelo lo reescriba: close_listings lo
@@ -158,13 +167,41 @@ def _trust_points(trust: Any) -> int | None:
     return None
 
 
+_MONTHS = ("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+
+
+def _stars(card: dict[str, Any]) -> str | None:
+    """De 0 a 5, no el entero de 0 a 100: "Confianza 80" no dice sobre qué."""
+    stars = card.get("trustStars")
+    if not isinstance(stars, int) or isinstance(stars, bool):
+        stars = to_stars(_trust_points(card.get("trust")))
+    if not isinstance(stars, int):
+        return None
+    stars = max(0, min(5, stars))
+    return "★" * stars + "☆" * (5 - stars)
+
+
+def _seen(value: Any) -> str | None:
+    """"24 oct". Un precio sin fecha no es un precio: lo pide la regla 7."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        seen = datetime.fromisoformat(value.strip())
+    except ValueError:
+        return None
+    return f"{seen.day} {_MONTHS[seen.month - 1]}"
+
+
 def _detail_bits(card: dict[str, Any], seller: str) -> list[str]:
     bits = []
     if card.get("price_kind") == "estimado":
         bits.append("estimado")
-    trust = _trust_points(card.get("trust"))
-    if trust is not None:
-        bits.append(f"Confianza {trust}")
+    stars = _stars(card)
+    if stars:
+        bits.append(stars)
+    seen = _seen(card.get("seen_at") or card.get("seenAt"))
+    if seen:
+        bits.append(seen)
     if card.get("ships") is True:
         bits.append("Envía")
     elif card.get("ships") is False:
@@ -227,7 +264,7 @@ def _price_key(item: dict[str, Any]) -> float:
     return value if isinstance(value, (int, float)) else float("inf")
 
 
-def _published_price(item: dict[str, Any]) -> bool:
+def has_published_price(item: dict[str, Any]) -> bool:
     """Un precio publicado es un texto no vacío. None y el espacio no ocupan un lugar."""
     price = item.get("price")
     if price is None or isinstance(price, bool):
@@ -242,7 +279,7 @@ def choose_options(listings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     completan las cinco: siguen siendo ejemplo y solo entran cuando no hay
     ninguno real. Si hay menos de cinco, se devuelven las que hay. No se inventan.
     """
-    priced = [item for item in listings if _published_price(item) and _https(item.get("url"))]
+    priced = [item for item in listings if has_published_price(item) and _https(item.get("url"))]
     real = sorted((item for item in priced if not item.get("example")), key=_price_key)
     if real:
         return real[:TARGET_OPTIONS]
@@ -271,7 +308,7 @@ async def carousel_message(to: str, listings: list[dict[str, Any]], summary: str
         "type": "interactive",
         "interactive": {
             "type": "carousel",
-            "body": {"text": clamp_summary(summary)},
+            "body": {"text": summary[:_CARD_BODY]},
             "action": {
                 "cards": [
                     {
@@ -302,7 +339,7 @@ async def one_offer_message(to: str, listings: list[dict[str, Any]], summary: st
         image = await marked_product_image(str(item.get("title") or "producto"))
     interactive: dict[str, Any] = {
         "type": "cta_url",
-        "body": {"text": clamp_summary(summary)},
+        "body": {"text": summary[:_CARD_BODY]},
         "action": {
             "name": "cta_url",
             "parameters": {"display_text": "Ver oferta", "url": item["url"]},
@@ -319,3 +356,102 @@ async def shopping_message(to: str, listings: list[dict[str, Any]], summary: str
     if many is not None:
         return many
     return await one_offer_message(to, listings, summary)
+
+
+# Botones de respuesta (Kapso, misma forma que la API de Meta):
+# https://docs.kapso.ai/docs/whatsapp/send-messages/buttons.md
+# De 1 a 3, título de 20 caracteres, títulos e ids únicos dentro del mensaje.
+MAX_BUTTONS = 3
+_BUTTON_BODY = 1024
+
+
+def _button_id(title: str, used: set[str]) -> str:
+    plain = unicodedata.normalize("NFKD", title)
+    plain = "".join(char for char in plain if not unicodedata.combining(char))
+    base = re.sub(r"[^a-z0-9]+", "-", plain.lower()).strip("-")[:188] or "opcion"
+    candidate, number = base, 2
+    while candidate in used:
+        candidate = f"{base[: 188 - len(str(number)) - 1]}-{number}"
+        number += 1
+    used.add(candidate)
+    return candidate
+
+
+def button_message(to: str, body: str, titles: list[str]) -> dict[str, Any] | None:
+    """Hasta tres opciones, a un toque. Es lo que convierte un texto en una salida."""
+    body = " ".join(body.split())
+    chosen: list[str] = []
+    for title in titles:
+        clean = " ".join(str(title).split())
+        if clean and len(clean) <= MAX_BUTTON and clean not in chosen:
+            chosen.append(clean)
+    if not body or len(body) > _BUTTON_BODY or not chosen or len(chosen) > MAX_BUTTONS:
+        return None
+    used: set[str] = set()
+    return {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {"text": body},
+            "action": {
+                "buttons": [
+                    {"type": "reply", "reply": {"id": _button_id(title, used), "title": title}} for title in chosen
+                ]
+            },
+        },
+    }
+
+
+# Afinar después de ver los precios, cuando la persona ya sabe cuánto cambia cada opción.
+# Sin catálogo que diga qué aplica a qué: el filtro sale de lo que trajeron las ofertas.
+ONLY_NEW = "Solo nuevos"
+ONLY_USED = "Solo usados"
+_USED_WORDS = re.compile(r"\b(usad[oa]s?|seminuev[oa]s?|segunda mano|reacondicionad[oa]s?|refurbished)\b")
+_NEW_WORDS = re.compile(r"\b(nuev[oa]s?|sellad[oa]s?)\b")
+
+
+def _folded(text: Any) -> str:
+    plain = unicodedata.normalize("NFKD", str(text or ""))
+    return "".join(char for char in plain if not unicodedata.combining(char)).lower()
+
+
+def mixed_condition(listings: list[dict[str, Any]]) -> bool:
+    """Si entre las ofertas hay usadas y nuevas, separarlas es una pregunta que vale."""
+    titles = [_folded(item.get("title")) for item in choose_options(listings)]
+    used = any(_USED_WORDS.search(title) for title in titles)
+    new = any(_NEW_WORDS.search(title) for title in titles) or any(
+        not _USED_WORDS.search(title) for title in titles
+    )
+    return bool(titles) and used and new
+
+
+def says_condition(product: str) -> bool:
+    folded = _folded(product)
+    return bool(_USED_WORDS.search(folded) or _NEW_WORDS.search(folded))
+
+
+_CAPACITY = re.compile(r"\b\d+\s?(?:gb|tb)\b")
+
+
+def narrowed(product: str) -> tuple[str, str] | None:
+    """Qué soltar cuando no hubo precios: (etiqueta del botón, producto más amplio).
+
+    Solo quita palabras que la persona escribió, así que no hace falta saber de qué
+    producto se trata: lo que no está, no se ofrece.
+    """
+    folded = _folded(product)
+    if _CAPACITY.search(folded):
+        wider = re.sub(r"\b\d+\s?(?:gb|tb)\b", "", product, flags=re.IGNORECASE)
+        return "Sin la capacidad", " ".join(wider.split())
+    if says_condition(product):
+        wider = re.sub(
+            r"\b(nuev[oa]s?|sellad[oa]s?|usad[oa]s?|seminuev[oa]s?|reacondicionad[oa]s?|refurbished)\b",
+            "",
+            product,
+            flags=re.IGNORECASE,
+        )
+        return "Nuevos y usados", " ".join(wider.split())
+    return None
+
