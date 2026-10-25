@@ -9,3 +9,6 @@ export const empresa = {
   whatsapp: "https://wa.me/19146084742",
   actualizado: "24 de octubre de 2026", // fecha de la política de privacidad y los términos
 };
+
+// A dónde llevan los botones de WhatsApp de la web.
+export const whatsappPrais = empresa.whatsapp;
