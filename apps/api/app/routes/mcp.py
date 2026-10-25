@@ -9,6 +9,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import CallToolResult, Icon, TextContent, ToolAnnotations
 from pydantic import AliasChoices, BaseModel, Field
 
+from app.agents.listing import _https, _published_price, choose_options
 from app.lib.rate import get_rate
 from app.lib.search import search_all
 from app.lib.types import SearchQuery
@@ -22,7 +23,6 @@ OPEN_WEB_BUDGET_S = 25
 # de docs/design-system/assets, porque la imagen de la API solo lleva apps/api/app.
 UI_DIR = Path(__file__).resolve().parent.parent / "ui"
 OFERTAS_URI = "ui://usaprais/ofertas.html"
-SUMMARY_OFFERS = 10
 
 
 def _data_uri(name: str, mime: str) -> str:
@@ -47,7 +47,7 @@ INSTRUCTIONS = """usaprais finds where a product is cheapest in Venezuela, acros
 - Use search_prices for any question about the price of a product sold in Venezuela.
 - Before searching, make sure you know the product with its brand and model or size. If the request is vague ("un carro", "un teléfono"), ask one short question first.
 - Answer in the user's language (usually Spanish, with "tú").
-- Lead with the verdict: the cheapest price in USD and the shop that sells it. Then at most two alternatives.
+- Lead with the verdict: the cheapest real price in USD and the shop that sells it. Then the other real priced options, up to five in total. An offer with no published price does not count. Example offers stay labeled as examples and do not fill those five when a real priced offer exists. If fewer than five real priced offers come back, talk about those. Do not invent prices to complete the five.
 - Every price you mention goes with its shop and when it was seen. If it was converted from bolívares, also the rate used.
 - Never invent or estimate prices, shops, rates or trust scores: use only what search_prices returns. Offers with example: true are demo data; say so.
 - An offer without a price is "precio al DM". If the cheapest shop has low trust or no score, say so and suggest how to stay safe.
@@ -98,29 +98,64 @@ class PriceSearch(BaseModel):
     exchangeRate: ExchangeRate | None = Field(default=None, description="Rate used to show prices in bolívares")
 
 
+def _comparison(offers: list[Offer]) -> list[Offer]:
+    """Las mismas cinco que el carrusel: con precio, reales primero, sin relleno de ejemplo."""
+    rows = [
+        {
+            "price": offer.price,
+            "url": offer.url,
+            "example": offer.example,
+            "price_usd": offer.priceUsd,
+            "offer": offer,
+        }
+        for offer in offers
+    ]
+    return [row["offer"] for row in choose_options(rows)]
+
+
 def _summary(result: PriceSearch) -> str:
-    """Texto para el modelo y para los clientes sin widget: el veredicto y las ofertas, con fuente y fecha."""
-    priced = [o for o in result.offers if o.priceUsd is not None]
-    unpriced = len(result.offers) - len(priced)
+    """Texto para el modelo y para los clientes sin widget: hasta cinco precios, con fuente y fecha."""
+    shown = _comparison(result.offers)
+    unpriced = sum(1 for offer in result.offers if not _published_price({"price": offer.price}))
     if not result.offers:
         lines = [f'"{result.query}": no offers found. Suggest searching with the exact brand and model.']
-    elif priced:
-        cheapest, priciest = priced[0].priceUsd, priced[-1].priceUsd
-        lines = [f'"{result.query}": {len(priced)} offers with a price, from USD {cheapest:g} to USD {priciest:g}.']
+    elif shown:
+        amounts = [offer.priceUsd for offer in shown if isinstance(offer.priceUsd, (int, float))]
+        if amounts:
+            lines = [
+                f'"{result.query}": {len(shown)} priced options, from USD {min(amounts):g} to USD {max(amounts):g}.'
+            ]
+        else:
+            lines = [f'"{result.query}": {len(shown)} priced options.']
     else:
         lines = [f'"{result.query}": {len(result.offers)} offers, none publishes a price.']
-    for i, o in enumerate(priced[:SUMMARY_OFFERS], 1):
-        flags = [o.merchant.channel]
-        if o.merchant.zone and o.merchant.zone != "Venezuela":
-            flags.append(o.merchant.zone)
-        flags.append(f"trust {o.merchant.trust}" if o.merchant.trust is not None else "no trust score")
-        if o.example:
+    for index, offer in enumerate(shown, 1):
+        flags = [offer.merchant.channel]
+        if offer.merchant.zone and offer.merchant.zone != "Venezuela":
+            flags.append(offer.merchant.zone)
+        flags.append(f"trust {offer.merchant.trust}" if offer.merchant.trust is not None else "no trust score")
+        if offer.example:
             flags.append("EXAMPLE DATA")
-        price = f"USD {o.priceUsd:g}" + (f" (published {o.price}, rate {o.rate})" if o.rate else "")
-        lines.append(f"{i}. {price} · {o.merchant.name} ({', '.join(flags)}) · {o.title} · seen {o.seenAt} · {o.url}")
-    if len(priced) > SUMMARY_OFFERS:
-        lines.append(f"…and {len(priced) - SUMMARY_OFFERS} more with a price.")
-    if unpriced:
+        if isinstance(offer.priceUsd, (int, float)):
+            price = f"USD {offer.priceUsd:g}"
+            if offer.rate:
+                price += f" (published {offer.price}, rate {offer.rate})"
+        else:
+            price = str(offer.price)
+        lines.append(
+            f"{index}. {price} · {offer.merchant.name} ({', '.join(flags)}) · {offer.title} · "
+            f"seen {offer.seenAt} · {offer.url}"
+        )
+    real_priced = [
+        offer
+        for offer in result.offers
+        if not offer.example and _published_price({"price": offer.price}) and _https(offer.url)
+    ]
+    if len(real_priced) > len(shown):
+        lines.append(f"…and {len(real_priced) - len(shown)} more with a price.")
+    if unpriced == 1:
+        lines.append("1 offer without a published price (ask by DM).")
+    elif unpriced:
         lines.append(f"{unpriced} offers without a published price (ask by DM).")
     if result.failedSources:
         lines.append(f"Did not respond: {', '.join(result.failedSources)}.")

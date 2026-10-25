@@ -223,7 +223,7 @@ El mismo resultado escrito en el formato nativo de cada canal: WhatsApp (Flow o 
 
 El texto sale de `Prais.textoParaCanal(canal, datos)`, que puedes usar directo en tus bots:
 
-- **WhatsApp:** top 3 con negritas `*así*`, una línea de contexto por oferta y el enlace a la lista completa.
+- **WhatsApp:** hasta 5 precios con negritas `*así*`, una línea de contexto por oferta y el enlace a la lista completa.
 - **X:** una sola respuesta de máximo 280 caracteres: tienda, total, ahorro y enlace. El contador avisa si te pasas.
 - **Instagram:** un DM corto que acompaña al carrusel (`IGSlide`).
 - Sin emojis en las plantillas. Si un canal lo pide, máximo uno, y nunca en lugar de una palabra.

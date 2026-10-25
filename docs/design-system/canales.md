@@ -17,7 +17,7 @@ Al tocar una oferta se abre `FichaOferta`. Los anuncios de Marketplace, Mercado 
 
 ## WhatsApp
 
-- El texto sale de `Prais.textoParaCanal('whatsapp', datos)`: producto en negrita, top 3 con tienda en negrita, una línea de contexto por oferta y el enlace a la lista completa.
+- El texto sale de `Prais.textoParaCanal('whatsapp', datos)`: producto en negrita, hasta 5 precios con tienda en negrita, una línea de contexto por oferta y el enlace a la lista completa.
 - En un Flow, cada oferta es una opción de la lista: título = tienda, descripción = total y Bs., metadata = canal · condición · envío.
 - La foto de perfil de la cuenta es Prais `tranqui` en su círculo (`prais-tranqui-circulo.svg`).
 
