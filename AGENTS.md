@@ -50,7 +50,7 @@ pnpm install                             # también configura git: hooks y push 
 cp apps/api/.env.example apps/api/.env   # pon GOOGLE_GENAI_API_KEY
 pnpm dev                                 # api en :4000, web en :3000 (la primera vez crea apps/api/.venv: pide python3)
 git pull origin main                     # antes del PR: trae lo último de main a tu rama
-pnpm build && pnpm lint                  # y vuelve a probar: no hay checks antes del auto-merge
+pnpm build && pnpm lint && pnpm test     # y vuelve a probar: no hay checks antes del auto-merge
 pnpm sync                                # después del merge: copia main de Platanus a usaprais.com
 ```
 

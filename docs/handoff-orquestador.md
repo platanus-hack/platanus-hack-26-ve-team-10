@@ -252,7 +252,7 @@ Parte de lo que ya está en `main`: el orquestador `root_agent` con seis especia
 | 1.6 | **Acuse inmediato:** marcar leído con "escribiendo…" y mandar el acuse antes de correr el agente | `routes/whatsapp.py` | Por WhatsApp, el acuse llega en ~2 s | — |
 | 1.7 | **No responder dos veces:** si el agente ya respondió y solo falló el envío, el reintento no vuelve a correr el agente | `routes/whatsapp.py` | Arregla el pendiente de [kapso.md](../agents/kapso.md#pendiente) | — |
 | 1.8 | **Modelo por rol:** `PRAIS_MODEL_ORQUESTADOR` y `PRAIS_MODEL_ESPECIALISTA`, con `PRAIS_MODEL` de respaldo | `agents/*.py`, `.env.example` | Los especialistas usan flash-lite sin tocar código | 0.3 |
-| 1.9 | **Una línea de log por consulta:** latencia y ofertas por fuente, y créditos de Firecrawl | `lib/search.py` | Se ven en Cloud Logging y sirven para fijar los plazos | — |
+| 1.9 | **Una línea de log por consulta:** latencia y ofertas por fuente, y créditos de Firecrawl. **Hecha para Firecrawl** (#55): `prais.firecrawl` deja el resultado, el tiempo y los créditos de cada página. Faltan las fuentes del registro | `lib/search.py` | Se ven en Cloud Logging y sirven para fijar los plazos | — |
 
 **Hito:** le escribes al número, recibes el acuse al instante y después el mejor precio real de la web, con fuente, fecha y tasa.
 

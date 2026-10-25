@@ -21,7 +21,7 @@ Todo se sube en paralelo al repo de Platanus y a `Pleo2/usaprais.com`:
 1. Crea la rama desde `main` actualizado, con el nombre `<tipo>/<tema-corto>`. Por ejemplo, `feat/whatsapp-webhook`.
 2. Abre el PR a `main` del repo de la org. `.github/workflows/auto-merge.yml` lo mergea solo, con merge commit y sin squash, para que se conserven los commits y autores de cada uno.
 3. Si el PR no está listo, ábrelo como borrador: los borradores no se mergean.
-4. Antes de abrir el PR, trae lo último de `main` a tu rama (`git pull origin main`), corre `pnpm install` si cambió el lockfile y vuelve a correr `pnpm build && pnpm lint`. No hay checks antes del auto-merge: lo que entra es lo que probaste.
+4. Antes de abrir el PR, trae lo último de `main` a tu rama (`git pull origin main`), corre `pnpm install` si cambió el lockfile y vuelve a correr `pnpm build && pnpm lint && pnpm test`. No hay checks antes del auto-merge: lo que entra es lo que probaste.
 
 ## Deploy
 
@@ -31,6 +31,7 @@ Cómo funciona, en [gcp.md](gcp.md).
 
 - `apps/web`: TypeScript en modo `strict`, y `@/` apunta a `src/`.
 - `apps/api`: Python 3.12, con `ruff` (`pnpm lint`). Los imports internos son `app.*`.
+- Pruebas de `apps/api`: `unittest` de la librería estándar, en `apps/api/tests/` (`pnpm test`). Sin red ni créditos: las APIs externas se reemplazan por un cliente falso.
 - Toda entrada externa se valida: en `apps/api` con pydantic (bodies de las rutas y argumentos de tools); los webhooks, con la firma y el JSON esperado.
 - Los secretos van en `.env`, que nunca se sube, y se listan en `.env.example`. En GCP van en Secret Manager.
 - Fija versiones exactas en `apps/api/requirements.txt` (`google-adk`, `mcp`, los SDKs de las fuentes): cambian rápido.

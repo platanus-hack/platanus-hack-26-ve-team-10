@@ -6,6 +6,7 @@
     "venv": "python3 -m venv .venv && .venv/bin/pip install -q -r requirements.txt ruff==0.17.2",
     "dev": "[ -d .venv ] || pnpm run venv; .venv/bin/uvicorn app.main:app --reload --port 4000 --env-file .env",
     "build": "[ -d .venv ] || pnpm run venv; .venv/bin/python -m compileall -q app",
-    "lint": "[ -d .venv ] || pnpm run venv; .venv/bin/ruff check ."
+    "lint": "[ -d .venv ] || pnpm run venv; .venv/bin/ruff check .",
+    "test": "[ -d .venv ] || pnpm run venv; .venv/bin/python -m unittest discover -s tests"
   }
 }

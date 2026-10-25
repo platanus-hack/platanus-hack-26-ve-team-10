@@ -76,20 +76,22 @@ async def search_offers(query: SearchQuery) -> dict[str, Any]:
     offers.sort(key=lambda o: o["priceUsd"] if o["priceUsd"] is not None else float("inf"))
 
     response: dict[str, Any] = {"query": query.text, "failedSources": failed_sources, "offers": offers}
-    if any(source.id == "ejemplo" for source in active):
+    if any(offer["example"] for offer in offers):
         response["notice"] = "Incluye datos de ejemplo: no todas las fuentes reales están conectadas."
     return response
 
 
 # Para el MCP: las fuentes del registro y la web abierta (Firecrawl) a la vez, con la misma forma
 # que search_offers. La web abierta no entra en search_offers porque tarda más de 8 s: aquí tiene
-# su propio plazo. Las tiendas web no dicen su ciudad, así que no se filtran por zona.
+# su propio plazo. Sus ofertas no se filtran por zona: casi ninguna tienda web dice su ciudad, y la
+# de un anuncio (merchant.zone) se muestra pero no se compara. Si falla toda la web abierta,
+# failedSources dice firecrawl; si falla una tienda de la web abierta, firecrawl:<dominio>.
 async def search_all(query: SearchQuery, open_web_budget_s: float) -> dict[str, Any]:
     found, web = await asyncio.gather(search_offers(query), search_open_web(query.text, open_web_budget_s))
 
     offers = found["offers"] + web["offers"]
     offers.sort(key=lambda o: o["priceUsd"] if o["priceUsd"] is not None else float("inf"))
-    failed_sources = found["failedSources"] + (["firecrawl"] if web.get("failed") else [])
+    failed_sources = found["failedSources"] + (["firecrawl"] if web.get("failed") else web.get("failedSources", []))
     notices = [found.get("notice"), web.get("notice") if web["offers"] else None]
 
     response: dict[str, Any] = {"query": query.text, "failedSources": failed_sources, "offers": offers}

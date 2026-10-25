@@ -7,6 +7,7 @@
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
     "setup:git": "bash scripts/git-setup.sh",
     "sync": "git fetch -q origin main && git push prais origin/main:refs/heads/main"
   }

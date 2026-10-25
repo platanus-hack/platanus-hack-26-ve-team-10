@@ -40,7 +40,11 @@ class Offer(BaseModel):
 class PriceSearch(BaseModel):
     query: str
     offers: list[Offer] = Field(description="Cheapest first; offers without a price go last")
-    failedSources: list[str] = Field(default=[], description="Sources that failed or ran out of time")
+    failedSources: list[str] = Field(
+        default=[],
+        description="Sources that failed or ran out of time. firecrawl:<domain> is an open-web shop whose pages "
+        "were blocked, failed or timed out and gave no offers (listed once; dead links are not listed)",
+    )
     notice: str | None = Field(default=None, description="Caveats to show the user")
 
 
@@ -51,8 +55,9 @@ class PriceSearch(BaseModel):
     description=(
         "Find where a product is cheapest in Venezuela across online shops and the main sales channels. "
         "Returns offers sorted by USD price, each with the price as published, the exchange rate used, when "
-        "it was seen, its source and the merchant's 0-100 trust score. Web shops do not report their city, "
-        "so the zone filter does not apply to them. Takes up to ~30 seconds. Never invent prices: use only "
+        "it was seen, its source and the merchant's 0-100 trust score. The zone filter does not apply to "
+        "open-web offers (source firecrawl): their merchant.zone is the listing's city when the page shows "
+        "one, otherwise 'Venezuela'. Takes up to ~30 seconds. Never invent prices: use only "
         "what this tool returns, and say so when an offer is example data."
     ),
     annotations=ToolAnnotations(read_only_hint=True, open_world_hint=True),
