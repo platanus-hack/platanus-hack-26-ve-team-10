@@ -320,9 +320,12 @@ class ParsingTest(unittest.TestCase):
 
 class SearchNoticeTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        patcher = mock.patch.object(mock_source, "enabled", True)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        for patcher in (
+            mock.patch.object(mock_source, "enabled", True),
+            mock.patch.object(search, "get_rate", mock.AsyncMock(return_value=RATE)),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     async def test_example_notice_only_with_example_offers(self):
         with_examples = await search.search_offers(SearchQuery(text="Harina PAN 1 kg"))
