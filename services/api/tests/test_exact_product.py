@@ -116,6 +116,31 @@ class AgentReceivesTheMessageTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(answer.text, "Busco iphone 18.")
         self.assertEqual(searched, ["iphone 18"])
 
+    async def test_a_failed_summary_still_returns_the_listings(self):
+        class _Response:
+            def __init__(self):
+                self.function_call = None
+                self.function_response = SimpleNamespace(
+                    response={"listings": [{"url": "https://tienda.example/p", "title": "iPhone 17"}]}
+                )
+                self.text = None
+
+        class _ToolEvent:
+            def __init__(self):
+                self.content = SimpleNamespace(parts=[_Response()])
+
+            def is_final_response(self) -> bool:
+                return False
+
+        async def run_async(**_kwargs):
+            yield _ToolEvent()
+            raise RuntimeError("429")
+
+        with mock.patch("app.agent.runner.run_async", run_async), self._no_network():
+            answer = await ask_prais("quota", "iphone 17")
+        self.assertIn("Encontré opciones", answer.text)
+        self.assertEqual(answer.listings[0]["url"], "https://tienda.example/p")
+
 
 class ProductMemoryTests(unittest.TestCase):
     def test_the_latest_model_keeps_the_phone_already_named(self):
