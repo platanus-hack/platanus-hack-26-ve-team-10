@@ -31,7 +31,7 @@ Para agregar una tool, decora una función `async` con `@mcp_server.tool(...)` e
 - **Qué hace:** abre cada oferta con `ui/open-link`. No llama tools por su cuenta.
 - **Protocolo:** JSON-RPC sobre `postMessage`, sin dependencias: `ui/initialize`, `ui/notifications/initialized` y después recibe `ui/notifications/tool-input` y `tool-result`. Avisa su alto con `ui/notifications/size-changed`. La especificación está en [ext-apps](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx).
 - **Seguridad:** el texto de las ofertas viene de páginas de terceros, así que el widget lo pinta con `textContent`, nunca como HTML, y solo acepta links `http(s)`.
-- **CSP:** solo declara Google Fonts. Las fotos de las tiendas vienen de dominios que no se conocen de antemano: si el host no las deja cargar, el widget muestra la inicial de la tienda.
+- **CSP:** solo declara Google Fonts. Las fotos de las tiendas vienen de dominios que no se conocen de antemano: si el host no las deja cargar, o la oferta no trae foto, el widget muestra la configuración real del producto leída del título, en Outfit: capacidad (`128 GB`), color con su muestra y eSIM o Dual SIM en los teléfonos, y BTU, kg, g, L, ml o pulgadas en el resto. Si el título no dice ninguna de esas cosas, muestra la inicial de la tienda.
 
 ## Conectarlo
 
