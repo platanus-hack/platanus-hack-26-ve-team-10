@@ -2,6 +2,18 @@
 
 Cada fuente del registro es un archivo en `apps/api/app/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). En el registro solo está la de ejemplo (`mock.py`), que se apaga con `USE_MOCK_SOURCE=false`. Además de sus ofertas fijas, responde por cada modelo del catálogo (`catalogo.json`) con comercios marcados "(ejemplo)" y precios generados desde `precioEjemplo`. Apagarla deja el catálogo con solo ofertas reales: ver [seo-geo.md](seo-geo.md#catálogo-el-interruptor-de-indexación). Firecrawl no está en ese registro: `search_offers` cancela a los 8 s, y la web abierta se llama directo desde la tool y desde el MCP.
 
+## Cadenas con tienda propia
+
+La lista curada está en `apps/api/app/lib/cadenas.py`. Son comercios que venden ellos mismos, tienen sucursales y su web es el canal oficial. Es una señal de respaldo comercial del comercio, no del precio y no de que la oferta sea el producto buscado. `trust_score` todavía no suma puntos por ella: quien calcule la confianza compara el dominio con `chain_for_host`.
+
+La comparación es por dominio exacto. Se ignora un `www` al principio. No se compara por nombre: `tiendas-daka.com` no hereda la confianza de `tiendasdaka.com`. Otro subdominio tampoco. `ve.epaenlinea.com` es EPA Venezuela; `epaenlinea.com` solo elige país, y Costa Rica, Guatemala y El Salvador no entran.
+
+Cada fila trae categoría (`farmacia`, `supermercado`, `tecnologia`, `hogar`), `tienda_propia: true`, si vimos tienda en línea y si un cliente HTTP simple recibe un bloqueo. La revisión del archivo es del 2026-10-24. Hay que volver a mirarla antes de la demo: la lista envejece.
+
+Cuatro tiendas en línea que respondieron con catálogo quedan marcadas `price_source`, para conectarlas después: Gama (`gamaenlinea.com`), IVOO (`ivoo.com`), Daka (`tiendasdaka.com`) y EPA Venezuela (`ve.epaenlinea.com`). No hay adapter en `lib/sources/`: esta lista no abre una fuente nueva. Cuando se conecten, el adapter lee estos dominios y no los copia a otro archivo.
+
+Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegador solo reciben un 403 genérico de Apache, sin la farmacia. Estos hosts respondieron, pero no son la tienda de la fila: `xiaomivenezuela.com` (un lander; Xiaomi Latin está en `xio-online.com`), `multimax.net` (Panamá; Venezuela es `multimax.com.ve`), `beco.com.ve` (no completó HTTP; Beco está en `becoenlinea.com`), `makro.com.ve` (no completó HTTP; Makro está en `makrove.com`), `mitiendadamasco.com` (respondió vacío) y `corporaciondamasco.com` (no resuelve). Damasco está en `www.damascovzla.com`.
+
 ## Qué hay que saber de cada una
 
 | Fuente | Cómo se consulta | Ojo |
