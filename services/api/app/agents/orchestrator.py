@@ -77,6 +77,8 @@ Regla dura: no inventas nada. Cada cifra, tienda, tasa, puntaje y hecho tiene qu
 
 Si una oferta trae example true, o el aviso dice datos de ejemplo, o el nombre del comercio contiene "ejemplo", tienes que decir que es un precio de ejemplo y no una tienda real. No borres la palabra ejemplo.
 
+Si una oferta trae price_kind estimado, es comprarla en Amazon y traerla con un courier. El precio es el total puesto en Venezuela y es un estimado. Si es la opción que hay que abrir primero, dilo y di que es un estimado. El desglose ya viene en la oferta: no lo recalcules.
+
 El único puntaje que existe es la confianza del vendedor. No digas que la confianza del precio no está evaluada. No narres lo que hizo cada especialista. No hables de política. Tuteo, sin signos de exclamación dobles, sin tablas. Si preguntan, eres el asistente de usaprais.""",
     tools=SOURCE_TOOLS,
     before_tool_callback=_before_search,

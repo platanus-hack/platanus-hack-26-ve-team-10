@@ -1,4 +1,4 @@
-"""Motor del puntaje de confianza. Igual para los siete canales.
+"""Motor del puntaje de confianza. Igual para todos los canales, importación incluida.
 
 El puntaje es el promedio de las señales que sí tienen un número, pesado por su
 `weight`. Un `null` no resta: solo baja la cobertura. Un `0` sí resta. Una
@@ -41,6 +41,7 @@ from app.lib.prices import format_money
 from app.lib.types import Money as PriceMoney
 
 PRICE_RED_FLAG = "Precio más de 50% bajo el mercado"
+ASIN_RED_FLAG = "Precio más de 50% bajo la mediana del mismo ASIN"
 PHOTO_RED_FLAG = "Varias fotos copiadas de otros vendedores"
 JOIN_MIN = 0.70
 META_CHANNELS = frozenset({"instagram", "facebook", "tiktok"})
@@ -51,6 +52,7 @@ CHANNEL_OF = {
     "ml-v1": "mercadolibre",
     "web-v1": "web",
     "amazon-v1": "amazon",
+    "import-v1": "importacion",
 }
 _METHOD_RANK = {"rif": 6, "dominio": 5, "declarado": 4, "telefono": 3, "handle": 2, "manual": 1}
 _SOCIAL = frozenset({"instagram", "tiktok", "facebook"})
@@ -309,6 +311,58 @@ def finalize(
         extra_bonus=extra_bonus,
         now=now or score.computed_at,
     )
+
+
+def score_import(
+    *,
+    amazon_score: float | None,
+    weight_source: Literal["listing", "tabla"],
+    tax_source: Literal["cotizado", "tabla"],
+    eta_days_min: int | None = None,
+    eta_days_max: int | None = None,
+    now: datetime | None = None,
+) -> TrustScore:
+    """import-v1 en parcial. El agregador llena price_anomaly contra la mediana del ASIN.
+
+    `courier_trust` queda null: courier-v1 no está confirmado, y null no es cero.
+    """
+    values: dict[str, Measured] = {
+        "weight_source": Measured(
+            1.0 if weight_source == "listing" else 0.4,
+            "Peso del listing de Amazon" if weight_source == "listing" else "Peso de la tabla por categoría",
+            weight_source == "listing",
+        ),
+        "tax_source": Measured(
+            1.0 if tax_source == "cotizado" else 0.5,
+            "Impuesto que cotizó el courier" if tax_source == "cotizado" else "Impuesto de la tabla",
+            tax_source == "cotizado",
+        ),
+    }
+    if amazon_score is not None:
+        shown = round_half_up(amazon_score)
+        values["amazon_seller"] = Measured(
+            amazon_score / 100,
+            f"Vendedor de Amazon {shown}/100",
+            amazon_score >= 75,
+        )
+    spread = _eta_spread(eta_days_min, eta_days_max)
+    if spread is not None:
+        values["eta_spread"] = Measured(
+            spread,
+            f"Entrega en {eta_days_min}-{eta_days_max} días",
+            spread >= 0.7,
+        )
+    return compute_trust("import-v1", build_signals("import-v1", values), stage="parcial", now=now)
+
+
+def _eta_spread(low: int | None, high: int | None) -> float | None:
+    """Rango declarado y corto vale 1. Sin días, no hay dato."""
+    if low is None or high is None or high < low:
+        return None
+    span = high - low
+    if span <= 7:
+        return 1.0
+    return clamp(1 - (span - 7) / 14)
 
 
 def amazon_sold_and_shipped(now: datetime | None = None) -> TrustScore:
@@ -787,7 +841,15 @@ def _pending_fills(
         if signal.value != "pending":
             continue
         if signal.key == "price_anomaly":
-            if deviation is None:
+            # La importación no se compara con Venezuela: un total más barato
+            # que las tiendas locales es el hallazgo, no un fraude. La señal
+            # mira el precio de Amazon contra la mediana del mismo ASIN.
+            if offer.trust.formula == "import-v1":
+                fill, flag = _asin_price_fill(offer)
+                fills[signal.key] = fill
+                if flag:
+                    flags.append(flag)
+            elif deviation is None:
                 fills[signal.key] = None
             else:
                 value, reason, good = anomaly_from_deviation(deviation)
@@ -833,7 +895,20 @@ def _channel(offer: Offer, merchants: dict[str, Merchant]) -> str | None:
     return CHANNEL_OF.get(offer.trust.formula)
 
 
+def _asin_price_fill(offer: Offer) -> tuple[Fill | None, str | None]:
+    landed = offer.landed
+    if landed is None or landed.asin_median_usd is None or landed.asin_median_usd <= 0:
+        return None, None
+    deviation = (landed.product_usd - landed.asin_median_usd) / landed.asin_median_usd
+    value, reason, good = anomaly_from_deviation(deviation)
+    reason = reason.replace("el mercado", "la mediana de su ASIN")
+    flag = ASIN_RED_FLAG if deviation <= -0.5 else None
+    return Fill(value, reason, good), flag
+
+
 def _priced(offer: Offer) -> bool:
+    # "estimado" es el total puesto en Venezuela. No entra en la mediana local:
+    # si entrara, una importación barata bajaría el mercado contra el que se mide.
     return offer.price_usd is not None and offer.price_kind == "publicado"
 
 
