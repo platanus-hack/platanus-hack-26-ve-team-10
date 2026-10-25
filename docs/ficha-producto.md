@@ -12,7 +12,7 @@ Este doc es la referencia viva de la ficha: si cambia una decisión, se cambia a
 /ve/p/bera-br-200-m7q1/
 ```
 
-- **Prefijo de país `/ve/`.** Venezuela es el primer mercado; otro país entra como `/co/`, `/mx/`, sin mover nada. Reemplaza el `/p/[slug]` de [agents/seo-geo.md](../agents/seo-geo.md).
+- **Prefijo de país `/ve/`.** Venezuela es el primer mercado; otro país entra como `/co/`, `/mx/`, sin mover nada. Reemplaza el `/p/[slug]` de [docs/seo-geo.md](../docs/seo-geo.md).
 - **El slug es el modelo tal como lo busca la gente:** "iphone-17", no "apple-iphone-17"; "redmi-15c", no "xiaomi-redmi-15c". La marca va delante solo si el modelo solo es ambiguo (`bera-br-200`).
 - **El slug termina en un id corto (`-k8f2`).** Los nombres que trae una fuente cambian; el id no. Si el slug cambia, la URL vieja redirige 301 a la nueva usando el id.
 - **Sin "precio" en la URL.** Solo ~2,4% de las búsquedas lo escriben; va en el title.
@@ -71,7 +71,7 @@ El precio "desde" es siempre el del producto **nuevo**. Si el modelo solo tiene 
 
 ## Qué datos necesita (cambios de contrato)
 
-Lo de abajo no existe todavía en `apps/api/app/lib/types.py`. Cambiar un contrato se avisa al equipo antes de mergear ([agents/contracts.md](../agents/contracts.md)).
+Lo de abajo no existe todavía en `apps/api/app/lib/types.py`. Cambiar un contrato se avisa al equipo antes de mergear ([docs/contracts.md](../docs/contracts.md)).
 
 | Dato | Dónde | Para qué |
 |---|---|---|
@@ -83,5 +83,5 @@ Lo de abajo no existe todavía en `apps/api/app/lib/types.py`. Cambiar un contra
 
 ## Decisiones abiertas
 
-- **Tasa:** BCV, paralela o ambas está abierto en [agents/architecture.md](../agents/architecture.md). Este doc asume BCV para el precio en Bs, porque es lo que más se busca ("dolar bcv", 4,09 millones de búsquedas al mes).
+- **Tasa:** BCV, paralela o ambas está abierto en [docs/architecture.md](../docs/architecture.md). Este doc asume BCV para el precio en Bs, porque es lo que más se busca ("dolar bcv", 4,09 millones de búsquedas al mes).
 - **Perfil de comercio:** pospuesto. Si se hace, iría en `/ve/comercios/[slug]` y la confianza pasaría a enlazar ahí.

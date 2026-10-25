@@ -2,7 +2,7 @@
 
 Material de referencia con dos usos:
 
-1. **Probar el agente** (frente 6 de [docs/plan.md](../docs/plan.md)): qué dice una persona y qué esperamos que haga Prais.
+1. **Probar el agente**: qué dice una persona y qué esperamos que haga Prais.
 2. **Medir el juez** de coincidencias (el paso que decide si un resultado de la búsqueda es de verdad el producto pedido, de un comercio de Venezuela): 10 productos con sus criterios y trampas, para etiquetar resultados nuevos y calcular cuánto acierta.
 
 Los productos salen de lo que más se busca en Venezuela ([keywords-ve.md](keywords-ve.md)): la gente busca modelos concretos, no categorías.
@@ -72,7 +72,7 @@ Con menos de 20 candidatos por producto, un solo error mueve el porcentaje mucho
 
 ## 3. Conversaciones para el agente
 
-Qué escribe la persona y qué esperamos. Las reglas salen de [agents/adk.md](../agents/adk.md): una pregunta a la vez, nunca inventar un precio, toda cifra con su fuente, fecha y tasa.
+Qué escribe la persona y qué esperamos. Las reglas son las de `apps/api/app/agents/orchestrator.py`: una pregunta a la vez, nunca inventar un precio, toda cifra con su fuente, fecha y tasa.
 
 | # | La persona escribe | Esperamos |
 |---|---|---|
@@ -115,6 +115,6 @@ Ningún falso descarte y ninguna inyección lograda. Los fallos fueron casos gri
 1. **La web de una marca** (por ejemplo `ve.allofpan.com`: catálogo sin precios ni venta). Hoy se etiqueta `descartar`; el juez la clasificó como `listado_ve`.
 2. **Una categoría que muestra otro producto como primero** (por ejemplo "Harinas" con Blancaflor arriba). Se etiquetó `descartar`; `gemini-3.5-flash` la dejó como `listado_ve`.
 3. **Un bulto o pack** (20 × 1 kg, "pack de 4"): ¿cuenta como el producto o se descarta? Hoy se descarta. Cambiarlo exige tener precio por unidad.
-4. **Los listados.** Mercado Libre Venezuela y Cashea solo ofrecen páginas de listado en las búsquedas. **Decidido** en [0001-firecrawl-listados.md](../docs/decisions/0001-firecrawl-listados.md): si el formato `product` no trae precio, Firecrawl extrae una lista de ofertas en JSON, y cada oferta tiene que tener su precio escrito en la página y nombrar el producto pedido. Mercado Libre sigue fuera de la web abierta: le toca a su especialista.
+4. **Los listados.** Mercado Libre Venezuela y Cashea solo ofrecen páginas de listado en las búsquedas. Si el formato `product` no trae precio, `app/lib/sources/firecrawl.py` extrae una lista de ofertas en JSON, y cada oferta tiene que tener su precio escrito en la página y nombrar el producto pedido. Mercado Libre sigue fuera de la web abierta: le toca a su especialista.
 
-Cada decisión se registra aquí y, si cambia el comportamiento del producto, en `docs/decisions/`.
+Cada decisión de esta lista se registra aquí.

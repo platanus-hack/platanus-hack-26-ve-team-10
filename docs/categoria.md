@@ -48,7 +48,7 @@ H1:          Teléfonos · Teléfonos Xiaomi · Zapatos deportivos de dama
 
 ## Bloques, en orden
 
-1. **Resumen con datos (solo en la página 1).** Un párrafo generado: "Hay 124 teléfonos en 18 comercios de Venezuela, desde $89 (Bs 3.565). El más buscado es el iPhone 17; el más barato, el Redmi A5. Precios vistos el 24 de octubre". Responde primero, como pide [agents/seo-geo.md](../agents/seo-geo.md).
+1. **Resumen con datos (solo en la página 1).** Un párrafo generado: "Hay 124 teléfonos en 18 comercios de Venezuela, desde $89 (Bs 3.565). El más buscado es el iPhone 17; el más barato, el Redmi A5. Precios vistos el 24 de octubre". Responde primero, como pide [docs/seo-geo.md](../docs/seo-geo.md).
 2. **Filtros.** Marca, rango de precio, condición, ciudad y método de pago. Las marcas y facetas que tienen página abierta son **enlaces normales** a su URL; el resto son parámetros.
 3. **Listado.** Ordenado por **popularidad**: primero los modelos más buscados (volumen del CSV) y con más ofertas. Cuando haya datos de clics propios, entran en el cálculo. Cada tarjeta lleva:
    - Foto y nombre del modelo.

@@ -7,7 +7,7 @@
 
 ## Ramas y PRs
 
-`main` está bloqueado: nadie hace push directo, todo entra por PR. GitHub no nos deja proteger la rama (no somos admins del repo), así que lo frenan dos hooks: el de Claude Code (`.claude/hooks/guard-main.mjs`) y el de git (`.githooks/pre-push`).
+`main` está bloqueado: nadie hace push directo, todo entra por PR. GitHub no nos deja proteger la rama (no somos admins del repo), así que lo frena el hook de git (`.githooks/pre-push`): un push a `main` de Platanus se rechaza, y hacia `Pleo2/usaprais.com` se permite (`pnpm sync`).
 
 ### Sincronización con usaprais.com
 
@@ -39,10 +39,10 @@ Cómo funciona, en [gcp.md](gcp.md).
 
 ## Docs
 
-- `agents/`: cómo se construye cada parte. Lo leen las personas y los agentes de código. Cortos, y solo sobre lo que existe.
-- `docs/`: producto y decisiones. Cada decisión con matices va en `docs/decisions/NNNN-titulo.md`.
+- `docs/`: toda la documentación. El mapa para saber cuál leer está en `AGENTS.md`.
 - `resources/`: material de referencia, no instrucciones.
-- Si un cambio contradice un doc de `agents/`, actualiza el doc en el mismo PR.
+- Si un cambio contradice un doc, actualiza ese doc en el mismo commit. El hook `.githooks/pre-commit` frena un commit de código que no toca `docs/` ni `AGENTS.md`, salvo que vaya precedido de `DOCS_REVIEWED=1`. Cursor aplica la misma regla antes de ejecutar `git commit` (`.cursor/hooks.json`).
+- En Cursor, cada turno que cambia archivos termina en su propio commit. El hook `stop` lo pide si el turno se cierra con cambios sin guardar en git.
 
 ## Archivos de la entrega
 

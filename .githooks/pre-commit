@@ -1,0 +1,4 @@
+#!/bin/sh
+# Cualquier commit (Cursor, Claude u otro) pasa por aquí si `pnpm install` activó los hooks.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+exec node scripts/check-docs.mjs --pre-commit

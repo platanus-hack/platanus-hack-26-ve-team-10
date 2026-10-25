@@ -1,13 +1,21 @@
 # Docs
 
-Producto y decisiones: el porqué de Prais. Para saber cómo se construye cada parte, ve a [agents/](../agents/).
+Toda la documentación del repo está aquí. `AGENTS.md`, en la raíz, dice cuál de estos archivos leer según el área que vas a tocar.
+
+## Cómo está armado
 
 | Ruta | Qué hay |
 |---|---|
-| `categoria.md` | La página de categoría: taxonomía, URLs, cuándo se indexa, bloques y orden |
-| `marca.md` | La página de marca y el índice de marcas: cuándo se activa o redirige, bloques y datos |
-| `ficha-producto.md` | La página de producto: URL, bloques, schema, ciclo de vida y datos que necesita |
-| `contrato-confianza.md` | El contrato del puntaje de confianza: qué entrega cada especialista y qué calcula el orquestador |
-| `spec-importacion.md` | Traerlo de USA: comprar en Amazon y traerlo con un courier como una oferta más del ranking |
-| `decisions/` | Una decisión por archivo: `NNNN-titulo.md`, con contexto, opciones consideradas y la decisión |
-| `design-system/` | Sistema de diseño de usaprais: tokens, componentes, personaje Prais, canales y capturas |
+| [architecture.md](architecture.md) | Las dos apps, las rutas y qué está hecho |
+| [contracts.md](contracts.md) | Formas de las rutas, de una oferta y de una fuente |
+| [conventions.md](conventions.md) | Idioma, ramas, PRs, el push a los dos repos y estilo de código |
+| [gcp.md](gcp.md) | Proyecto de GCP, secretos, Cloud Build y Cloud Run |
+| [sources.md](sources.md) | Fuentes que faltan por conectar, y los datos que pide el puntaje |
+| [kapso.md](kapso.md) | Cómo se configura el webhook en Kapso, y lo que el código todavía no cubre |
+| [mcp-tool.md](mcp-tool.md) | Cómo se conecta cada cliente al servidor MCP |
+| [seo-geo.md](seo-geo.md) | Páginas públicas `/ve/...`: cuándo se indexan |
+| [tools.md](tools.md) | Skills, MCP y `llms.txt` de las librerías externas |
+| [ficha-producto.md](ficha-producto.md) | La página de producto |
+| [categoria.md](categoria.md) | La página de categoría |
+| [marca.md](marca.md) | La página de marca |
+| [design-system/](design-system/) | Tokens, componentes y el personaje, para la web |

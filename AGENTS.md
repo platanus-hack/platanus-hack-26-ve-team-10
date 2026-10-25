@@ -8,28 +8,31 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 |---|---|
 | `apps/api/` | Backend en Python (FastAPI): el agente ADK, el webhook de Kapso y el servidor MCP |
 | `apps/api/app/lib/` | Tipos y contratos, búsqueda, precios, confianza y tasa. Es la única fuente de esa lógica |
-| `apps/api/app/lib/sources/` | Una fuente por archivo (hoy, la de ejemplo), registradas en `__init__.py` |
-| `infra/`, `cloudbuild.*.yaml` | Scripts de `gcloud` y pipelines de Cloud Build: ver [agents/gcp.md](agents/gcp.md) |
+| `apps/api/app/lib/sources/` | Fuentes del registro. Hoy solo la de ejemplo (`mock.py`). Firecrawl no está ahí: vive en `firecrawl.py` y se llama directo |
+| `apps/api/app/agents/` | Código del orquestador y de sus tools. No es documentación |
+| `infra/`, `cloudbuild.*.yaml` | Scripts de `gcloud` y pipelines de Cloud Build |
 | `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
-| `agents/` | Cómo se construye cada parte, un doc por área |
-| `docs/design-system/` | Design system de usaprais: tokens y componentes para la web. Léelo antes de tocar la interfaz |
-| `docs/`, `resources/`, `design/brand/` | Decisiones, material de referencia y marca (`lib.pen`) |
+| `docs/` | Toda la documentación. El índice está en [docs/README.md](docs/README.md) |
+| `resources/` | Material de referencia. No son instrucciones |
 
 ## Qué doc leer
 
+La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
+
 | Si vas a tocar | Lee |
 |---|---|
-| Cualquier cosa, la primera vez | [agents/architecture.md](agents/architecture.md), [agents/contracts.md](agents/contracts.md) y [agents/conventions.md](agents/conventions.md) |
-| Qué hace cada uno del equipo | [docs/plan.md](docs/plan.md) |
-| Usar una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [agents/tools.md](agents/tools.md): su skill, su MCP o su `llms.txt` |
-| El agente o sus tools | [agents/adk.md](agents/adk.md) |
-| Conectar una fuente real | [agents/sources.md](agents/sources.md) |
-| El puntaje de confianza | [docs/contrato-confianza.md](docs/contrato-confianza.md) y los borradores de `resources/*_trust_score.py` |
-| Traer un producto de USA | [docs/spec-importacion.md](docs/spec-importacion.md) |
-| WhatsApp | [agents/kapso.md](agents/kapso.md) |
-| MCP | [agents/mcp-tool.md](agents/mcp-tool.md) |
-| Páginas públicas | [agents/seo-geo.md](agents/seo-geo.md) |
-| Deploy | [agents/gcp.md](agents/gcp.md) |
+| Cualquier cosa, la primera vez | [docs/architecture.md](docs/architecture.md), [docs/contracts.md](docs/contracts.md) y [docs/conventions.md](docs/conventions.md) |
+| Ramas, PRs, el push a los dos repos, idioma y estilo de código | [docs/conventions.md](docs/conventions.md) |
+| CI: el auto-merge y qué hay que probar antes del PR | [docs/conventions.md](docs/conventions.md) y `.github/workflows/auto-merge.yml` |
+| Infra y deploy (GCP, Cloud Build, Cloud Run, secretos) | [docs/gcp.md](docs/gcp.md) y [infra/README.md](infra/README.md) |
+| Una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [docs/tools.md](docs/tools.md): su skill, su MCP o su `llms.txt` |
+| El agente o sus tools | `apps/api/app/agents/orchestrator.py` y `apps/api/app/agent.py` |
+| Conectar una fuente real | [docs/sources.md](docs/sources.md) |
+| El puntaje de confianza | `apps/api/app/lib/prices.py` y los borradores de `resources/*_trust_score.py` |
+| WhatsApp | [docs/kapso.md](docs/kapso.md) |
+| MCP | [docs/mcp-tool.md](docs/mcp-tool.md) |
+| Páginas públicas | [docs/seo-geo.md](docs/seo-geo.md), y el detalle en [docs/ficha-producto.md](docs/ficha-producto.md), [docs/categoria.md](docs/categoria.md) y [docs/marca.md](docs/marca.md) |
+| La interfaz | [docs/design-system/](docs/design-system/) antes de tocar componentes, tokens o al personaje |
 
 ## Reglas
 
@@ -37,11 +40,13 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 2. Todo se sube en paralelo a Platanus y a `Pleo2/usaprais.com`. `pnpm install` lo configura y los hooks lo exigen. Después de cada merge, `pnpm sync`.
 3. **No te repitas.** La lógica de precios vive solo en `apps/api/app/lib`. La web no calcula nada: le pregunta al backend.
 4. **Sin boilerplate.** Antes de agregar un archivo, una capa o un paquete, piensa si la demo lo necesita hoy. Si no, no va.
-5. **No adivines APIs externas.** Antes de escribir contra una, consulta su skill, su MCP o su `llms.txt` ([agents/tools.md](agents/tools.md)).
-6. El agente nunca inventa un precio: cada precio sale de `search_offers`.
+5. **No adivines APIs externas.** Antes de escribir contra una, consulta su skill, su MCP o su `llms.txt` ([docs/tools.md](docs/tools.md)).
+6. El agente nunca inventa un precio. Cada precio sale de `search_offers` o de `search_open_web`.
 7. Todo precio que se muestra lleva su fuente y su fecha. Si se convirtió de moneda, también lleva la tasa usada.
 8. Los secretos van en variables de entorno, listadas en el `.env.example` de cada app.
 9. No toques `README.md`, `platanus-hack-project.jsonc`, `project-description.md` ni `project-logo.png` sin que te lo pidan, porque son la entrega de la hackathon.
+10. **Docs en el mismo commit.** Si el cambio toca código o configuración (`app/` o `src/` de una app, `requirements.txt`, `package.json`, `next.config.ts`, `Dockerfile`, `.env.example`, `pnpm-workspace.yaml`, `infra/`, `cloudbuild.*.yaml` o `.github/`), el commit también tiene que tocar `AGENTS.md` o `docs/`. Antes, revisa si cambió la arquitectura, una ruta, una variable de entorno, una dependencia o el deploy, y actualiza el doc de la tabla de arriba. Si no hace falta, repite el commit con `DOCS_REVIEWED=1` delante. Lo exigen `.githooks/pre-commit` (cualquier `git commit`, después de `pnpm install`) y `.cursor/hooks.json` (Cursor, antes de ejecutar el commit).
+11. **Un commit por turno.** En Cursor, si un turno deja archivos cambiados, el hook `stop` de `.cursor/hooks.json` pide un commit antes de seguir. Un turno, un commit. No juntes el trabajo de varios turnos en uno solo.
 
 ## Comandos
 
@@ -57,7 +62,7 @@ pnpm sync                                # después del merge: copia main de Pla
 ## Antes de entregar
 
 - [ ] Reescribir `project-description.md` con lo que Prais hace de verdad: hoy es provisional. Alinear también `project-description-spanish` en el `jsonc`.
-- [ ] Deploy en GCP armado (dev a cargo de GCP, ver [agents/gcp.md](agents/gcp.md)) y usaprais.com respondiendo, porque es la `deploy-url` que valida Platanus.
+- [ ] Deploy en GCP armado (dev a cargo de GCP, ver [docs/gcp.md](docs/gcp.md)) y usaprais.com respondiendo, porque es la `deploy-url` que valida Platanus.
 - [ ] `README.md` conciso, como pide Platanus.
 
 <!-- BEGIN:nextjs-agent-rules -->

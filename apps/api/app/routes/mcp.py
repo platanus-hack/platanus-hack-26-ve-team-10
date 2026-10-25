@@ -54,7 +54,7 @@ INSTRUCTIONS = """usaprais finds where a product is cheapest in Venezuela, acros
 
 
 # Salida estructurada: el cliente recibe este schema como outputSchema y el widget la pinta. Los
-# nombres van en camelCase, igual que la respuesta de search_offers (agents/contracts.md).
+# nombres van en camelCase, igual que la respuesta de search_offers (docs/contracts.md).
 class Merchant(BaseModel):
     name: str
     channel: str = Field(description="web, mercadolibre, instagram, tiktok or facebook")
