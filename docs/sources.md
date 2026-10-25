@@ -308,7 +308,7 @@ aparecieron un iPhone 15 a 45 dólares y otro a 5.000: al primero lo caza la ban
 
 ## Puntaje de confianza por fuente
 
-La web abierta no corre el puntaje estricto en cada búsqueda. El agente sigue [open_web_trust_skill.md](../services/api/app/agents/open_web_trust_skill.md): cada listado trae `trust_review` con las banderas que ya se ven (precio contra las otras ofertas, dominio que imita una marca, funda o copia). Antigüedad, RIF, políticas y Safe Browsing siguen en `resources/website_trust_score.py` y no se inventan.
+La web abierta mide `web-v1` con lo que se consigue sin leer otra página (antigüedad del dominio, correo, HTTPS, cadena revisada y lenguaje de riesgo). RIF, políticas y Safe Browsing siguen en `resources/website_trust_score.py` y no se inventan. Cómo se habla de cualquier puntaje, en WhatsApp y en el MCP, está en [trust_skill.md](../services/api/app/agents/trust_skill.md).
 
 Cada canal mide cosas distintas. Para poder compararlos, todos entregan la misma caja: una lista de señales. Cada señal tiene un peso fijo (los de un canal suman 100) y un valor de 0 a 1.
 

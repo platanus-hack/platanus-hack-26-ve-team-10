@@ -200,7 +200,7 @@ details.sinprecio .lista { margin-top: 8px; }
     } catch (e) { return d.toLocaleString("es-VE"); }
   }
   function seguro(url) { return typeof url === "string" && /^https?:\/\//i.test(url) ? url : null; }
-  var CANAL = { web: "Web", mercadolibre: "Mercado Libre", instagram: "Instagram", tiktok: "TikTok", facebook: "Marketplace", amazon: "Amazon" };
+  var CANAL = { web: "Web", mercadolibre: "Mercado Libre", instagram: "Instagram", tiktok: "TikTok", facebook: "Marketplace", amazon: "Amazon", importacion: "Traerlo de USA" };
   function canal(c) { return CANAL[c] || c || ""; }
 
   function el(tag, attrs, kids) {
@@ -292,6 +292,7 @@ details.sinprecio .lista { margin-top: 8px; }
     var badges = el("div", { class: "badges" });
     if (esMejor) badges.appendChild(el("span", { class: "badge sol", text: "Más barato" }));
     if (o.example) badges.appendChild(el("span", { class: "badge ojo", text: "Ejemplo" }));
+    if (o.priceKind === "estimado") badges.appendChild(el("span", { class: "badge", text: "Estimado con courier" }));
     var t = o.merchant ? o.merchant.trust : null;
     if (t == null) badges.appendChild(el("span", { class: "badge", text: "Sin puntaje de confianza" }));
     else if (t >= 75) badges.appendChild(el("span", { class: "badge bien", text: "Confiable · " + t }));

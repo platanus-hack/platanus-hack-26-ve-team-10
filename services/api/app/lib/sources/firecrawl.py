@@ -1056,7 +1056,7 @@ async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str,
                 "Di solo eso: no inventes un precio ni pidas revisar cada opción."
             )
         else:
-            notice = "Open-web shops have no seller trust score yet. Prices come only from the scraped page."
+            notice = "Prices come only from the scraped page."
             if len(offers) < PRICED_TARGET:
                 notice += " No hubo 5 ofertas con precio publicado."
         # Una tienda con ofertas en la respuesta no se reporta como caída por otra de sus páginas.
