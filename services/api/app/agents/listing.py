@@ -1,5 +1,6 @@
 """Misma forma de listado para todos los especialistas, y las tarjetas de WhatsApp."""
 
+import os
 import re
 import unicodedata
 from datetime import datetime
@@ -23,6 +24,16 @@ MAX_SUMMARY = 250
 # encima, así que aquí solo se topa en el límite duro de WhatsApp.
 _CARD_BODY = 1024
 MAX_BUTTON = 20
+# Cuerpo de un mensaje de texto. La lista cabe de sobra; se topa por seguridad.
+_TEXT_BODY = 4096
+# Título dentro del renglón de detalle: lo justo para distinguir una variante de otra.
+_LIST_TITLE = 48
+
+# Dos formas de contestar la comparación, y se elige una. La lista es texto plano: no
+# depende de que la tienda sirva una imagen que WhatsApp acepte, que es lo que tumbaba
+# al carrusel (Meta rechaza WebP con un 400 y se perdía la respuesta entera). El carrusel
+# queda completo: WHATSAPP_REPLY_STYLE=carousel lo vuelve a poner.
+REPLY_STYLE = os.environ.get("WHATSAPP_REPLY_STYLE", "list")
 
 CHANNEL_LABEL = {
     "instagram": "Instagram",
@@ -352,12 +363,53 @@ async def one_offer_message(to: str, listings: list[dict[str, Any]], summary: st
     return {"messaging_product": "whatsapp", "to": to, "type": "interactive", "interactive": interactive}
 
 
-async def shopping_message(to: str, listings: list[dict[str, Any]], summary: str) -> dict[str, Any] | None:
+def list_line(card: dict[str, Any]) -> str:
+    """Una oferta en tres renglones: precio y vendedor, el detalle, y el enlace.
+
+    El detalle sale de _detail_bits, el mismo que usa la tarjeta: así la lista cumple
+    la regla 7 igual que el carrusel (fuente, fecha y la tasa si hubo conversión).
+    """
+    price = " ".join(str(card.get("price") or "").split())
+    seller = " ".join(str(card.get("seller") or "Tienda").split())
+    title = " ".join(str(card.get("title") or "").split())
+    channel = CHANNEL_LABEL.get(card.get("channel") or "", str(card.get("channel") or "Web"))
+    detail = [_ellipsis(title, _LIST_TITLE)] if title else []
+    detail.append(channel)
+    detail += _detail_bits(card, seller)
+    head = f"• {_bold(price)} — {seller}" if price else f"• {seller}"
+    return "\n".join([head, "  " + " · ".join(detail), f"  {card['url']}"])
+
+
+async def list_message(to: str, listings: list[dict[str, Any]], summary: str) -> dict[str, Any] | None:
+    """La comparación como lista de texto. Una sola oferta también vale: a diferencia
+    del carrusel, que exige dos tarjetas, aquí no hay mínimo."""
+    chosen = choose_options(listings)
+    if not chosen:
+        return None
+    body = "\n\n".join([summary, *(list_line(card) for card in chosen)])
+    return {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "text",
+        # Sin vista previa: con cinco enlaces, WhatsApp expandiría el primero y
+        # descuadraría la lista. https://docs.kapso.ai/docs/whatsapp/send-messages/text.md
+        "text": {"body": body[:_TEXT_BODY], "preview_url": False},
+    }
+
+
+async def carousel_or_card(to: str, listings: list[dict[str, Any]], summary: str) -> dict[str, Any] | None:
     """Carrusel si hay dos o más ofertas. Una tarjeta si hay una. Nada si no hay precio."""
     many = await carousel_message(to, listings, summary)
     if many is not None:
         return many
     return await one_offer_message(to, listings, summary)
+
+
+async def shopping_message(to: str, listings: list[dict[str, Any]], summary: str) -> dict[str, Any] | None:
+    """El despachador: una forma u otra, según REPLY_STYLE. Hoy, la lista."""
+    if REPLY_STYLE == "carousel":
+        return await carousel_or_card(to, listings, summary)
+    return await list_message(to, listings, summary)
 
 
 # Botones de respuesta (Kapso, misma forma que la API de Meta):
