@@ -58,5 +58,5 @@ Tailwind, pnpm y Cloud Run no publican `llms.txt`: usa su web o el MCP de Google
 
 ## Ojo
 
-- Los MCP que operan cuentas reales (`kapso`, `apify`, Mercado Libre) pueden mandar mensajes o gastar créditos. Úsalos para explorar y configurar. Lo que va a producción vive en el código de `apps/api`.
+- Los MCP que operan cuentas reales (`kapso`, `apify`, Mercado Libre) pueden mandar mensajes o gastar créditos. Úsalos para explorar y configurar. Lo que va a producción vive en el código de `services/api`.
 - No pegues keys en `.mcp.json`: se sube al repo. Las credenciales van en el login OAuth o en `claude mcp add` local.

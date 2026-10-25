@@ -1,9 +1,9 @@
 # Solo construye y sube una imagen. Lo usan los scripts de infra (50 y 51) vía build_image;
 # los pipelines de CI (cloudbuild.web.yaml y cloudbuild.api.yaml) hacen lo mismo y además despliegan.
-# Se envía el repo entero, así que _CONTEXT puede ser la raíz (web) o apps/api.
+# Se envía el repo entero, así que _CONTEXT puede ser la raíz (web) o services/api.
 substitutions:
-  _DOCKERFILE: apps/api/Dockerfile
-  _CONTEXT: apps/api
+  _DOCKERFILE: services/api/Dockerfile
+  _CONTEXT: services/api
   _IMAGE: ""
   _TAG: manual
   _API_URL: ""   # solo la web: se pasa como --build-arg API_URL
