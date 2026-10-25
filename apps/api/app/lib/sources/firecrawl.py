@@ -252,7 +252,7 @@ def _is_listing(url: str) -> bool:
     """A category, search, or classifieds page: several items, no single product price."""
     if _host(url).startswith("listado."):
         return True
-    segments = [_plain(segment) for segment in unquote(urlparse(url).path).split("/") if segment]
+    segments = [plain(segment) for segment in unquote(urlparse(url).path).split("/") if segment]
     return any(segment in _LISTING_SEGMENTS or segment in _CLASSIFIED_SEGMENTS for segment in segments)
 
 
@@ -289,12 +289,14 @@ def _hit_title(hit: Any) -> str | None:
     return getattr(hit, "title", None)
 
 
-def _plain(text: str) -> str:
+# plain, published_prices y matches_product también los usa apify.py: leer un precio escrito y
+# decidir si un anuncio es el producto pedido es lo mismo en una página que en un caption.
+def plain(text: str) -> str:
     return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
 
 
 def _currency(value: str | None) -> str | None:
-    token = re.sub(r"[\s.:]", "", _plain(value or "")).upper()
+    token = re.sub(r"[\s.:]", "", plain(value or "")).upper()
     # En Venezuela el dólar se escribe también u$s, U$S o REF (el precio de referencia, en dólares).
     if token in ("USD", "US$", "U$S", "U$D", "USD$", "$USD", "$", "REF", "DOLAR", "DOLARES"):
         return "USD"
@@ -332,7 +334,7 @@ def _amount(raw: str) -> float | None:
         return None
 
 
-def _published_prices(text: str) -> dict[float, set[str | None]]:
+def published_prices(text: str) -> dict[float, set[str | None]]:
     """Cada monto escrito en la página, con la moneda escrita junto a él (None si no tiene)."""
     prices: dict[float, set[str | None]] = {}
     for match in _PRICE.finditer(text):
@@ -363,16 +365,16 @@ def _singular(word: str) -> str:
     return word[:-1] if len(word) > 3 and word.endswith("s") and not word[-2].isdigit() else word
 
 
-def _matches(product: str, title: str) -> bool:
+def matches_product(product: str, title: str) -> bool:
     """El anuncio nombra la marca, el modelo y las cifras de la consulta.
 
     Un listado mezcla productos: sin esto, "Harina PAN" trae Harina Kaly, y
     "Redmi 15C" trae el 13C. Se compara sin espacios ni signos, como la fuente
     de ejemplo, para que "BR200" cuente como "BR 200" y "P.A.N." como "PAN".
     """
-    compact = re.sub(r"[^a-z0-9]", "", _plain(title))
+    compact = re.sub(r"[^a-z0-9]", "", plain(title))
     required = []
-    for word in re.findall(r"[a-z0-9]+", _plain(product)):
+    for word in re.findall(r"[a-z0-9]+", plain(product)):
         word = _UNIT.sub(r"\1", _singular(word))
         if word not in _GENERIC and (len(word) >= 3 or any(char.isdigit() for char in word)):
             required.append(word)
@@ -395,7 +397,7 @@ _COMPARISON = re.compile(r"\s+(?:vs\.?|versus|contra)\s+", re.IGNORECASE)
 
 
 def _words(text: str) -> set[str]:
-    return set(re.findall(r"[a-z0-9]+", _plain(text)))
+    return set(re.findall(r"[a-z0-9]+", plain(text)))
 
 
 def _brands_in(text: str) -> set[str]:
@@ -409,7 +411,7 @@ def _has_phrase(text: str, phrase: str) -> bool:
 
 def _extra_tier(query: str, title: str) -> bool:
     """The title adds Pro, Plus, mini or slim, and the query did not ask for it."""
-    query_plain, title_plain = _plain(query), _plain(title)
+    query_plain, title_plain = plain(query), plain(title)
     return any(_has_phrase(title_plain, tier) and not _has_phrase(query_plain, tier) for tier in _TIERS)
 
 
@@ -448,7 +450,7 @@ def _matching_title(query: str, title: str, brand: str | None = None) -> str | N
         return None
     if len(priced_brands) > 1 and not priced_brands <= query_brands:
         return None
-    if _extra_tier(query, priced) or not _matches(query, priced):
+    if _extra_tier(query, priced) or not matches_product(query, priced):
         return None
     return priced
 
@@ -559,7 +561,7 @@ def _from_listing(url: str, document: Any, product: str) -> list[_Found]:
     """
     data = getattr(document, "json", None)
     items = data.get("offers") if isinstance(data, dict) else None
-    published = _published_prices(getattr(document, "markdown", None) or "")
+    published = published_prices(getattr(document, "markdown", None) or "")
     seller = shop_name(url, _site_name(document), None)
     found = []
     for item in items or []:

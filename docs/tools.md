@@ -52,6 +52,7 @@ Si no hay MCP, o para leer la documentación entera, abre el índice con WebFetc
 | Firecrawl | https://docs.firecrawl.dev/llms.txt |
 | Apify | https://docs.apify.com/llms.txt |
 | Cloudflare (DNS) | https://developers.cloudflare.com/llms.txt |
+| dolarapi (tasa del dólar en Venezuela) | https://dolarapi.com/docs/venezuela/ — sin API key. `GET /v1/dolares/oficial` y `/v1/dolares/paralelo` devuelven `{ promedio, fechaActualizacion }`; en Venezuela `compra` y `venta` vienen en `null` |
 
 Tailwind, pnpm y Cloud Run no publican `llms.txt`: usa su web o el MCP de Google para Cloud Run.
 

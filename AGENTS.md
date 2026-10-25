@@ -8,7 +8,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 |---|---|
 | `apps/api/` | Backend en Python (FastAPI): el agente ADK, el webhook de Kapso y el servidor MCP |
 | `apps/api/app/lib/` | Tipos y contratos, búsqueda, precios, confianza y tasa. Es la única fuente de esa lógica |
-| `apps/api/app/lib/sources/` | Fuentes del registro. Hoy solo la de ejemplo (`mock.py`). Firecrawl no está ahí: vive en `firecrawl.py` y se llama directo |
+| `apps/api/app/lib/sources/` | Fuentes del registro: la de ejemplo (`mock.py`) e Instagram y TikTok por Apify (`apify.py`). Firecrawl no está en el registro: vive en `firecrawl.py` y se llama directo |
 | `apps/api/app/agents/` | Código del orquestador y de sus tools. No es documentación |
 | `infra/`, `cloudbuild.*.yaml` | Scripts de `gcloud` y pipelines de Cloud Build |
 | `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
@@ -28,7 +28,7 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 | Una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [docs/tools.md](docs/tools.md): su skill, su MCP o su `llms.txt` |
 | El agente o sus tools | `apps/api/app/agents/orchestrator.py` y `apps/api/app/agent.py` |
 | Conectar una fuente real | [docs/sources.md](docs/sources.md) |
-| El puntaje de confianza | `apps/api/app/lib/prices.py` y los borradores de `resources/*_trust_score.py` |
+| El puntaje de confianza | `apps/api/app/lib/trust.py`, `apps/api/app/lib/contracts.py` y los borradores de `resources/*_trust_score.py` |
 | WhatsApp | [docs/kapso.md](docs/kapso.md) |
 | MCP | [docs/mcp-tool.md](docs/mcp-tool.md) |
 | Páginas públicas | [docs/seo-geo.md](docs/seo-geo.md), y el detalle en [docs/ficha-producto.md](docs/ficha-producto.md), [docs/categoria.md](docs/categoria.md) y [docs/marca.md](docs/marca.md) |

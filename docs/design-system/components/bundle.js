@@ -243,11 +243,12 @@ function textoParaCanal(canal, d) {
       'La mejor opción: ' + top.tienda + ', ' + pb(top) + ' con envío. Son ' + usd(ah) + ' menos que el promedio.\n\n' +
       'Te mandé el carrusel con el top ' + Math.min(5, of.length) + '. Desliza para ver dónde y a cuánto.';
   }
-  var lines = of.slice(0, 3).map(function (o, i) {
+  var lines = of.slice(0, 5).map(function (o, i) {
     var m = [o.canal, o.condicion, o.envio ? 'envío ' + usd(o.envio) : o.envio === 0 ? 'envío gratis' : null].filter(Boolean).join(' · ');
     return (i + 1) + '. *' + o.tienda + '* — ' + pb(o) + (m ? '\n    ' + m : '');
   });
-  return '*' + d.producto + '*\nRevisé ' + of.length + ' tiendas. Estos son los 3 precios más bajos con envío incluido:\n\n' +
+  var cuantos = lines.length === 1 ? 'el precio más bajo' : 'los ' + lines.length + ' precios más bajos';
+  return '*' + d.producto + '*\nRevisé ' + of.length + ' tiendas. Estos son ' + cuantos + ' con envío incluido:\n\n' +
     lines.join('\n') + '\n\nEl mejor está ' + usd(ah) + ' por debajo del promedio (' + usd(prom) + ').\nLista completa: ' + link;
 }
 

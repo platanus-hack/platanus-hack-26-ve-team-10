@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 Currency = Literal["USD", "VES"]
-Channel = Literal["instagram", "tiktok", "web", "mercadolibre", "facebook"]
+Channel = Literal["instagram", "tiktok", "web", "mercadolibre", "facebook", "amazon"]
 
 
 @dataclass(frozen=True)

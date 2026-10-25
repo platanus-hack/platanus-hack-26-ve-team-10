@@ -23,7 +23,9 @@ def format_money(price: Money) -> str:
     return f"{_SYMBOLS[price.currency]} {number}"
 
 
-# Puntaje de 0 a 100. Fórmula inicial: ajustarla cuando tengamos datos reales.
+# Entero provisional de search_offers. El contrato (señales, cobertura, veredicto)
+# vive en trust.py. Esta fórmula sigue aquí porque Merchant todavía no trae las
+# señales de cada canal: cambiar eso es cambiar el contrato de la búsqueda.
 def trust_score(merchant: Merchant) -> int:
     score = 40.0
     if merchant.followers:

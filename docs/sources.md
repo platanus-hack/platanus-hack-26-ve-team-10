@@ -1,6 +1,6 @@
 # Fuentes
 
-Cada fuente del registro es un archivo en `apps/api/app/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). En el registro solo está la de ejemplo (`mock.py`), que se apaga con `USE_MOCK_SOURCE=false`. Además de sus ofertas fijas, responde por cada modelo del catálogo (`catalogo.json`) con comercios marcados "(ejemplo)" y precios generados desde `precioEjemplo`. Apagarla deja el catálogo con solo ofertas reales: ver [seo-geo.md](seo-geo.md#catálogo-el-interruptor-de-indexación). Firecrawl no está en ese registro: `search_offers` cancela a los 8 s, y la web abierta se llama directo desde la tool y desde el MCP.
+Cada fuente del registro es un archivo en `apps/api/app/lib/sources/` que cumple el contrato `Source`. Los pasos para sumar una están en [contracts.md](contracts.md#sumar-una-fuente). En el registro están la de ejemplo (`mock.py`), que se apaga con `USE_MOCK_SOURCE=false`, e Instagram y TikTok por Apify (`apify.py`), que se encienden con `APIFY_TOKEN`. Además de sus ofertas fijas, responde por cada modelo del catálogo (`catalogo.json`) con comercios marcados "(ejemplo)" y precios generados desde `precioEjemplo`. Apagarla deja el catálogo con solo ofertas reales: ver [seo-geo.md](seo-geo.md#catálogo-el-interruptor-de-indexación). Firecrawl no está en ese registro: `search_offers` cancela a los 8 s, y la web abierta se llama directo desde la tool y desde el MCP.
 
 ## Cadenas con tienda propia
 
@@ -18,16 +18,16 @@ Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegad
 
 | Fuente | Cómo se consulta | Ojo |
 |---|---|---|
-| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | El puntaje de tiendas web todavía no se calcula. El borrador está en [resources/website_trust_score.py](../resources/website_trust_score.py) |
-| **Apify: Instagram** | Cliente de Python de Apify + actor `apify/instagram-scraper` | Tarda de segundos a minutos. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
-| **Apify: TikTok** | Cliente de Python de Apify + actor `clockworks/tiktok-scraper` | Igual que Instagram. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
+| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | La web abierta sigue sin puntaje (`trust` null). El motor ya puede cerrar una tienda si llegan sus señales; RDAP, DNS y Safe Browsing no están conectados |
+| **Apify: Instagram** | Conectada: `instagram_source` en `app/lib/sources/apify.py`, actor `apify/instagram-scraper` | Se entra por la página del hashtag del producto. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
+| **Apify: TikTok** | Conectada: `tiktok_source` en el mismo archivo, actor `clockworks/tiktok-scraper` | Busca por palabras, con proxy venezolano. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
 | **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
-| **Mercado Libre** | API oficial, sitio `MLV` | Responde **403 sin token**: hay que registrar una app. Plan B: un actor de Apify. El puntaje de confianza usa `/items` y `/users` (ver [resources/mercadolibre_trust_score.py](../resources/mercadolibre_trust_score.py)) |
+| **Mercado Libre** | API oficial, sitio `MLV` | Sigue **403 sin token**: no hay cliente en vivo. `score_mercadolibre` en `app/lib/trust.py` puntúa el JSON de `/items` y `/users` sin llamar a la red |
 | **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta_ads_signals.py](../resources/meta_ads_signals.py)) |
 
 ## Reglas
 
-- **Lento no va en vivo.** Cada fuente tiene 8 segundos (`asyncio.wait_for` la cancela). Si tarda más (Apify), el actor corre antes y el adapter lee su último resultado.
+- **Lento no va en vivo.** Cada fuente tiene 8 segundos (`asyncio.wait_for` la cancela). Si tarda más (Apify), la búsqueda arranca el actor, lo espera un poco y sigue sin él: la corrida queda andando y la siguiente búsqueda del mismo producto lee su resultado. Ver [Apify](#apify-instagram-y-tiktok).
 - **Sin precio no hay inventos.** Si la publicación no tiene precio, `price` va en `None`.
 - **Una fuente que falla no tumba la búsqueda.** `search_offers` ya la deja fuera y la anota en `failedSources`.
 - **Async de verdad.** `search` es `async`: usa clientes asíncronos (`httpx.AsyncClient`) para no bloquear a las demás fuentes.
@@ -56,9 +56,64 @@ El título de ese artículo tiene que decir la marca, el modelo y las cifras de 
 
 Una comparación que nombra los dos no cuenta por mencionar el producto buscado. Cuenta el artículo al que corresponde el precio. En un listado se botan los otros avisos y se queda el que sí coincide. Si la ficha dice "iPhone 14 vs Samsung" y la marca del precio es Samsung, esa oferta no entra. Si la marca del precio es Apple, entra el lado del iPhone, no el Samsung.
 
+## Apify: Instagram y TikTok
+
+Las dos están en `app/lib/sources/apify.py`: comparten el cliente, la caché y la lectura de captions.
+
+**El plazo.** Una corrida de actor tarda de segundos a minutos y `search_offers` corta a los 8 s. La fuente arranca el actor, lo espera `LIVE_WAIT_S` (6 s) y devuelve lo que tenga. La corrida **no se cancela**: termina en segundo plano y deja sus publicaciones en la caché, así que la siguiente búsqueda del mismo producto sí las ve. Un resultado dura 6 horas; uno vacío o fallido, 15 minutos, para no pagar dos veces lo mismo. **Precalentar antes de una demo es buscar el producto una vez.** La corrida vive en el proceso del API: si Cloud Run apaga la instancia, se pierde y la próxima búsqueda vuelve a arrancarla.
+
+**Por dónde entra cada una.**
+
+| | Instagram | TikTok |
+|---|---|---|
+| Entrada | `directUrls` con `https://www.instagram.com/explore/tags/<hashtag>/` y `resultsType: posts` | `searchQueries` con el producto, `searchSection: /video` |
+| Hashtag | `_hashtag()` arma el tag del producto: "Harina PAN 1 kg" es `#harinapan`, "iPhone 15 128 GB" es `#iphone15`. Una cifra seguida de su unidad se cae: es la presentación, no el modelo | — |
+| Zona | `proxyCountryCode` no aplica: el hashtag es global y se filtra por el caption | `proxyCountryCode: "VE"` |
+| Seguidores | No vienen en una publicación: `followers` va en `None` | `authorMeta.fans` |
+
+`searchType: "hashtag"` **no** sirve para esto: devuelve el volumen del hashtag y los relacionados, no sus publicaciones. Por eso se usa la URL del hashtag.
+
+**El precio sale del caption**, con las mismas funciones que la web abierta (`published_prices` y `matches_product`, en `firecrawl.py`: esa lógica vive en un solo lugar). Las reglas:
+
+- El monto tiene que estar escrito **con su moneda** ($, USD, Bs). Un número suelto, como un teléfono, no es un precio.
+- Si la publicación nombra el precio en dólares y en bolívares, manda el de dólares.
+- Si nombra **varios precios** en la misma moneda (un post con tres modelos), no se usa ninguno.
+- Sin precio, la oferta solo se guarda si el caption dice "precio al DM" (o inbox, interno, privado, whatsapp), y va con `price=None`.
+- La publicación tiene que nombrar el producto pedido (`matches_product` sobre el caption), si no, se descarta.
+
+**Lo que cuesta.** Los dos actores cobran por publicación (Instagram, unos USD 2,70 por 1.000 en el plan gratis). Cada corrida pide `RESULTS` (20) y además lo limita con `max_items`, así que son unos 5 centavos. La caché es lo que evita repetirlas.
+
+**Lo que falta.** El hashtag de Instagram es global: para "iPhone 15" trae publicaciones de todo el mundo y solo quedan las que nombran precio y producto. Una lista de cuentas de comercios venezolanos (`directUrls` de perfiles) daría mucha mejor cobertura, y es el siguiente paso. Tampoco se guarda todavía lo que pide el puntaje de confianza: para eso hay que sumar campos a `Merchant` (ver [Datos que el puntaje necesita](#datos-que-el-puntaje-necesita)).
+
+**Probar que el token sirve**, con una corrida de verdad (gasta créditos), desde `apps/api`:
+
+```bash
+.venv/bin/python scripts/apify_prueba.py "iPhone 15 128 GB" instagram
+```
+
+Muestra el input que recibe el actor, la primera publicación entera (para confirmar los nombres de los campos) y las ofertas que salen de ahí.
+
 ## Puntaje de confianza por fuente
 
-Cada fuente tiene un borrador de su puntaje de confianza en `resources/`, en Python. Ahí están las señales, los pesos, las banderas rojas y los actores o APIs que usa. La implementación va en `apps/api/app/lib/prices.py`: los borradores no se importan desde el backend. Antes de llevarlo, corre el actor con casos reales y confirma los nombres de sus campos.
+Cada canal mide cosas distintas. Para poder compararlos, todos entregan la misma caja: una lista de señales. Cada señal tiene un peso fijo (los de un canal suman 100) y un valor de 0 a 1.
+
+El motor está en `apps/api/app/lib/trust.py`. Los modelos (`TrustSignal`, `TrustScore`, `Adjustment`, `MerchantIdentity`) están en `apps/api/app/lib/contracts.py`. Los borradores de `resources/` no se importan: son la referencia de las fórmulas y de los nombres de campo. Antes de escribir un adapter, corre el actor con casos reales y confirma esos nombres.
+
+Cómo se calcula:
+
+- **Sin dato no es cero.** `null` significa que no hay dato y esa señal no entra en la cuenta. `0` significa que el dato está y es malo. `"pending"` es un hueco que el agregador va a llenar; al cerrar, si no pudo, lo baja a `null`. Un puntaje `final` no puede conservar un `"pending"`.
+- **Cobertura.** Es el peso medido dividido entre 100. El puntaje divide solo entre el peso medido: quien tiene menos datos no es castigado, solo se mide con menos certeza.
+- **Veredicto.** En `stage="parcial"` el puntaje queda en `null` y el veredicto en `sin_datos`: el especialista no cierra. Al pasar a `final`, una bandera roja deja el puntaje en 0 y el veredicto en `riesgosa`. Si se midió menos del 40 % del peso, no hay puntaje (`sin_datos`). De 75 para arriba es `confiable`; de 50 a 74, `precaucion`; por debajo, `riesgosa`.
+- **Estrellas.** `to_stars()` convierte el 0–100 a 0–5. Los cortes coinciden con el veredicto (90, 75, 60 y 50). Sin puntaje, no hay estrellas. El texto del catálogo usa los mismos 75 y 50.
+- **Agregador.** `ask_prais` junta el JSON de cada tool y llama a `close_listings`. Ahí corren cuatro pasadas: mediana de precio e identidad del comercio, cierre de Instagram, TikTok, Facebook, Mercado Libre y Amazon, cierre de la tienda web (su señal `linked_socials` usa los puntajes de Instagram y TikTok del mismo vendedor) y los ajustes de Meta Ads. Hace falta un grupo de al menos 5 precios publicados del mismo producto y la misma condición (nuevo, usado o reacondicionado). Una oferta cuyo `evidence_id` no está en la oferta se descarta con error `parseo`.
+
+La búsqueda (`search_offers`) sigue devolviendo `merchant.trust` como un entero. Esa fórmula provisional está en `prices.trust_score` (seguidores, comentarios y tiempo de respuesta, con piso de 40). Cambiar el `Merchant` de `types.py` para guardar los datos crudos de cada fuente cambia el contrato de la búsqueda: hay que avisarlo antes de mergear. Hasta entonces, las pasadas solo actúan si el listado trae `contractOffer` y `contractMerchant`.
+
+Mercado Libre, de punta a punta en este código: el JSON de la publicación y del vendedor entra a `score_mercadolibre` y sale un `TrustScore`. Con la mediana, el agregador llena `price_anomaly` y deja `stage="final"`. No llama a la API.
+
+Todavía no: el hash perceptual de las fotos de Facebook (si nadie pasa el conteo, `photos_original` queda sin dato), los campos crudos en el `Merchant` de la búsqueda, y el fetch de los otros canales. El atajo de Amazon (vende y envía Amazon → 95) y el bonus de hasta +10 de Marketplace sí están en el motor. `amazon` ya es un canal en `types.py`.
+
+El contrato pedía comprobar que el estado del agente se propaga y que hubiera un paso determinista entre los especialistas y la respuesta. Eso ya no aplica: los especialistas son tools de Python y `ask_prais` lee el JSON de cada una.
 
 | Fuente | Borrador | Qué pesa más |
 |---|---|---|
@@ -74,7 +129,7 @@ Todos comparten la misma salida: puntaje de 0 a 100, cobertura, veredicto (`conf
 
 ## Datos que el puntaje necesita
 
-Hoy `Merchant` solo trae `followers`, `comments` y `response_time_min`. El puntaje de confianza solo cuenta las señales cuyo dato trae la fuente: las demás no se cuentan y su peso se reparte entre las que sí hay. Por eso, **cada dato de esta lista que traiga tu fuente suma una señal al puntaje** sin tocar nada más.
+El `Merchant` de la búsqueda solo trae `followers`, `comments` y `response_time_min`. El puntaje del contrato no usa esos tres campos: cuenta las señales cuyo dato trae la fuente. Las demás no entran en la cuenta. El puntaje divide solo entre el peso medido, y la cobertura dice cuánto quedó afuera. **Cada dato de esta lista que traiga tu fuente suma una señal**, pero guardarlo en `types.py` cambia el contrato: avisa antes de mergear.
 
 Cómo guardarlo:
 
@@ -174,7 +229,7 @@ Actores: `junglee/Amazon-crawler` y `reefapi/amazon-seller-scraper`.
 
 ## Variables
 
-`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa `APIFY_TOKEN`. Agrégalas a `apps/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
+`FIRECRAWL_API_KEY` y `APIFY_TOKEN`. El puntaje de tiendas web puede usar además `GOOGLE_SAFE_BROWSING_KEY`, que es opcional, y el de Mercado Libre, `ML_ACCESS_TOKEN`, el token de la app. Amazon usa `APIFY_TOKEN`. `APIFY_TOKEN` sale de [Apify Console → Settings → API & Integrations](https://console.apify.com/settings/integrations) y va en `apps/api/.env`. Sin él, Instagram y TikTok quedan apagadas y la búsqueda sigue igual que antes. Las demás variables, agrégalas a `apps/api/.env.example` cuando conectes la fuente. En producción ya tienen lugar en el secreto `prais-api-secrets` ([gcp.md](gcp.md)).
 
 ## Docs
 
