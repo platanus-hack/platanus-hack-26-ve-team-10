@@ -32,7 +32,7 @@ ChatGPT / Claude ─────┘                                             
 | Webhook de WhatsApp | Hecho. El número de producción apunta al API en Cloud Run. Probado en el sandbox de Kapso |
 | MCP con `search_prices` | Hecho, con íconos, instrucciones para el modelo y tablero de ofertas (MCP Apps) |
 | Catálogo SEO (`/ve/...`) | Hecho con datos de ejemplo: 147 modelos, 28 categorías. Se indexa solo cuando hay ofertas reales: ver [seo-geo.md](seo-geo.md) |
-| Confianza del comercio | Fórmula inicial en `apps/api/app/lib/prices.py`. Las cadenas con tienda propia, comparadas por dominio, están en `apps/api/app/lib/cadenas.py` ([sources.md](sources.md#cadenas-con-tienda-propia)). Los borradores por fuente (Instagram, Marketplace, TikTok, tiendas web, Mercado Libre, Amazon y Meta Ads) están en `resources/`, resumidos en [sources.md](sources.md#puntaje-de-confianza-por-fuente) |
+| Confianza del comercio | Motor en `apps/api/app/lib/trust.py` y modelos en `contracts.py`: solo cuentan las señales medidas, una bandera roja deja el puntaje en 0 y con menos del 40 % de cobertura no hay puntaje. `search_offers` todavía devuelve el entero provisional de `prices.py`. Las cadenas con tienda propia están en `cadenas.py`. Detalle en [sources.md](sources.md#puntaje-de-confianza-por-fuente) |
 | Fuentes reales | Firecrawl está conectado, fuera del registro de `search_offers`. Instagram y TikTok entran por Apify (`app/lib/sources/apify.py`), con `APIFY_TOKEN`: ver [sources.md](sources.md#apify-instagram-y-tiktok). Faltan Facebook Marketplace, Mercado Libre y Meta Ads |
 | Deploy en GCP | Armado: `infra/` y `cloudbuild.*.yaml`. Cómo funciona, en [gcp.md](gcp.md) |
 

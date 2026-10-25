@@ -25,7 +25,9 @@ Cada oferta de `offers` lleva `title`, `url`, `price` (como la publica el comerc
 
 **Ruta interna, fuera del contrato.** `POST /internal/whatsapp-task` (`app/routes/whatsapp.py`) la llama solo Cloud Tasks, con un token OIDC. No la uses desde la web ni desde Kapso, y su forma puede cambiar sin avisar: los contratos públicos de arriba no cambian.
 
-Los tipos son `dataclass` en `app/lib/types.py`, en `snake_case` (`merchant_id`, `usd_to_ves`, `response_time_min`). `Source` es un `Protocol`: `id`, `enabled` y `async search(query)`.
+Los tipos de la búsqueda son `dataclass` en `app/lib/types.py`, en `snake_case` (`merchant_id`, `usd_to_ves`, `response_time_min`). `Source` es un `Protocol`: `id`, `enabled` y `async search(query)`. `Channel` incluye `amazon`.
+
+`merchant.trust` en la respuesta de `search_offers` sigue siendo un entero de 0 a 100 (o null en la web abierta): es la fórmula provisional de `prices.trust_score`. El puntaje del contrato —señales, cobertura y veredicto— vive en `app/lib/contracts.py` y se calcula en `app/lib/trust.py`. No reemplaza esa respuesta hasta que cada fuente mande sus señales. Cambiar el `Merchant` de la búsqueda para guardarlas se avisa antes de mergear.
 
 ## Sumar una fuente
 
