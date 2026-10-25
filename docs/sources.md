@@ -46,7 +46,15 @@ El tiempo de cada lectura es el que le queda al plazo (25 s en el MCP, 45 s en e
 
 Antes de leer se descartan los dominios de otros países (`.mx`, `.pe`, `.co`, `.com.ar` y similares) y las webs de marca que no venden en Venezuela (`lenovo.com`, `nvidia.com`, `apple.com`…). Una ruta `/ve/` o un dominio `.ve` sí se lee (`apple.com/ve`). Las tiendas conocidas (`sigmatiendas.com`, `soytechno.com`, `tiendasdaka.com`, `elplazas.com`) y los dominios `.ve` van primero. De lo que queda se leen hasta 8 páginas. La búsqueda pide 15 resultados —4 créditos, porque son 2 por cada 10, redondeando hacia arriba— para que, al botar los de afuera, todavía queden tiendas de Venezuela.
 
-Si una página se leyó y otra se cortó por el tiempo, la que sí se leyó se guarda (una hora si trajo ofertas, 10 minutos si no). La consulta siguiente no vuelve a pagarla. El resultado entero no se guarda cuando alguna página quedó a medias: el MCP sigue en 25 s y el agente en 45 s. Con una sola lectura por listado, 25 s alcanza para la búsqueda y para leer la página.
+Si esas primeras páginas no traen ningún precio publicado, la búsqueda no se cierra ahí. Sigue, y se detiene en cuanto aparece una oferta con precio. No inventa el monto: sigue valiendo solo un precio que está escrito en la página.
+
+- **Más resultados.** Lee las páginas de esa misma búsqueda que no entraron en las primeras 8.
+- **El listado.** Si todavía no hay precio, lee las páginas de categoría o de anuncios que esa búsqueda trajo y que aún no se abrieron. Cada una sigue siendo una sola lectura, con JSON y markdown juntos.
+- **Una consulta más cerrada.** Si sigue sin precio y queda tiempo, busca `comprar "{producto}" precio`, otra vez desde Caracas y en Venezuela. De esos resultados abre primero los listados. Es otra búsqueda de Firecrawl y solo se paga cuando la primera tanda no trajo precio (los mismos 2 créditos por cada 10 resultados).
+
+Un aviso sin precio no entra como opción. Si esta pasada tampoco encuentra un precio publicado, la tool lo dice en una frase y no pide revisar cada opción. El orquestador repite eso y no completa el hueco con un consejo.
+
+Si una página se leyó y otra se cortó por el tiempo, la que sí se leyó se guarda (una hora si trajo ofertas, 10 minutos si no). La consulta siguiente no vuelve a pagarla. El resultado entero no se guarda cuando alguna página quedó a medias, ni cuando se acabó el tiempo antes de esa pasada que sigue buscando un precio: la próxima búsqueda puede abrir lo que esta no alcanzó. El MCP sigue en 25 s y el agente en 45 s. Con una sola lectura por listado, 25 s alcanza para la búsqueda y para leer la página.
 
 ## El precio tiene que ser del producto pedido
 
