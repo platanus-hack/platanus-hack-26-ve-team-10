@@ -18,7 +18,7 @@ from app.lib.types import SearchQuery
 OPEN_WEB_BUDGET_S = 25
 
 # Widget de ofertas (MCP Apps): Claude y ChatGPT lo muestran dentro del chat. Los assets son copias
-# de docs/design-system/assets, porque la imagen de la API solo lleva apps/api/app.
+# de docs/design-system/assets, porque la imagen de la API solo lleva services/api/app.
 UI_DIR = Path(__file__).resolve().parent.parent / "ui"
 OFERTAS_URI = "ui://usaprais/ofertas.html"
 SUMMARY_OFFERS = 10

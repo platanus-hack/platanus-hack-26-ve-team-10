@@ -9,8 +9,8 @@ Hoy existen `/`, las guías, `/privacidad`, `/terminos` y el catálogo de Venezu
 | Página | Indexable | Para qué |
 |---|---|---|
 | Landing `/` | Sí | Marca, propuesta y el chat |
-| Guías `/comparador-de-precios`, `/comparador-de-celulares`, `/que-es-usaprais` | Sí | Responder búsquedas del concepto ("comparar celulares" 1.000/mes, "comparador de teléfonos" 590) y que los asistentes de IA encuentren qué es usaprais, también como usaprice o usaprices. El contenido vive en `apps/web/src/lib/guias.ts`; para agregar una guía, súmala ahí y crea su carpeta con el `page.tsx` de 5 líneas |
-| Privacidad `/privacidad` y términos `/terminos` | Sí | Los pide Meta para verificar el negocio y el número de WhatsApp. Los datos legales y de contacto están en `apps/web/src/lib/empresa.ts` y tienen que coincidir con los documentos de la empresa |
+| Guías `/comparador-de-precios`, `/comparador-de-celulares`, `/que-es-usaprais` | Sí | Responder búsquedas del concepto ("comparar celulares" 1.000/mes, "comparador de teléfonos" 590) y que los asistentes de IA encuentren qué es usaprais, también como usaprice o usaprices. El contenido vive en `services/web/src/lib/guias.ts`; para agregar una guía, súmala ahí y crea su carpeta con el `page.tsx` de 5 líneas |
+| Privacidad `/privacidad` y términos `/terminos` | Sí | Los pide Meta para verificar el negocio y el número de WhatsApp. Los datos legales y de contacto están en `services/web/src/lib/empresa.ts` y tienen que coincidir con los documentos de la empresa |
 | Blog `/blog/...` | Sí | Preguntas que la gente busca: "dónde comprar X más barato en Caracas" |
 | Producto `/ve/p/[slug]-[id]` | Sí, con ofertas reales | La comparación de precios de un producto. Es la página que más tráfico puede traer. Detalle en [docs/ficha-producto.md](../docs/ficha-producto.md) |
 | Categoría `/ve/[categoria]`, `/ve/[categoria]/[marca o faceta]` | Sí, con reglas | Listado de modelos por categoría, marca o faceta con demanda. Detalle en [docs/categoria.md](../docs/categoria.md) |
@@ -33,11 +33,11 @@ Hoy existen `/`, las guías, `/privacidad`, `/terminos` y el catálogo de Venezu
 
 ## Catálogo: el interruptor de indexación
 
-El catálogo (categorías, marcas, modelos y facetas) está en `apps/api/app/lib/catalogo.json`, generado desde la investigación de keywords (`resources/keywords-ve.csv`) con `apps/api/scripts/catalogo_semilla.py`. Los precios **no** están ahí: `apps/api/app/lib/catalogo.py` se los pide a `search_offers` por cada modelo, igual que el agente.
+El catálogo (categorías, marcas, modelos y facetas) está en `services/api/app/lib/catalogo.json`, generado desde la investigación de keywords (`resources/keywords-ve.csv`) con `services/api/scripts/catalogo_semilla.py`. Los precios **no** están ahí: `services/api/app/lib/catalogo.py` se los pide a `search_offers` por cada modelo, igual que el agente.
 
 - Cada página que devuelve la API trae `indexable` y `datosDeEjemplo`. Una página es indexable solo con ofertas de fuentes reales (cualquier fuente que no sea `ejemplo`), con los umbrales de los docs: ficha con 1 oferta real, categoría + marca y faceta con 5 modelos reales, marca con 2 categorías reales.
 - Con datos de ejemplo la página sale con `noindex, follow`, fuera del sitemap, sin `Product` en el schema y con el aviso "Datos de demostración". Google nunca ve precios inventados como si fueran reales.
-- **Pasar a datos reales no toca la web ni el catálogo:** se conecta una fuente en `apps/api/app/lib/sources/` y se apaga la de ejemplo con `USE_MOCK_SOURCE=false`. Las páginas con ofertas reales se vuelven indexables y entran al sitemap solas, en la siguiente revalidación (1 h).
+- **Pasar a datos reales no toca la web ni el catálogo:** se conecta una fuente en `services/api/app/lib/sources/` y se apaga la de ejemplo con `USE_MOCK_SOURCE=false`. Las páginas con ofertas reales se vuelven indexables y entran al sitemap solas, en la siguiente revalidación (1 h).
 - Para sumar modelos, categorías o facetas, edita `catalogo_semilla.py` y vuelve a generar `catalogo.json`. Cuando el scraping traiga el catálogo real, reemplaza ese JSON.
 
 Pendiente del catálogo v1 respecto a los docs: paginación (hoy ninguna categoría pasa de 32 modelos), historial de precios, métodos de pago (no hay datos), filtros de precio y pago, y la regla anti-parpadeo (hoy una página se abre o se cierra en la siguiente revalidación).

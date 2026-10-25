@@ -14,6 +14,8 @@ from google.oauth2 import id_token
 
 from app.agent import FALLBACK_REPLY, ask_prais
 from app.agents.listing import carousel_message, clamp_summary
+from app.lib import replies
+from app.lib.replies import ReplyInProgress
 from app.lib.tasks import enqueue_whatsapp_event, queue_enabled
 
 router = APIRouter()
@@ -56,11 +58,25 @@ async def _post_message(phone_number_id: str, payload: dict[str, Any]) -> None:
         response.raise_for_status()
 
 
+def _text_payload(to: str, body: str) -> dict[str, Any]:
+    return {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}}
+
+
 async def _send_text(phone_number_id: str, to: str, body: str) -> None:
-    await _post_message(
-        phone_number_id,
-        {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}},
-    )
+    await _post_message(phone_number_id, _text_payload(to, body))
+
+
+def _message_id(event: dict[str, Any]) -> str | None:
+    message_id = (event.get("message") or {}).get("id")
+    if isinstance(message_id, str) and message_id:
+        return message_id
+    return None
+
+
+async def _send_saved(phone_number_id: str, message_id: str | None, payload: dict[str, Any]) -> None:
+    await _post_message(phone_number_id, payload)
+    if message_id:
+        await replies.complete(message_id, payload)
 
 
 _GREETINGS = {
@@ -82,23 +98,34 @@ def _is_greeting(text: str) -> bool:
     return cleaned in _GREETINGS
 
 
-async def _reply(event: dict[str, Any]) -> None:
+async def _reply(event: dict[str, Any], *, takeover: bool = False) -> None:
     parsed = _text_message(event)
     if not parsed:
         return
     phone_number_id, sender, text = parsed
+    message_id = _message_id(event)
+    if message_id:
+        claim = await replies.claim(message_id, takeover=takeover)
+        if claim.kind == "done" and claim.payload is not None:
+            await _post_message(phone_number_id, claim.payload)
+            return
+        if claim.kind == "in_progress":
+            raise ReplyInProgress()
     if _is_greeting(text):
-        await _send_text(phone_number_id, sender, _GREETING_REPLY)
+        await _send_saved(phone_number_id, message_id, _text_payload(sender, _GREETING_REPLY))
         return
     answer = await ask_prais(f"whatsapp:{sender}", text)
     carousel = await carousel_message(sender, answer.listings, answer.text)
     if carousel is not None:
         try:
             await _post_message(phone_number_id, carousel)
-            return
         except Exception:
             log.exception("whatsapp carousel failed")
-    await _send_text(phone_number_id, sender, clamp_summary(answer.text))
+        else:
+            if message_id:
+                await replies.complete(message_id, carousel)
+            return
+    await _send_saved(phone_number_id, message_id, _text_payload(sender, clamp_summary(answer.text)))
 
 
 async def _reply_all(events: list[dict[str, Any]]) -> None:
@@ -161,7 +188,10 @@ async def whatsapp_task(request: Request):
     event = await request.json()
     attempt = int(request.headers.get("x-cloudtasks-taskretrycount", "0")) + 1
     try:
-        await _reply(event)
+        await _reply(event, takeover=attempt >= MAX_ATTEMPTS)
+    except ReplyInProgress:
+        log.info("whatsapp task still in progress (intento %s de %s)", attempt, MAX_ATTEMPTS)
+        return Response(status_code=500)
     except Exception:
         log.exception("whatsapp task failed (intento %s de %s)", attempt, MAX_ATTEMPTS)
         if attempt < MAX_ATTEMPTS:

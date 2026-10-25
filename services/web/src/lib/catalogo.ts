@@ -1,7 +1,7 @@
 import { cacheLife } from "next/cache";
 
 // Datos de las páginas del catálogo (/ve/...). La web no calcula nada: todo sale de la API
-// (apps/api/app/lib/catalogo.py), que a su vez pide los precios a search_offers.
+// (services/api/app/lib/catalogo.py), que a su vez pide los precios a search_offers.
 // Cada página trae `indexable` y `datosDeEjemplo`: con datos de ejemplo va noindex y con aviso.
 const API = process.env.API_URL ?? "http://localhost:4000";
 

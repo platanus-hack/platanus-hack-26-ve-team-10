@@ -5,7 +5,7 @@ from app.lib import catalogo
 router = APIRouter(prefix="/catalogo")
 
 
-# Páginas públicas del catálogo. La web las pide al construir y al revalidar (apps/web/src/lib/catalogo.ts).
+# Páginas públicas del catálogo. La web las pide al construir y al revalidar (services/web/src/lib/catalogo.ts).
 # Cada respuesta trae "indexable" y "datosDeEjemplo": la web pone noindex y el aviso según eso.
 def _o_404(pagina):
     if pagina is None:

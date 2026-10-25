@@ -1,4 +1,4 @@
-# Pipeline de prais-web (apps/web): build -> push -> deploy. El build de Next ya compila y revisa tipos.
+# Pipeline de prais-web (services/web): build -> push -> deploy. El build de Next ya compila y revisa tipos.
 # Contexto = raíz del repo (workspace de pnpm). API_URL se fija al construir (rewrite de /api/*):
 # lo pasa el trigger como _API_URL, con la URL del backend.
 # El deploy solo cambia la imagen: el resto de la configuración se conserva de infra/51-deploy-web.sh.
@@ -17,7 +17,7 @@ steps:
     args:
       - build
       - -f
-      - apps/web/Dockerfile
+      - services/web/Dockerfile
       - --build-arg
       - API_URL=${_API_URL}
       - -t

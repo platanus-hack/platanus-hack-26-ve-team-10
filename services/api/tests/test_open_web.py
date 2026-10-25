@@ -1,6 +1,6 @@
 """La web abierta con un cliente falso de Firecrawl: sin red ni créditos.
 
-Correr desde apps/api: .venv/bin/python -m unittest discover -s tests
+Correr desde services/api: .venv/bin/python -m unittest discover -s tests
 """
 
 import asyncio

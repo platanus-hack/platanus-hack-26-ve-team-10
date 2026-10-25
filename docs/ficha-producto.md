@@ -71,7 +71,7 @@ El precio "desde" es siempre el del producto **nuevo**. Si el modelo solo tiene 
 
 ## Qué datos necesita (cambios de contrato)
 
-Lo de abajo no existe todavía en `apps/api/app/lib/types.py`. Cambiar un contrato se avisa al equipo antes de mergear ([docs/contracts.md](../docs/contracts.md)).
+Lo de abajo no existe todavía en `services/api/app/lib/types.py`. Cambiar un contrato se avisa al equipo antes de mergear ([docs/contracts.md](../docs/contracts.md)).
 
 | Dato | Dónde | Para qué |
 |---|---|---|

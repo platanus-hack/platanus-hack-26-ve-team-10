@@ -48,9 +48,9 @@ ensure_trigger() {  # ensure_trigger <nombre> <cloudbuild.yaml> <archivos> <sust
 }
 
 ensure_trigger "${API_SERVICE}-deploy" cloudbuild.api.yaml \
-  'apps/api/**,cloudbuild.api.yaml' \
+  'services/api/**,cloudbuild.api.yaml' \
   "_REGION=${REGION},_REPO=${REPO},_SERVICE=${API_SERVICE}"
 
 ensure_trigger "${WEB_SERVICE}-deploy" cloudbuild.web.yaml \
-  'apps/web/**,pnpm-lock.yaml,pnpm-workspace.yaml,package.json,cloudbuild.web.yaml' \
+  'services/web/**,pnpm-lock.yaml,pnpm-workspace.yaml,package.json,cloudbuild.web.yaml' \
   "_REGION=${REGION},_REPO=${REPO},_SERVICE=${WEB_SERVICE},_API_URL=${API_URL}"

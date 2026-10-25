@@ -1,5 +1,5 @@
 {
- "_doc": "Catálogo semilla de usaprais (Venezuela). Lo genera apps/api/scripts/catalogo_semilla.py desde resources/keywords-ve.csv. volumen = búsquedas/mes en Google Venezuela (DataForSEO, 2026-10-24). precioEjemplo lo lee SOLO la fuente de ejemplo (sources/mock.py); los precios reales salen de search_offers.",
+ "_doc": "Catálogo semilla de usaprais (Venezuela). Lo genera services/api/scripts/catalogo_semilla.py desde resources/keywords-ve.csv. volumen = búsquedas/mes en Google Venezuela (DataForSEO, 2026-10-24). precioEjemplo lo lee SOLO la fuente de ejemplo (sources/mock.py); los precios reales salen de search_offers.",
  "pais": "ve",
  "categorias": [
   {

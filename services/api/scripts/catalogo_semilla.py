@@ -1,6 +1,6 @@
-"""Genera apps/api/app/lib/catalogo.json desde la investigación de keywords (resources/keywords-ve.csv).
+"""Genera services/api/app/lib/catalogo.json desde la investigación de keywords (resources/keywords-ve.csv).
 
-Uso (desde la raíz): apps/api/.venv/bin/python apps/api/scripts/catalogo_semilla.py resources/keywords-ve.csv apps/api/app/lib/catalogo.json
+Uso (desde la raíz): services/api/.venv/bin/python services/api/scripts/catalogo_semilla.py resources/keywords-ve.csv services/api/app/lib/catalogo.json
 """
 import csv
 import hashlib
@@ -281,7 +281,7 @@ ids = [x["id"] for x in productos]
 assert len(ids) == len(set(ids)), "ids repetidos"
 
 catalogo = {
-    "_doc": "Catálogo semilla de usaprais (Venezuela). Lo genera apps/api/scripts/catalogo_semilla.py desde resources/keywords-ve.csv. "
+    "_doc": "Catálogo semilla de usaprais (Venezuela). Lo genera services/api/scripts/catalogo_semilla.py desde resources/keywords-ve.csv. "
             "volumen = búsquedas/mes en Google Venezuela (DataForSEO, 2026-10-24). precioEjemplo lo lee SOLO la fuente "
             "de ejemplo (sources/mock.py); los precios reales salen de search_offers.",
     "pais": "ve",

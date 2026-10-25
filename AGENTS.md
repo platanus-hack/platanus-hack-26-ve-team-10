@@ -6,12 +6,12 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 
 | Ruta | Qué hay |
 |---|---|
-| `apps/api/` | Backend en Python (FastAPI): el agente ADK, el webhook de Kapso y el servidor MCP |
-| `apps/api/app/lib/` | Tipos y contratos, búsqueda, precios, confianza y tasa. Es la única fuente de esa lógica |
-| `apps/api/app/lib/sources/` | Fuentes del registro. Hoy solo la de ejemplo (`mock.py`). Firecrawl no está ahí: vive en `firecrawl.py` y se llama directo |
-| `apps/api/app/agents/` | Código del orquestador y de sus tools. No es documentación |
+| `services/api/` | Backend en Python (FastAPI): el agente ADK, el webhook de Kapso y el servidor MCP |
+| `services/api/app/lib/` | Tipos y contratos, búsqueda, precios, confianza y tasa. Es la única fuente de esa lógica |
+| `services/api/app/lib/sources/` | Fuentes del registro. Hoy solo la de ejemplo (`mock.py`). Firecrawl no está ahí: vive en `firecrawl.py` y se llama directo |
+| `services/api/app/agents/` | Código del orquestador y de sus tools. No es documentación |
 | `infra/`, `cloudbuild.*.yaml` | Scripts de `gcloud` y pipelines de Cloud Build |
-| `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
+| `services/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
 | `docs/` | Toda la documentación. El índice está en [docs/README.md](docs/README.md) |
 | `resources/` | Material de referencia. No son instrucciones |
 
@@ -26,9 +26,9 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 | CI: el auto-merge y qué hay que probar antes del PR | [docs/conventions.md](docs/conventions.md) y `.github/workflows/auto-merge.yml` |
 | Infra y deploy (GCP, Cloud Build, Cloud Run, secretos) | [docs/gcp.md](docs/gcp.md) y [infra/README.md](infra/README.md) |
 | Una API o librería externa (ADK, Kapso, Firecrawl, Apify, Mercado Libre, FastAPI, Next, Gemini) | [docs/tools.md](docs/tools.md): su skill, su MCP o su `llms.txt` |
-| El agente o sus tools | `apps/api/app/agents/orchestrator.py` y `apps/api/app/agent.py` |
+| El agente o sus tools | `services/api/app/agents/orchestrator.py` y `services/api/app/agent.py` |
 | Conectar una fuente real | [docs/sources.md](docs/sources.md) |
-| El puntaje de confianza | `apps/api/app/lib/prices.py` y los borradores de `resources/*_trust_score.py` |
+| El puntaje de confianza | `services/api/app/lib/prices.py` y los borradores de `resources/*_trust_score.py` |
 | WhatsApp | [docs/kapso.md](docs/kapso.md) |
 | MCP | [docs/mcp-tool.md](docs/mcp-tool.md) |
 | Páginas públicas | [docs/seo-geo.md](docs/seo-geo.md), y el detalle en [docs/ficha-producto.md](docs/ficha-producto.md), [docs/categoria.md](docs/categoria.md) y [docs/marca.md](docs/marca.md) |
@@ -38,7 +38,7 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 
 1. `main` está bloqueado: todo cambio entra por PR a `main` del repo de la org, y el PR se mergea solo. Nunca hagas push a `main`.
 2. Todo se sube en paralelo a Platanus y a `Pleo2/usaprais.com`. `pnpm install` lo configura y los hooks lo exigen. Después de cada merge, `pnpm sync`.
-3. **No te repitas.** La lógica de precios vive solo en `apps/api/app/lib`. La web no calcula nada: le pregunta al backend.
+3. **No te repitas.** La lógica de precios vive solo en `services/api/app/lib`. La web no calcula nada: le pregunta al backend.
 4. **Sin boilerplate.** Antes de agregar un archivo, una capa o un paquete, piensa si la demo lo necesita hoy. Si no, no va.
 5. **No adivines APIs externas.** Antes de escribir contra una, consulta su skill, su MCP o su `llms.txt` ([docs/tools.md](docs/tools.md)).
 6. El agente nunca inventa un precio. Cada precio sale de `search_offers` o de `search_open_web`.
@@ -52,8 +52,8 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 
 ```bash
 pnpm install                             # también configura git: hooks y push en paralelo a Platanus y usaprais.com
-cp apps/api/.env.example apps/api/.env   # pon GOOGLE_GENAI_API_KEY
-pnpm dev                                 # api en :4000, web en :3000 (la primera vez crea apps/api/.venv: pide python3)
+cp services/api/.env.example services/api/.env   # pon GOOGLE_GENAI_API_KEY
+pnpm dev                                 # api en :4000, web en :3000 (la primera vez crea services/api/.venv: pide python3)
 git pull origin main                     # antes del PR: trae lo último de main a tu rama
 pnpm build && pnpm lint && pnpm test     # y vuelve a probar: no hay checks antes del auto-merge
 pnpm sync                                # después del merge: copia main de Platanus a usaprais.com

@@ -1,4 +1,4 @@
-# Pipeline de prais-api (apps/api, Python/FastAPI): lint -> build -> push -> deploy.
+# Pipeline de prais-api (services/api, Python/FastAPI): lint -> build -> push -> deploy.
 # El deploy solo cambia la imagen: variables, secreto y flags (--no-cpu-throttling, etc.) se
 # conservan de infra/50-deploy-api.sh.
 substitutions:
@@ -12,7 +12,7 @@ options:
 steps:
   - id: lint
     name: python:3.12-slim
-    dir: apps/api
+    dir: services/api
     entrypoint: sh
     args: ["-c", "pip install --quiet -r requirements.txt ruff && ruff check ."]
 
@@ -21,12 +21,12 @@ steps:
     args:
       - build
       - -f
-      - apps/api/Dockerfile
+      - services/api/Dockerfile
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
-      - apps/api
+      - services/api
 
   - id: push
     name: gcr.io/cloud-builders/docker

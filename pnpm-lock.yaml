@@ -8,9 +8,9 @@ importers:
 
   .: {}
 
-  apps/api: {}
+  services/api: {}
 
-  apps/web:
+  services/web:
     dependencies:
       next:
         specifier: 16.4.3
