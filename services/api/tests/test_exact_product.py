@@ -1,4 +1,4 @@
-"""Pregunta una elección que cambia el precio antes de buscar. Sin red.
+"""El agente recibe el mensaje tal como lo escribió la persona. Sin red.
 
 Correr desde services/api: .venv/bin/python -m unittest discover -s tests
 """
@@ -7,9 +7,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from app.agent import ask_prais, clear_product_dialog
-from app.agents.clarify import next_question
-from app.agents.listing import list_message
+from app.agent import ask_prais, track_product
 from app.agents.orchestrator import _before_search
 from app.routes.whatsapp import _inbound_text, _reply
 
@@ -46,49 +44,15 @@ def _list_reply(sender: str, title: str, row_id: str) -> dict:
     }
 
 
-class QuestionTests(unittest.TestCase):
-    def test_iphone_14_asks_only_the_model(self):
-        question = next_question("iPhone 14", frozenset())
-        assert question is not None
-        self.assertEqual(question.dimension, "model")
-        self.assertEqual(question.text, "¿Cuál iPhone 14 buscas?")
-        self.assertEqual(
-            question.choices,
-            ("iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max", "Me da igual"),
-        )
-
-    def test_exact_phone_is_ready_to_search(self):
-        self.assertIsNone(next_question("iPhone 14 Pro Max 256 GB usado", frozenset()))
-
-    def test_named_pro_asks_condition_not_another_model(self):
-        question = next_question("iPhone 14 Pro", frozenset())
-        assert question is not None
-        self.assertEqual(question.dimension, "condition")
-        self.assertEqual(question.choices, ("Nuevo", "Usado", "Me da igual"))
-
-    def test_accessory_does_not_ask(self):
-        self.assertIsNone(next_question("funda para iPhone 14", frozenset()))
-
-    def test_playstation_asks_the_model_and_not_storage(self):
-        question = next_question("PlayStation 5", frozenset())
-        assert question is not None
-        self.assertEqual(question.dimension, "model")
-        self.assertEqual(
-            question.choices,
-            ("PlayStation 5", "PlayStation 5 Pro", "PlayStation 5 Slim", "Me da igual"),
-        )
-
-
-class SearchGateTests(unittest.IsolatedAsyncioTestCase):
+class AgentReceivesTheMessageTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        clear_product_dialog()
-        self.searches: list[str] = []
+        self.heard: list[str] = []
 
     def _runner(self):
-        searches = self.searches
+        heard = self.heard
 
         async def run_async(**kwargs):
-            searches.append(kwargs["new_message"].parts[0].text)
+            heard.append(kwargs["new_message"].parts[0].text)
             yield _Final("Listo.")
 
         return mock.patch("app.agent.runner.run_async", run_async)
@@ -99,85 +63,104 @@ class SearchGateTests(unittest.IsolatedAsyncioTestCase):
 
         return mock.patch("app.agents.specialists.search_open_web", explode)
 
-    async def test_iphone_17pro_reaches_the_agent_unchanged(self):
-        with self._runner():
-            answer = await ask_prais("wa-17", "comprar un iphone 17pro")
-        self.assertEqual(answer.choices, [])
-        self.assertEqual(self.searches, ["comprar un iphone 17pro"])
+    async def test_any_request_reaches_the_agent_unchanged(self):
+        messages = (
+            "comprar un iphone 17pro",
+            "Estoy buscando un apartamento en Valencia de 2 habitaciones de lujo",
+            "PlayStation 5",
+            "hola",
+        )
+        with self._runner(), self._no_network():
+            for message in messages:
+                await ask_prais(f"person-{message}", message)
+        self.assertIn("comprar un iphone 17pro", self.heard[0])
+        self.assertIn("Producto ya fijado", self.heard[0])
+        self.assertEqual(self.heard[1:], list(messages[1:]))
 
-    async def test_a_non_phone_is_not_rewritten(self):
-        with self._runner():
-            await ask_prais("wa-car", "Toyota Corolla")
-        self.assertEqual(self.searches, ["Toyota Corolla"])
+    async def test_a_link_is_compared_by_the_product_on_the_page(self):
+        async def name(_url: str) -> str:
+            return "iPhone 15 128 GB"
 
-    async def test_a_vague_name_does_not_block_the_tool(self):
+        with self._runner(), self._no_network(), mock.patch("app.agent.product_name_at", name):
+            await ask_prais("link-person", "mira https://tienda.example/iphone")
+        self.assertIn("iPhone 15 128 GB", self.heard[0])
+        self.assertIn("No preguntes cuál modelo es", self.heard[0])
+
+    async def test_the_same_question_is_not_asked_twice(self):
+        searched: list[str] = []
+
+        async def run_async(**_kwargs):
+            yield _Final("¿Cuál iPhone buscas?")
+
+        async def search(product: str, budget_s: float = 45):
+            searched.append(product)
+            return {"offers": []}
+
+        with mock.patch("app.agent.runner.run_async", run_async), mock.patch("app.agent.search_open_web", search):
+            first = await ask_prais("twice", "un iphone")
+            second = await ask_prais("twice", "el normal")
+        self.assertEqual(first.text, "¿Cuál iPhone buscas?")
+        self.assertEqual(second.text, "Sigo con lo que ya me dijiste.")
+        self.assertEqual(searched, ["el normal"])
+
+    async def test_latest_model_does_not_ask_which_model(self):
+        searched: list[str] = []
+
+        async def run_async(**_kwargs):
+            yield _Final("¿Cuál modelo de iPhone buscas?")
+
+        async def search(product: str, budget_s: float = 45):
+            searched.append(product)
+            return {"offers": []}
+
+        with mock.patch("app.agent.runner.run_async", run_async), mock.patch("app.agent.search_open_web", search):
+            answer = await ask_prais("known-18", "Hola! Quiero un iphone 18\nel ultimo modelo que salio")
+        self.assertEqual(answer.text, "Busco iphone 18.")
+        self.assertEqual(searched, ["iphone 18"])
+
+
+class ProductMemoryTests(unittest.TestCase):
+    def test_the_latest_model_keeps_the_phone_already_named(self):
+        named = track_product(None, "Hola! Quiero un iphone 18")
+        self.assertEqual(named, "iphone 18")
+        self.assertEqual(track_product(named, "el ultimo modelo que salio"), "iphone 18")
+
+
+class SearchGateTests(unittest.TestCase):
+    def test_the_product_name_does_not_block_the_search(self):
         tool = SimpleNamespace(name="find_listings_open_web")
-        context = SimpleNamespace(invocation_id="once-1", session=SimpleNamespace(user_id="nobody"))
-        first = _before_search(tool, {"product": "iPhone 14"}, context)
+        context = SimpleNamespace(invocation_id="once", session=SimpleNamespace(user_id="somebody"))
+        first = _before_search(tool, {"product": "comprar un iphone 17pro"}, context)
         self.assertIsNone(first)
-        again = _before_search(tool, {"product": "iPhone 14"}, context)
+        again = _before_search(tool, {"product": "comprar un iphone 17pro"}, context)
+        assert again is not None
+        self.assertEqual(again["listings"], [])
         self.assertEqual(again["notice"], "This search already ran for this message. Use those listings.")
 
 
-class WhatsAppListTests(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
-        clear_product_dialog()
-
-    def test_list_payload_matches_kapso(self):
-        payload = list_message(
-            "584120000000",
-            "¿Cuál iPhone 14 buscas?",
-            ["iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max", "Me da igual"],
-            section="Modelos",
-        )
+class WhatsAppTests(unittest.IsolatedAsyncioTestCase):
+    def test_text_and_a_tapped_row_are_the_message(self):
         self.assertEqual(
-            payload,
-            {
-                "messaging_product": "whatsapp",
-                "to": "584120000000",
-                "type": "interactive",
-                "interactive": {
-                    "type": "list",
-                    "body": {"text": "¿Cuál iPhone 14 buscas?"},
-                    "action": {
-                        "button": "Ver opciones",
-                        "sections": [
-                            {
-                                "title": "Modelos",
-                                "rows": [
-                                    {"id": "iphone-14", "title": "iPhone 14"},
-                                    {"id": "iphone-14-plus", "title": "iPhone 14 Plus"},
-                                    {"id": "iphone-14-pro", "title": "iPhone 14 Pro"},
-                                    {"id": "iphone-14-pro-max", "title": "iPhone 14 Pro Max"},
-                                    {"id": "me-da-igual", "title": "Me da igual"},
-                                ],
-                            }
-                        ],
-                    },
-                },
-            },
+            _inbound_text(_text_event("5800", "comprar un iphone 17pro")),
+            ("99", "5800", "comprar un iphone 17pro"),
         )
-
-    def test_text_and_list_reply_both_count(self):
-        self.assertEqual(_inbound_text(_text_event("5800", "el pro")), ("99", "5800", "el pro"))
-        tapped = _inbound_text(_list_reply("5800", "iPhone 14 Pro", "iphone-14-pro"))
-        self.assertEqual(tapped, ("99", "5800", "iPhone 14 Pro"))
+        tapped = _inbound_text(_list_reply("5800", "iPhone 17 Pro", "iphone-17-pro"))
+        self.assertEqual(tapped, ("99", "5800", "iPhone 17 Pro"))
         reaction = {
             "phone_number_id": "99",
             "message": {"type": "reaction", "from": "5800", "reaction": {"emoji": "👍"}},
         }
         self.assertIsNone(_inbound_text(reaction))
 
-    async def test_whatsapp_sends_a_list_and_accepts_a_tap_or_text(self):
+    async def test_whatsapp_sends_the_agent_reply_for_whatever_was_asked(self):
         posted: list[dict] = []
+        heard: list[str] = []
 
         async def capture(_phone_number_id, payload):
             posted.append(payload)
 
-        sent: list[str] = []
-
         async def run_async(**kwargs):
-            sent.append(kwargs["new_message"].parts[0].text)
+            heard.append(kwargs["new_message"].parts[0].text)
             yield _Final("Listo.")
 
         async def explode(*_args, **_kwargs):
@@ -189,7 +172,12 @@ class WhatsAppListTests(unittest.IsolatedAsyncioTestCase):
             mock.patch("app.agents.specialists.search_open_web", explode),
         ):
             await _reply(_text_event("5800", "comprar un iphone 17pro"))
-            await _reply(_list_reply("5800", "iPhone 14 Pro", "iphone-14-pro"))
+            await _reply(_text_event("5800", "toyota corolla en valencia"))
+            await _reply(_list_reply("5800", "iPhone 17 Pro", "iphone-17-pro"))
 
-        self.assertEqual([item["type"] for item in posted], ["text", "text"])
-        self.assertEqual(sent, ["comprar un iphone 17pro", "iPhone 14 Pro"])
+        self.assertIn("comprar un iphone 17pro", heard[0])
+        self.assertIn("iphone 17pro", heard[0])
+        self.assertEqual(heard[1], "toyota corolla en valencia")
+        self.assertIn("iPhone 17 Pro", heard[2])
+        self.assertEqual([item["type"] for item in posted], ["text", "text", "text"])
+        self.assertEqual(posted[0]["text"]["body"], "Listo.")

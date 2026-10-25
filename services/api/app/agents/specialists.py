@@ -3,6 +3,7 @@
 from typing import Any
 
 from app.agents.listing import cards_from_offers
+from app.agents.open_web_trust import review_listings
 from app.lib.importacion.cotizar import quote_import
 from app.lib.search import search_offers
 from app.lib.sources.firecrawl import search_open_web
@@ -47,7 +48,9 @@ async def find_listings_open_web(product: str) -> dict[str, Any]:
         product: Product or service the orchestrator is comparing.
     """
     found = await search_open_web(product)
-    found["listings"] = cards_from_offers(found.get("offers") or [])
+    listings = cards_from_offers(found.get("offers") or [])
+    review_listings(product, listings)
+    found["listings"] = listings
     return found
 
 

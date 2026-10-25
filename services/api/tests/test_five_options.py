@@ -12,6 +12,7 @@ from app.agents.listing import (
     card_text,
     carousel_message,
     choose_options,
+    shopping_message,
 )
 from app.agents.orchestrator import root_agent
 from app.routes.mcp import INSTRUCTIONS, Merchant, Offer, PriceSearch, _summary
@@ -109,6 +110,18 @@ class CarouselTests(unittest.IsolatedAsyncioTestCase):
         with mock.patch("app.agents.listing.marked_product_image", boom):
             self.assertIsNone(await carousel_message("5800", rows, "Solo hay un precio."))
 
+    async def test_one_priced_offer_is_still_a_card(self):
+        async def boom(_title: str) -> str:
+            raise AssertionError("network")
+
+        rows = [_row("https://a.example/1", "USD 2,00", 2)]
+        with mock.patch("app.agents.listing.marked_product_image", boom):
+            payload = await shopping_message("5800", rows, "Solo hay un precio.")
+        assert payload is not None
+        self.assertEqual(payload["interactive"]["type"], "cta_url")
+        self.assertEqual(payload["interactive"]["action"]["parameters"]["url"], "https://a.example/1")
+        self.assertEqual(payload["interactive"]["action"]["parameters"]["display_text"], "Ver oferta")
+
 
 def _offer(
     url: str,
@@ -205,5 +218,6 @@ class ReplyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(cards), 5)
         self.assertEqual(cards[0]["action"]["parameters"]["url"], "https://a.example/1")
         self.assertNotIn("demo.example", str(cards))
-        self.assertEqual(posted[1]["type"], "text")
-        self.assertIn("Solo hay un precio", posted[1]["text"]["body"])
+        self.assertEqual(posted[1]["interactive"]["type"], "cta_url")
+        self.assertEqual(posted[1]["interactive"]["action"]["parameters"]["url"], "https://a.example/1")
+        self.assertIn("Solo hay un precio", posted[1]["interactive"]["body"]["text"])
