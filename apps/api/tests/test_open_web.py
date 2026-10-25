@@ -5,6 +5,7 @@ Correr desde apps/api: .venv/bin/python -m unittest discover -s tests
 
 import asyncio
 import os
+import time
 import unittest
 from types import SimpleNamespace
 from unittest import mock
@@ -54,9 +55,11 @@ class FakeFirecrawl:
     con el SDK 4.54.0, el formato JSON como objeto JsonFormat responde 400.
     """
 
-    def __init__(self, pages, slow=()):
+    def __init__(self, pages, slow=(), delays=None, use_full_timeout=()):
         self.pages = pages
         self.slow = set(slow)
+        self.delays = dict(delays or {})
+        self.use_full_timeout = set(use_full_timeout)
         self.scraped = []
 
     async def search(self, query, **_):
@@ -73,7 +76,11 @@ class FakeFirecrawl:
             assert listing["schema"] is firecrawl.ListedOffers and isinstance(listing["prompt"], str)
             kind = "json"
         self.scraped.append((url, kind))
-        if url in self.slow:
+        if url in self.use_full_timeout:
+            await asyncio.sleep(timeout / 1000)
+        elif url in self.delays:
+            await asyncio.sleep(self.delays[url])
+        elif url in self.slow:
             await asyncio.sleep(5)
         page = self.pages[url]
         if isinstance(page, Exception):
@@ -84,6 +91,7 @@ class FakeFirecrawl:
 class OpenWebTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         firecrawl._cache.clear()
+        firecrawl._page_cache.clear()
         for patcher in (
             mock.patch.dict(os.environ, {"FIRECRAWL_API_KEY": "fake"}),
             mock.patch.object(firecrawl, "get_rate", mock.AsyncMock(return_value=RATE)),
@@ -234,6 +242,7 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([offer["priceUsd"] for offer in result["offers"]], [5000, 5100, 5200, 5300, 7900])
 
         firecrawl._cache.clear()
+        firecrawl._page_cache.clear()
         alone = await self.run_search(FakeFirecrawl({portal: listing_page(portal, cars, "u$s5.000 u$s5.100 u$s5.200 u$s5.300 u$s5.400")}))
         self.assertEqual(len(alone["offers"]), 5)
 
@@ -270,6 +279,124 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(offer["priceUsd"], 5.2)
         self.assertEqual(offer["rate"], "200 Bs/USD (tasa de prueba, 2026-10-24T08:00:00-04:00)")
 
+    async def test_listing_fits_in_the_mcp_budget(self):
+        """A slow listing, a fast listing and a product page, inside the 25s MCP budget.
+
+        The slow listing used to be product-then-JSON in series and came back as
+        timeout. It is one JSON read now, so it finishes with offers.
+        """
+        slow = "https://soytechno.com/laptops-gamer/"
+        fast = "https://sigmatiendas.com/collections/laptops-gamer"
+        detail = "https://www.multimax.com.ve/producto/msi-katana-15/"
+        offer = {"title": "MSI Katana 15 RTX 5060 gamer", "price": 1669, "currency": "USD"}
+        client = FakeFirecrawl(
+            {
+                slow: listing_page(slow, [offer], "MSI Katana 15 RTX 5060 gamer USD 1.669"),
+                fast: listing_page(fast, [{**offer, "price": 1599}], "MSI Katana 15 RTX 5060 gamer USD 1.599"),
+                detail: product_page(detail, 1720.0, title="MSI Katana 15 RTX 5060 gamer"),
+            },
+            delays={slow: 2},
+        )
+        started = time.monotonic()
+        with self.assertLogs("prais.firecrawl", level="INFO") as logs:
+            result = await self.run_search(client, budget_s=25, product="laptop gamer RTX 5060")
+        self.assertLess(time.monotonic() - started, 25)
+        shops = {offer["merchant"]["name"] for offer in result["offers"]}
+        self.assertGreaterEqual(len(shops), 2)
+        self.assertIn("soytechno.com", shops)
+        self.assertIn("sigmatiendas.com", shops)
+        self.assertEqual(result["failedSources"], [])
+        self.assertEqual([kind for url, kind in client.scraped if url == slow], ["json"])
+        self.assertEqual([kind for url, kind in client.scraped if url == fast], ["json"])
+        self.assertEqual([kind for url, kind in client.scraped if url == detail], ["product"])
+        logged = " ".join(logs.output)
+        self.assertIn('"outcome": "con_ofertas"', logged)
+        self.assertNotIn('"detail": "timeout"', logged)
+
+    async def test_foreign_and_brand_sites_are_not_scraped(self):
+        keep = {
+            "https://soytechno.com/laptops-gamer/": listing_page(
+                "https://soytechno.com/laptops-gamer/",
+                [{"title": "MSI Katana 15 RTX 5060 gamer", "price": 1669, "currency": "USD"}],
+                "USD 1.669",
+            ),
+            "https://www.apple.com/ve/iphone-15/": product_page(
+                "https://www.apple.com/ve/iphone-15/", 800.0, title="iPhone 15 128 GB"
+            ),
+            "https://www.lenovo.com/ve/laptops": product_page(
+                "https://www.lenovo.com/ve/laptops", 900.0, title="Lenovo LOQ RTX 5060 gamer"
+            ),
+        }
+        drop = [
+            "https://www.cyberpuerta.mx/Computo/Laptops",
+            "https://www.falabella.com.pe/laptops",
+            "https://tienda.example.com.co/laptops",
+            "https://www.lenovo.com/laptops",
+            "https://www.nvidia.com/en-us/geforce/laptops/",
+        ]
+        pages = {**keep, **{url: product_page(url, 1.0) for url in drop}}
+        client = FakeFirecrawl(pages)
+        await self.run_search(client, product="laptop gamer RTX 5060")
+        scraped = {url for url, _kind in client.scraped}
+        self.assertTrue(set(keep) <= scraped)
+        self.assertTrue(scraped.isdisjoint(drop))
+
+    async def test_venezuela_shops_are_read_before_other_results(self):
+        known = "https://soytechno.com/apple-iphone-15/"
+        local = [f"https://shop{n}.com.ve/item/{n}" for n in range(6)]
+        filler = [f"https://other{n}.example.com/item/{n}" for n in range(6)]
+        foreign = [
+            "https://www.cyberpuerta.mx/laptops",
+            "https://www.lenovo.com/laptops",
+            "https://www.nvidia.com/geforce",
+            "https://tienda.example.com.co/celulares",
+            "https://www.falabella.com.pe/iphone",
+        ]
+        pages = {}
+        for url in foreign + filler + local + [known]:
+            pages[url] = product_page(url, 700.0, title="iPhone 15 128 GB")
+        client = FakeFirecrawl(pages)
+        await self.run_search(client, product="iPhone 15 128 GB")
+        scraped = {url for url, _kind in client.scraped}
+        self.assertLessEqual(len(scraped), firecrawl.SCRAPE_LIMIT)
+        self.assertIn(known, scraped)
+        self.assertTrue(set(local) <= scraped)
+        self.assertTrue(scraped.isdisjoint(foreign))
+        self.assertNotIn(filler[-1], scraped)
+
+    async def test_a_finished_page_is_reused_when_another_times_out(self):
+        good = "https://www.autocosmos.com.ve/aveo"
+        slow = "https://slow.example.com/aveo"
+        client = FakeFirecrawl(
+            {
+                good: listing_page(good, [{"title": "Chevrolet Aveo", "price": 7000, "currency": "u$s"}], "u$s7.000"),
+                slow: product_page(slow, 6500.0),
+            },
+            slow=[slow],
+        )
+        first = await self.run_search(client, budget_s=2)
+        self.assertEqual([offer["priceUsd"] for offer in first["offers"]], [7000])
+        self.assertEqual(first["failedSources"], ["firecrawl:slow.example.com"])
+        self.assertNotIn("chevrolet aveo usado", firecrawl._cache)
+        self.assertIsNotNone(firecrawl._recall("Chevrolet Aveo usado", good))
+        self.assertIsNone(firecrawl._recall("Chevrolet Aveo usado", slow))
+        good_scrapes = [item for item in client.scraped if item[0] == good]
+        second = await self.run_search(client, budget_s=2)
+        self.assertEqual([item for item in client.scraped if item[0] == good], good_scrapes)
+        self.assertEqual([offer["priceUsd"] for offer in second["offers"]], [7000])
+
+    async def test_listing_extraction_is_not_started_when_time_is_gone(self):
+        url = "https://soytechno.com/msi-katana-15/"
+        client = FakeFirecrawl(
+            {url: listing_page(url, [{"title": "MSI Katana", "price": 1600, "currency": "USD"}], "USD 1.600")},
+            use_full_timeout=[url],
+        )
+        result = await self.run_search(client, budget_s=3, product="MSI Katana")
+        self.assertEqual(client.scraped, [(url, "product")])
+        self.assertEqual(result["offers"], [])
+        self.assertEqual(result["failedSources"], [])
+        self.assertNotIn("msi katana", firecrawl._cache)
+
 
 class ParsingTest(unittest.TestCase):
     def test_published_prices_keep_the_currency_next_to_them(self):
@@ -294,6 +421,29 @@ class ParsingTest(unittest.TestCase):
             [firecrawl._currency(label) for label in labels],
             ["USD", "USD", "USD", "USD", "USD", "USD", "USD", "VES", "VES", "VES", "VES", None, None],
         )
+
+    def test_listing_urls_and_shops_outside_venezuela(self):
+        self.assertTrue(firecrawl._is_listing("https://soytechno.com/laptops-gamer/"))
+        self.assertTrue(firecrawl._is_listing("https://sigmatiendas.com/collections/laptops"))
+        self.assertTrue(firecrawl._is_listing("https://tienda.example.com/categoría/laptops/"))
+        self.assertTrue(firecrawl._is_listing("https://listado.example.com/portatiles"))
+        self.assertFalse(firecrawl._is_listing("https://soytechno.com/apple-iphone-15/"))
+        self.assertFalse(firecrawl._is_listing("https://www.farmadon.com.ve/producto/mary-arroz/"))
+        self.assertFalse(firecrawl._sells_in_venezuela("https://www.cyberpuerta.mx/laptops"))
+        self.assertFalse(firecrawl._sells_in_venezuela("https://www.lenovo.com/laptops"))
+        self.assertFalse(firecrawl._sells_in_venezuela("https://www.nvidia.com/geforce"))
+        self.assertTrue(firecrawl._sells_in_venezuela("https://www.apple.com/ve/iphone-15/"))
+        self.assertTrue(firecrawl._sells_in_venezuela("https://soytechno.com/laptops-gamer/"))
+        self.assertTrue(firecrawl._sells_in_venezuela("https://www.autocosmos.com.ve/aveo"))
+        self.assertEqual(firecrawl._ve_group("https://soytechno.com/laptops-gamer/"), 0)
+        self.assertEqual(firecrawl._ve_group("https://www.autocosmos.com.ve/aveo"), 1)
+        self.assertEqual(firecrawl._ve_group("https://other.example.com/item"), 2)
+
+    def test_search_timeout_leaves_time_to_read_pages(self):
+        deadline = time.monotonic() + 24
+        timeout = firecrawl._search_timeout_ms(deadline)
+        self.assertLessEqual(timeout, firecrawl.SEARCH_TIMEOUT_MS)
+        self.assertGreaterEqual(24_000 - timeout, 9_000)
 
     def test_matches(self):
         cases = [
