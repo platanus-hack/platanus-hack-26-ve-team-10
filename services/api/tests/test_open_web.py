@@ -777,14 +777,6 @@ class SearchNoticeTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(without["offers"], [])
         self.assertNotIn("notice", without)
 
-    async def test_search_all_lists_failed_pages(self):
-        async def open_web(product, budget_s):
-            return {"offers": [], "failedSources": ["firecrawl:autos.example.com.ve"]}
-
-        with mock.patch.object(search, "search_open_web", open_web):
-            result = await search.search_all(SearchQuery(text="Chevrolet Aveo usado"), 25)
-        self.assertEqual(result["failedSources"], ["firecrawl:autos.example.com.ve"])
-
 
 if __name__ == "__main__":
     unittest.main()

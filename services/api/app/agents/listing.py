@@ -63,6 +63,8 @@ class ListingCard(BaseModel):
     fulfiller: str | None = None
     landed: dict[str, Any] | None = None
     seen_at: str | None = None  # cuándo se vio ese precio: con esta inflación, uno sin fecha no es un precio
+    zone: str | None = None
+    source: str | None = None  # firecrawl, ejemplo o el id de la fuente del registro: lo pide el MCP
 
 
 class SpecialistReport(BaseModel):
@@ -98,6 +100,8 @@ def cards_from_offers(offers: list[dict[str, Any]]) -> list[dict[str, Any]]:
             trust=merchant.get("trust"),
             price_usd=offer.get("priceUsd"),
             seen_at=offer.get("seenAt"),
+            zone=merchant.get("zone"),
+            source=offer.get("source"),
         )
         data = card.model_dump()
         # El contrato viaja con la tarjeta sin que ningún modelo lo reescriba: close_listings lo

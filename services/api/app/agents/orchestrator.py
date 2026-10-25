@@ -46,8 +46,8 @@ def _before_search(tool: BaseTool, args: dict[str, Any], tool_context: ToolConte
     return _search_once(tool, args, tool_context)
 
 
-# Cómo hablar de la confianza de una tienda de la web abierta. El cálculo está en open_web_trust.py.
-_TRUST_SKILL = (Path(__file__).with_name("open_web_trust_skill.md")).read_text(encoding="utf-8")
+# Cómo hablar de la confianza de una oferta. La misma skill va en las instrucciones del MCP.
+TRUST_SKILL = (Path(__file__).with_name("trust_skill.md")).read_text(encoding="utf-8")
 
 # Las tools devuelven el listado. No hay un segundo modelo reescribiendo ese JSON.
 root_agent = LlmAgent(
@@ -76,9 +76,9 @@ Regla dura: no inventas nada. Cada cifra, tienda, tasa, puntaje y hecho tiene qu
 
 Si una oferta trae example true, o el aviso dice datos de ejemplo, o el nombre del comercio contiene "ejemplo", tienes que decir que es un precio de ejemplo y no una tienda real. No borres la palabra ejemplo.
 
-Cada listado de la web abierta trae trust_review. Úsalo así, y no lo contradigas:
+Cada listado trae la confianza de su comercio. Úsala así, y no la contradigas:
 
-{_TRUST_SKILL}
+{TRUST_SKILL}
 
 Si una oferta trae price_kind estimado, es comprarla en Amazon y traerla con un courier. El precio es el total puesto en Venezuela y es un estimado. Si es la opción que hay que abrir primero, dilo y di que es un estimado. El desglose ya viene en la oferta: no lo recalcules.
 

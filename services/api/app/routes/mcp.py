@@ -9,14 +9,22 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import CallToolResult, Icon, TextContent, ToolAnnotations
 from pydantic import AliasChoices, BaseModel, Field
 
-from app.agents.listing import _https, choose_options, has_published_price
+from app.agents.listing import (
+    _https,
+    _trust_points,
+    choose_options,
+    has_published_price,
+)
+from app.agents.orchestrator import TRUST_SKILL
+from app.agents.specialists import find_all_listings
 from app.lib.rate import get_rate
-from app.lib.search import search_all
+from app.lib.trust import to_stars
 from app.lib.types import SearchQuery
 
 # Open-web budget inside one MCP call. The agent allows 45s. A listing is now one
 # Firecrawl read, so 25s still covers the search plus that read. The client is
-# another assistant waiting live, so this stays below the agent's 45s.
+# another assistant waiting live, so this stays below the agent's 45s. Amazon keeps
+# its own 35s wait, so a call can take up to ~40s.
 OPEN_WEB_BUDGET_S = 25
 
 # Widget de ofertas (MCP Apps): Claude y ChatGPT lo muestran dentro del chat. Los assets son copias
@@ -42,26 +50,26 @@ ICONS = [
     Icon(src=_data_uri("usaprais.svg", "image/svg+xml"), mime_type="image/svg+xml", sizes=["any"]),
 ]
 
-INSTRUCTIONS = """usaprais finds where a product is cheapest in Venezuela, across online shops and the main sales channels.
-
-- Use search_prices for any question about the price of a product sold in Venezuela.
-- Before searching, make sure you know the product with its brand and model or size. If the request is vague ("un carro", "un teléfono"), ask one short question first.
-- Answer in the user's language (usually Spanish, with "tú").
-- Lead with the verdict: the cheapest real price in USD and the shop that sells it. Then the other real priced options, up to five in total. An offer with no published price does not count. Example offers stay labeled as examples and do not fill those five when a real priced offer exists. If fewer than five real priced offers come back, talk about those. Do not invent prices to complete the five.
-- Every price you mention goes with its shop and when it was seen. If it was converted from bolívares, also the rate used.
-- Never invent or estimate prices, shops, rates or trust scores: use only what search_prices returns. Offers with example: true are demo data; say so.
-- An offer without a price is "precio al DM". If the cheapest shop has low trust or no score, say so and suggest how to stay safe.
-- When the offers widget is shown in the chat, do not repeat the whole list: give the verdict in one or two sentences."""
+# El MCP es solo la capa de comunicación: la búsqueda es la del agente y esta skill le dice al
+# asistente que pregunta cómo contestar con ella. La confianza se cuenta con la misma skill que WhatsApp.
+INSTRUCTIONS = (Path(__file__).with_name("mcp_skill.md")).read_text(encoding="utf-8").replace(
+    "{trust_skill}", TRUST_SKILL
+)
 
 
 # Salida estructurada: el cliente recibe este schema como outputSchema y el widget la pinta. Los
-# nombres van en camelCase, igual que la respuesta de search_offers (docs/contracts.md).
+# nombres van en camelCase, igual que la respuesta de search_offers (docs/contracts.md). Sale de las
+# mismas tarjetas que ve WhatsApp (ListingCard), ya con la confianza cerrada.
 class Merchant(BaseModel):
     name: str
-    channel: str = Field(description="web, mercadolibre, instagram, tiktok, facebook or amazon")
+    channel: str = Field(description="web, mercadolibre, facebook, instagram, tiktok or importacion (Amazon + courier)")
     zone: str | None = Field(default=None, description="City or area the merchant reports")
     delivers: bool | None = None
     trust: int | None = Field(default=None, description="0-100 seller trust score; null when not scored yet")
+    stars: int | None = Field(default=None, description="The same trust score in stars, 0-5")
+    verdict: str | None = Field(
+        default=None, description="confiable, precaucion, riesgosa or sin_datos; null for a provisional score"
+    )
 
 
 class Offer(BaseModel):
@@ -70,8 +78,11 @@ class Offer(BaseModel):
     price: str | None = Field(default=None, description="Price as the merchant published it; null means 'ask by DM'")
     priceUsd: float | None = Field(default=None, description="Price converted to USD")
     rate: str | None = Field(default=None, description="Exchange rate used, with its source and date, if converted")
-    seenAt: str = Field(description="When the price was seen (ISO 8601)")
-    source: str = Field(description="Where the offer came from: firecrawl, ejemplo…")
+    seenAt: str | None = Field(default=None, description="When the price was seen (ISO 8601)")
+    source: str = Field(description="Where the offer came from: firecrawl, ejemplo, a source id or the channel")
+    priceKind: str = Field(
+        default="publicado", description="publicado, or estimado for the landed estimate of buying it in the US"
+    )
     example: bool = Field(default=False, description="True for made-up demo data: never present it as real")
     imageUrl: str | None = Field(
         default=None, validation_alias=AliasChoices("imageUrl", "image_url"), description="Product photo, if any"
@@ -96,6 +107,34 @@ class PriceSearch(BaseModel):
     )
     notice: str | None = Field(default=None, description="Caveats to show the user")
     exchangeRate: ExchangeRate | None = Field(default=None, description="Rate used to show prices in bolívares")
+
+
+def _offer(card: dict) -> Offer:
+    trust = card.get("trust")
+    points = _trust_points(trust)
+    stars = card.get("trustStars")
+    return Offer(
+        title=card["title"],
+        url=card["url"],
+        price=card.get("price"),
+        priceUsd=card.get("price_usd"),
+        rate=card.get("rate"),
+        seenAt=card.get("seen_at"),
+        source=card.get("source") or card["channel"],
+        priceKind=card.get("price_kind") or "publicado",
+        example=bool(card.get("example")),
+        imageUrl=card.get("image_url"),
+        reviews=card.get("reviews"),
+        merchant=Merchant(
+            name=card["seller"],
+            channel=card["channel"],
+            zone=card.get("zone"),
+            delivers=card.get("ships"),
+            trust=points,
+            stars=stars if isinstance(stars, int) else to_stars(points),
+            verdict=trust.get("verdict") if isinstance(trust, dict) else None,
+        ),
+    )
 
 
 def _comparison(offers: list[Offer]) -> list[Offer]:
@@ -133,7 +172,12 @@ def _summary(result: PriceSearch) -> str:
         flags = [offer.merchant.channel]
         if offer.merchant.zone and offer.merchant.zone != "Venezuela":
             flags.append(offer.merchant.zone)
-        flags.append(f"trust {offer.merchant.trust}" if offer.merchant.trust is not None else "no trust score")
+        if offer.merchant.trust is not None:
+            flags.append(f"trust {offer.merchant.trust}/100" + (f" {offer.merchant.verdict}" if offer.merchant.verdict else ""))
+        else:
+            flags.append(f"trust {offer.merchant.verdict}" if offer.merchant.verdict else "no trust score")
+        if offer.priceKind == "estimado":
+            flags.append("estimated landed price")
         if offer.example:
             flags.append("EXAMPLE DATA")
         if isinstance(offer.priceUsd, (int, float)):
@@ -144,7 +188,7 @@ def _summary(result: PriceSearch) -> str:
             price = str(offer.price)
         lines.append(
             f"{index}. {price} · {offer.merchant.name} ({', '.join(flags)}) · {offer.title} · "
-            f"seen {offer.seenAt} · {offer.url}"
+            f"seen {offer.seenAt or 'date unknown'} · {offer.url}"
         )
     real_priced = [
         offer
@@ -167,7 +211,7 @@ def _summary(result: PriceSearch) -> str:
 apps = Apps()
 
 
-# Las tools llaman directo a la búsqueda, sin el agente: quien pregunta ya es un asistente de IA.
+# La tool corre la búsqueda del agente sin el orquestador: quien pregunta ya es un asistente de IA.
 @apps.tool(
     resource_uri=OFERTAS_URI,
     name="search_prices",
@@ -175,9 +219,9 @@ apps = Apps()
     description=(
         "Find where a product is cheapest in Venezuela across online shops and the main sales channels. "
         "Returns offers sorted by USD price, each with the price as published, the exchange rate used, when "
-        "it was seen, its source and the merchant's 0-100 trust score. The zone filter does not apply to "
+        "it was seen, its source and the merchant's closed trust score (0-100, stars and verdict). The zone filter does not apply to "
         "open-web offers (source firecrawl): their merchant.zone is the listing's city when the page shows "
-        "one, otherwise 'Venezuela'. Takes up to ~30 seconds. Never invent prices: use only "
+        "one, otherwise 'Venezuela'. Takes up to ~40 seconds. Never invent prices: use only "
         "what this tool returns, and say so when an offer is example data."
     ),
     annotations=ToolAnnotations(read_only_hint=True, open_world_hint=True),
@@ -190,12 +234,19 @@ async def search_prices(
     needs_delivery: bool | None = None,
 ) -> Annotated[CallToolResult, PriceSearch]:
     found, rate = await asyncio.gather(
-        search_all(SearchQuery(text=query, zone=zone, needs_delivery=needs_delivery), OPEN_WEB_BUDGET_S),
+        find_all_listings(SearchQuery(text=query, zone=zone, needs_delivery=needs_delivery), OPEN_WEB_BUDGET_S),
         get_rate(),
     )
-    result = PriceSearch.model_validate(
-        found
-        | {"exchangeRate": {"source": rate.source, "usdToVes": rate.usd_to_ves, "observedAt": rate.observed_at}}
+    offers = sorted(
+        (_offer(card) for card in found["listings"]),
+        key=lambda offer: offer.priceUsd if offer.priceUsd is not None else float("inf"),
+    )
+    result = PriceSearch(
+        query=found["query"],
+        offers=offers,
+        failedSources=found["failedSources"],
+        notice=found.get("notice"),
+        exchangeRate=ExchangeRate(source=rate.source, usdToVes=rate.usd_to_ves, observedAt=rate.observed_at),
     )
     return CallToolResult(
         content=[TextContent(type="text", text=_summary(result))],
