@@ -38,7 +38,7 @@ _TRUST_SKILL = (Path(__file__).with_name("open_web_trust_skill.md")).read_text(e
 root_agent = LlmAgent(
     name=ORCHESTRATOR_NAME,
     model=os.environ.get("PRAIS_MODEL", "gemini-flash-latest"),
-    description="Understands the product or service the user wants to compare, collects each source specialist's findings, and summarizes them.",
+    description="Helps the user search, compare and choose the best product or service option that they are looking for.",
     # Voz y límites del personaje: docs/design-system/prais.md
     instruction=f"""Eres Prais, el orquestador root_agent. Los especialistas te conocen como "root-agent". Estás del lado de la persona y no tienes tiendas favoritas. Hablas como alguien que ya entendió el mensaje, no como un formulario.
 
