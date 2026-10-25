@@ -142,6 +142,16 @@ CATALOGS: dict[str, tuple[SignalSpec, ...]] = {
         ("precio", "price_anomaly", 20, "aggregator"),
         ("reportes", "reports", 10, "nobody"),
     ),
+    # courier_trust queda null hasta confirmar courier-v1 (issue 58, punto abierto 1).
+    "import-v1": _row(
+        ("reputacion", "amazon_seller", 25, "specialist"),
+        ("reputacion", "courier_trust", 20, "specialist"),
+        ("contenido", "weight_source", 10, "specialist"),
+        ("contenido", "tax_source", 10, "specialist"),
+        ("contenido", "eta_spread", 5, "specialist"),
+        ("precio", "price_anomaly", 20, "aggregator"),
+        ("reportes", "reports", 10, "nobody"),
+    ),
 }
 
 
@@ -311,6 +321,39 @@ class Merchant(Model):
     trust: TrustScore | None = None
 
 
+class CourierQuote(Model):
+    courier_id: str
+    courier_name: str
+    freight_usd: float
+    tax_usd: float
+    insurance_usd: float = 0
+    includes_tax: bool
+    quoted_at: datetime
+    source: Literal["cotizador", "tabla"]
+    tax_source: Literal["cotizado", "tabla"]
+    eta_days_min: int | None = None
+    eta_days_max: int | None = None
+
+
+class Landed(Model):
+    """Desglose puesto en Venezuela. `total_usd` es el `price_usd` de la oferta."""
+
+    product_usd: float
+    freight_usd: float
+    tax_usd: float
+    insurance_usd: float = 0
+    total_usd: float
+    billable_lb: float
+    weight_source: Literal["listing", "tabla"]
+    tax_source: Literal["cotizado", "tabla"]
+    asin: str
+    requirements: list[str] = Field(default_factory=list)
+    quotes: list[CourierQuote] = Field(default_factory=list)
+    eta_days_min: int | None = None
+    eta_days_max: int | None = None
+    asin_median_usd: float | None = None
+
+
 class Offer(Model):
     id: str
     merchant_id: str
@@ -323,17 +366,24 @@ class Offer(Model):
     trust: TrustScore
     image_url: str | None = None
     price: Money | None = None
-    price_kind: Literal["publicado", "al_dm"] = "publicado"
+    price_kind: Literal["publicado", "al_dm", "estimado"] = "publicado"
     price_usd: float | None = None
     price_ves: float | None = None
     rate_used: RateRef | None = None
     judge: Judgement | None = None
+    fulfiller_id: str | None = None
+    landed: Landed | None = None
 
     @model_validator(mode="after")
     def _price_kind(self) -> "Offer":
         missing = self.price is None
         if missing != (self.price_kind == "al_dm"):
             raise ValueError("a missing price is price_kind al_dm, and a published price is not")
+        if self.price_kind == "estimado":
+            if self.landed is None or not self.fulfiller_id:
+                raise ValueError("an estimate needs a fulfiller and a landed breakdown")
+            if self.price_usd is None or abs(float(self.price_usd) - float(self.landed.total_usd)) > 0.02:
+                raise ValueError("price_usd is the landed total")
         return self
 
 
