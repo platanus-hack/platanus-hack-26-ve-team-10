@@ -25,6 +25,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 | El agente o sus tools | [agents/adk.md](agents/adk.md) |
 | Conectar una fuente real | [agents/sources.md](agents/sources.md) |
 | El puntaje de confianza | [docs/contrato-confianza.md](docs/contrato-confianza.md) y los borradores de `resources/*_trust_score.py` |
+| Traer un producto de USA | [docs/spec-importacion.md](docs/spec-importacion.md) |
 | WhatsApp | [agents/kapso.md](agents/kapso.md) |
 | MCP | [agents/mcp-tool.md](agents/mcp-tool.md) |
 | Páginas públicas | [agents/seo-geo.md](agents/seo-geo.md) |
