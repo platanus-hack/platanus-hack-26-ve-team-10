@@ -48,6 +48,14 @@ Antes de leer se descartan los dominios de otros países (`.mx`, `.pe`, `.co`, `
 
 Si una página se leyó y otra se cortó por el tiempo, la que sí se leyó se guarda (una hora si trajo ofertas, 10 minutos si no). La consulta siguiente no vuelve a pagarla. El resultado entero no se guarda cuando alguna página quedó a medias: el MCP sigue en 25 s y el agente en 45 s. Con una sola lectura por listado, 25 s alcanza para la búsqueda y para leer la página.
 
+## El precio tiene que ser del producto pedido
+
+Una oferta entra solo si el artículo que trae el precio es el que se buscó. Eso se decide al leer la página, antes de armar las tarjetas. El texto con el que el asistente resume la búsqueda no agrega ni quita ofertas.
+
+El título de ese artículo tiene que decir la marca, el modelo y las cifras de la búsqueda. Un iPhone 14 no es un Samsung, ni un iPhone 15, ni un iPhone 14 Pro, Plus, mini o slim. Si la ficha (`product`) trae el precio de otro artículo, la página queda fuera y no se pide el listado en JSON: ya se vio qué está a la venta. Si la ficha no trae precio, recién ahí se lee el listado, igual que antes.
+
+Una comparación que nombra los dos no cuenta por mencionar el producto buscado. Cuenta el artículo al que corresponde el precio. En un listado se botan los otros avisos y se queda el que sí coincide. Si la ficha dice "iPhone 14 vs Samsung" y la marca del precio es Samsung, esa oferta no entra. Si la marca del precio es Apple, entra el lado del iPhone, no el Samsung.
+
 ## Apify: Instagram y TikTok
 
 Las dos están en `app/lib/sources/apify.py`: comparten el cliente, la caché y la lectura de captions.
