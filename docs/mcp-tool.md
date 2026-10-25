@@ -19,3 +19,5 @@ La primera llamada después de un rato sin uso tarda unos 17 s: es el arranque e
 pnpm dev
 npx @modelcontextprotocol/inspector   # conectar a http://localhost:4000/mcp
 ```
+
+El tablero (`apps/api/app/ui/ofertas.html`) se ve en el inspector, pestaña Apps, o en Claude y ChatGPT con el conector apuntando a la URL pública.
