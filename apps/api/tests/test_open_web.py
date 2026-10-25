@@ -273,7 +273,7 @@ class OpenWebTest(unittest.IsolatedAsyncioTestCase):
 
 class ParsingTest(unittest.TestCase):
     def test_published_prices_keep_the_currency_next_to_them(self):
-        prices = firecrawl._published_prices("u$s6.600 · Bs.S 1.039,96 · $1,039.96 · REF 0,81 · 84,20 · 6.600.000 Bs")
+        prices = firecrawl.published_prices("u$s6.600 · Bs.S 1.039,96 · $1,039.96 · REF 0,81 · 84,20 · 6.600.000 Bs")
         self.assertEqual(prices[6600], {"USD"})
         self.assertEqual(prices[1039.96], {"VES", "USD"})
         self.assertEqual(prices[0.81], {"USD"})
@@ -283,10 +283,10 @@ class ParsingTest(unittest.TestCase):
 
     def test_a_symbol_belongs_to_the_amount_after_it(self):
         # Un título que termina en cifra, o dos precios seguidos, no se quedan con el símbolo ajeno.
-        self.assertEqual(firecrawl._published_prices("### Samsung Galaxy A15\n\nRef. 150")[150], {"USD"})
-        self.assertEqual(firecrawl._published_prices("Bs. 5.200,00 REF 26,00"), {5200: {"VES"}, 26: {"USD"}})
-        self.assertEqual(firecrawl._published_prices("Bs. 9.125,00\n$25,00")[25], {"USD"})
-        self.assertEqual(firecrawl._published_prices("179,00$-209,00$"), {179: {"USD"}, 209: {"USD"}})
+        self.assertEqual(firecrawl.published_prices("### Samsung Galaxy A15\n\nRef. 150")[150], {"USD"})
+        self.assertEqual(firecrawl.published_prices("Bs. 5.200,00 REF 26,00"), {5200: {"VES"}, 26: {"USD"}})
+        self.assertEqual(firecrawl.published_prices("Bs. 9.125,00\n$25,00")[25], {"USD"})
+        self.assertEqual(firecrawl.published_prices("179,00$-209,00$"), {179: {"USD"}, 209: {"USD"}})
 
     def test_currencies(self):
         labels = ("u$s", "U$S", "US$", "$", "REF", "Ref.", "USD$", "Bs.", "Bs.S", "Bs.:", "Bs.D", "EUR", "Consultar")
@@ -315,7 +315,7 @@ class ParsingTest(unittest.TestCase):
         ]
         for product, title, expected in cases:
             with self.subTest(product=product, title=title):
-                self.assertEqual(firecrawl._matches(product, title), expected)
+                self.assertEqual(firecrawl.matches_product(product, title), expected)
 
 
 class SearchNoticeTest(unittest.IsolatedAsyncioTestCase):

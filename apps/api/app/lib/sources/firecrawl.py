@@ -139,12 +139,14 @@ def _hit_title(hit: Any) -> str | None:
     return getattr(hit, "title", None)
 
 
-def _plain(text: str) -> str:
+# plain, published_prices y matches_product también los usa apify.py: leer un precio escrito y
+# decidir si un anuncio es el producto pedido es lo mismo en una página que en un caption.
+def plain(text: str) -> str:
     return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
 
 
 def _currency(value: str | None) -> str | None:
-    token = re.sub(r"[\s.:]", "", _plain(value or "")).upper()
+    token = re.sub(r"[\s.:]", "", plain(value or "")).upper()
     # En Venezuela el dólar se escribe también u$s, U$S o REF (el precio de referencia, en dólares).
     if token in ("USD", "US$", "U$S", "U$D", "USD$", "$USD", "$", "REF", "DOLAR", "DOLARES"):
         return "USD"
@@ -182,7 +184,7 @@ def _amount(raw: str) -> float | None:
         return None
 
 
-def _published_prices(text: str) -> dict[float, set[str | None]]:
+def published_prices(text: str) -> dict[float, set[str | None]]:
     """Cada monto escrito en la página, con la moneda escrita junto a él (None si no tiene)."""
     prices: dict[float, set[str | None]] = {}
     for match in _PRICE.finditer(text):
@@ -213,16 +215,16 @@ def _singular(word: str) -> str:
     return word[:-1] if len(word) > 3 and word.endswith("s") and not word[-2].isdigit() else word
 
 
-def _matches(product: str, title: str) -> bool:
+def matches_product(product: str, title: str) -> bool:
     """El anuncio nombra la marca, el modelo y las cifras de la consulta.
 
     Un listado mezcla productos: sin esto, "Harina PAN" trae Harina Kaly, y
     "Redmi 15C" trae el 13C. Se compara sin espacios ni signos, como la fuente
     de ejemplo, para que "BR200" cuente como "BR 200" y "P.A.N." como "PAN".
     """
-    compact = re.sub(r"[^a-z0-9]", "", _plain(title))
+    compact = re.sub(r"[^a-z0-9]", "", plain(title))
     required = []
-    for word in re.findall(r"[a-z0-9]+", _plain(product)):
+    for word in re.findall(r"[a-z0-9]+", plain(product)):
         word = _UNIT.sub(r"\1", _singular(word))
         if word not in _GENERIC and (len(word) >= 3 or any(char.isdigit() for char in word)):
             required.append(word)
@@ -330,7 +332,7 @@ def _from_listing(url: str, document: Any, product: str) -> list[_Found]:
     """
     data = getattr(document, "json", None)
     items = data.get("offers") if isinstance(data, dict) else None
-    published = _published_prices(getattr(document, "markdown", None) or "")
+    published = published_prices(getattr(document, "markdown", None) or "")
     seller = shop_name(url, _site_name(document), None)
     found = []
     for item in items or []:
@@ -342,7 +344,7 @@ def _from_listing(url: str, document: Any, product: str) -> list[_Found]:
         if listed.variant and listed.variant.lower() not in title.lower():
             title = f"{title} {listed.variant}"
         currency = _listed_currency(listed, published)
-        if not listed.price or listed.price <= 0 or not currency or not _matches(product, title):
+        if not listed.price or listed.price <= 0 or not currency or not matches_product(product, title):
             continue
         link = urljoin(url, listed.url) if listed.url else url
         found.append(
