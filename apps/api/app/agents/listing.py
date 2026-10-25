@@ -23,6 +23,7 @@ CHANNEL_LABEL = {
     "web": "Web",
     "mercadolibre": "Mercado Libre",
     "facebook": "Facebook",
+    "amazon": "Amazon",
 }
 
 

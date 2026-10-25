@@ -9,6 +9,7 @@ from google.genai import types
 
 from app.agents.listing import listings_from_tool_response
 from app.agents.orchestrator import root_agent
+from app.lib.trust import close_listings
 
 FALLBACK_REPLY = "Algo falló de mi lado. Inténtalo otra vez en un momento."
 log = logging.getLogger("prais.agent")
@@ -64,5 +65,5 @@ async def ask_prais(user_id: str, message: str) -> PraisAnswer:
                 reply += "".join(part.text or "" for part in event.content.parts if not part.function_call)
     except Exception:
         log.exception("agent run failed")
-        return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=listings)
-    return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=listings)
+        return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings))
+    return PraisAnswer(text=reply.strip() or FALLBACK_REPLY, listings=close_listings(listings))

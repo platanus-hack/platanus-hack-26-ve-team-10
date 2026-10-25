@@ -57,7 +57,7 @@ INSTRUCTIONS = """usaprais finds where a product is cheapest in Venezuela, acros
 # nombres van en camelCase, igual que la respuesta de search_offers (docs/contracts.md).
 class Merchant(BaseModel):
     name: str
-    channel: str = Field(description="web, mercadolibre, instagram, tiktok or facebook")
+    channel: str = Field(description="web, mercadolibre, instagram, tiktok, facebook or amazon")
     zone: str | None = Field(default=None, description="City or area the merchant reports")
     delivers: bool | None = None
     trust: int | None = Field(default=None, description="0-100 seller trust score; null when not scored yet")
