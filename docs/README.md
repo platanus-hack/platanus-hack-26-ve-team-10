@@ -22,5 +22,4 @@ Toda la documentación del repo está aquí. `AGENTS.md`, en la raíz, dice cuá
 | [ficha-producto.md](ficha-producto.md) | La página de producto |
 | [categoria.md](categoria.md) | La página de categoría |
 | [marca.md](marca.md) | La página de marca |
-| [decisions/](decisions/) | Una decisión por archivo |
 | [design-system/](design-system/) | Tokens, componentes y el personaje, para la web |

@@ -35,7 +35,6 @@ La documentación vive en `docs/`. Entra por la fila del área que vas a tocar.
 | MCP | [docs/mcp-tool.md](docs/mcp-tool.md) |
 | Páginas públicas | [docs/seo-geo.md](docs/seo-geo.md), y el detalle en [docs/ficha-producto.md](docs/ficha-producto.md), [docs/categoria.md](docs/categoria.md) y [docs/marca.md](docs/marca.md) |
 | La interfaz | [docs/design-system/](docs/design-system/) antes de tocar componentes, tokens o al personaje |
-| Una decisión ya tomada | [docs/decisions/](docs/decisions/) |
 
 ## Reglas
 
