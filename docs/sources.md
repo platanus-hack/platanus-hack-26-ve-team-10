@@ -22,7 +22,7 @@ Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegad
 | **Apify: Instagram** | Conectada: `instagram_source` en `app/lib/sources/apify.py`, actor `apify/instagram-scraper` | Se entra por la página del hashtag del producto. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
 | **Apify: TikTok** | Conectada: `tiktok_source` en el mismo archivo, actor `clockworks/tiktok-scraper` | Busca por palabras, con proxy venezolano. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
 | **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
-| **Mercado Libre** | API oficial, sitio `MLV` | Sigue **403 sin token**: no hay cliente en vivo. `score_mercadolibre` en `app/lib/trust.py` puntúa el JSON de `/items` y `/users` sin llamar a la red |
+| **Mercado Libre** | Conectada: `mercadolibre_source` en `app/lib/sources/mercadolibre.py`, actor `sourabhbgp/mercadolibre-scraper` con `country: "VE"` | Es un puente hasta tener la API oficial: ver [abajo](#mercado-libre-por-ahora-con-un-actor) |
 | **Amazon + courier** | Actor `junglee/Amazon-crawler` y el cotizador de cada courier. Ver [Traerlo de USA](#traerlo-de-usa) | Sin `APIFY_TOKEN` la tool no llama a Amazon. El precio que compite es el total puesto en Venezuela |
 | **Meta Ads** | API de la Ad Library | Solo devuelve anuncios comerciales que se mostraron en la UE o el Reino Unido. Para Venezuela no sirve. Candidato: el actor `curious_coder/facebook-ads-library-scraper`, que se usa para ajustar el puntaje de confianza (ver [resources/meta_ads_signals.py](../resources/meta_ads_signals.py)) |
 
@@ -193,6 +193,45 @@ con Firecrawl, y `safe_browsing` una `GOOGLE_SAFE_BROWSING_KEY`.
 que imita a una marca sin serlo (`iphone-venezuela.com`) y un anuncio que en realidad vende un
 accesorio. La tercera que había —precio más de 50 % bajo el resto— **no se repite aquí**: es
 `price_anomaly`, y el agregador ya la aplica con ese mismo umbral.
+
+## Mercado Libre: por ahora, con un actor
+
+La API oficial responde **403 hasta en `/sites/MLV`**: hay que registrar una app gratis en
+developers.mercadolibre.com.ve para tener `client_id` y `client_secret`. El endpoint de token
+acepta `client_credentials`, así que no haría falta OAuth con navegador.
+
+Mientras eso no exista, el canal entra por `sourabhbgp/mercadolibre-scraper` con `country: "VE"`.
+Leer el sitio directo no es opción: `listado.mercadolibre.com.ve` devuelve su verificación
+anti-bots, y no se intenta saltarla (por eso `mercadolibre.` y `tucarro.` están en `_SKIP_HOSTS`
+de la web abierta).
+
+**MLV tiene catálogo**, contra lo que se podía suponer: una corrida real de "iPhone 15" devolvió 15
+avisos, los 15 de Venezuela y todos con precio en dólares. Pero su relevancia es floja —entre los 15
+había varios Xiaomi Redmi—, así que el filtro `matches_product` no es opcional.
+
+**`scrapeProductDetails` es obligatorio.** Sin abrir la ficha no vienen la reputación del vendedor
+ni la garantía, y el puntaje se queda en 15 % de cobertura. Con detalle, 15 resultados salieron por
+unos 3 céntimos.
+
+**El puntaje.** `score_mercadolibre` ya existía y lee la forma de la API oficial, así que la fuente
+le traduce la del actor (`sellerReputation` → `seller_reputation.level_id`, `sellerPowerStatus` →
+`power_seller_status`). Lo que el actor no trae queda en `None`, no cuenta y su peso se reparte:
+
+| Señal | Peso | ¿La trae el actor? |
+|---|---|---|
+| `thermometer` | 15 | Sí (`5_green`, `2_orange`…) |
+| `power_seller` | 5 | Sí (`silver`, `gold`…) |
+| `completeness`, `warranty`, `risk_language` | 15 | Sí |
+| `sales_volume`, `negative_ratings`, `account_age`, `location` | 35 | **No**: solo la API oficial |
+
+Un vendedor con reputación llega a 35 % de cobertura, y a 55 % cuando el agregador llena
+`price_anomaly`. Cuando exista el token, la fuente se reemplaza y `score_mercadolibre` no cambia.
+
+**Los términos de servicio.** Scrapear Mercado Libre va contra sus términos, y que lo haga un actor
+de terceros no cambia eso. La API es la vía sancionada: para una demo el riesgo es bajo, pero si
+esto va a producción de verdad, registrar la app deja de ser opcional.
+
+No necesita variable nueva: usa `APIFY_TOKEN`, el mismo de Instagram y TikTok.
 
 ## Puntaje de confianza por fuente
 

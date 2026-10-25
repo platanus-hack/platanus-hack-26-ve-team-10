@@ -58,7 +58,6 @@ async def find_listings_open_web(product: str) -> dict[str, Any]:
 # Apagadas hasta conectar cada fuente de verdad. El código queda; no se le ofrecen al orquestador.
 PAUSED_TOOLS = [
     _listings_tool("the Meta Ad Library", None),
-    _listings_tool("Mercado Libre", "mercadolibre"),
     # Facebook Marketplace necesita un actor de pago y proxy residencial: ver docs/sources.md.
     _listings_tool("Facebook Marketplace", "facebook"),
 ]
@@ -80,6 +79,7 @@ async def find_listings_importacion(product: str) -> dict[str, Any]:
 # de search_offers: esta tool lo espera aparte y, si no alcanza, la siguiente búsqueda lo lee.
 SOURCE_TOOLS = [
     find_listings_open_web,
+    _listings_tool("Mercado Libre", "mercadolibre"),
     _listings_tool("Instagram", "instagram"),
     _listings_tool("TikTok", "tiktok"),
     find_listings_importacion,
