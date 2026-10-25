@@ -13,7 +13,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 | `infra/`, `cloudbuild.*.yaml` | Scripts de `gcloud` y pipelines de Cloud Build |
 | `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |
 | `docs/` | Toda la documentación. El índice está en [docs/README.md](docs/README.md) |
-| `resources/`, `design/brand/` | Material de referencia y marca (`lib.pen`). No son instrucciones |
+| `resources/` | Material de referencia. No son instrucciones |
 
 ## Qué doc leer
 
