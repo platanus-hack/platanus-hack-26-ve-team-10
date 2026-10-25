@@ -18,7 +18,7 @@ Quedó fuera Farmavenezuela (`farmavenezuela.com`): un cliente HTTP y el navegad
 
 | Fuente | Cómo se consulta | Ojo |
 |---|---|---|
-| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | La web abierta sigue sin puntaje (`trust` null). El motor ya puede cerrar una tienda si llegan sus señales; RDAP, DNS y Safe Browsing no están conectados |
+| **Firecrawl** | `search_open_web` en `app/lib/sources/firecrawl.py`. La llaman la tool de la web abierta y `search_prices` del MCP. Cómo distingue un listado de una ficha, abajo | Su puntaje (`web-v1`) lo arma `app/lib/sources/web_trust.py` con RDAP y DNS: ver [abajo](#la-confianza-de-una-tienda-web). Safe Browsing sigue sin conectar |
 | **Apify: Instagram** | Conectada: `instagram_source` en `app/lib/sources/apify.py`, actor `apify/instagram-scraper` | Se entra por la página del hashtag del producto. Muchas tiendas ponen "precio al DM": la oferta va con `price=None` |
 | **Apify: TikTok** | Conectada: `tiktok_source` en el mismo archivo, actor `clockworks/tiktok-scraper` | Busca por palabras, con proxy venezolano. El puntaje de confianza usa `clockworks/tiktok-profile-scraper` y `clockworks/tiktok-comments-scraper` (ver [resources/tiktok_trust_score.py](../resources/tiktok_trust_score.py)) |
 | **Apify: Facebook Marketplace** | Cliente de Python de Apify + un actor de Marketplace de la Apify Store | Facebook no tiene API oficial. Candidato: `deepmine/facebook-marketplace-scraper`, con proxy residencial (ver [resources/fb_marketplace_trust_score.py](../resources/fb_marketplace_trust_score.py)) |
@@ -161,6 +161,38 @@ El impuesto de Liberty es el que el cotizador devuelve (`taxSource: "cotizado"`)
 La oferta sale con `import-v1` en `stage: "parcial"`. Al cerrar, `price_anomaly` compara el precio de Amazon con la mediana del mismo ASIN. No mira el precio venezolano: si lo mirara, una importación más barata que las tiendas de aquí saldría con puntaje 0. Con un solo precio de ese ASIN no hay mediana y la señal queda sin dato. Vendido y enviado por Amazon usa el atajo de 95. El puntaje del courier (`courier_trust`) queda vacío: `courier-v1` no se calculó porque sus pesos siguen sin confirmar. Vacío no es cero.
 
 No se guardan las cotizaciones. Postgres hoy guarda la conversación del agente, no esta tarifa.
+
+## La confianza de una tienda web
+
+`app/lib/sources/web_trust.py` arma el puntaje parcial `web-v1` de cada oferta de la web abierta, y
+`app/agents/open_web_trust.py` se lo pega a la oferta como contrato. Lo cierra el agregador, igual
+que en los demás canales ([contracts.md](contracts.md#el-puntaje-de-confianza-de-una-fuente)).
+
+Mide lo que se sabe del dominio **sin pagar otra lectura de la página**:
+
+| Señal | Peso | De dónde sale | Cuesta |
+|---|---|---|---|
+| `domain_age` | 15 | RDAP (`rdap.org/domain/<dominio>`) | Gratis, sin API key |
+| `contact` | 10 | Si el host está en `cadenas.py`: una cadena revisada a mano es una empresa con contacto verificable | Gratis |
+| `https` | 5 | La URL | Gratis |
+| `mx` | 5 | DNS sobre HTTPS (`dns.google`) | Gratis, sin API key |
+| `risk_language` | 5 | El helper compartido de `trust.py` | Gratis |
+
+Las dos consultas de red se hacen **una vez por host**, en paralelo y con 4 segundos de tope, y se
+recuerdan un día. Lo que no se pudo averiguar queda en `None`: no cuenta y su peso se reparte.
+
+Una cadena conocida llega a 0,40 de cobertura sola; una tienda que no está en `cadenas.py` llega a
+0,30 y necesita que el agregador llene `price_anomaly` (20) para pasar el mínimo. `linked_socials`
+(10) lo llena el agregador con el puntaje ya cerrado de las redes del mismo comercio, que existe
+desde que Instagram y TikTok emiten el contrato.
+
+**Lo que falta**: `contact` completo (RIF, dirección), `policies` y `catalog` piden otra extracción
+con Firecrawl, y `safe_browsing` una `GOOGLE_SAFE_BROWSING_KEY`.
+
+**Dos banderas rojas** se conservan de la revisión anterior, ahora dentro del puntaje: un dominio
+que imita a una marca sin serlo (`iphone-venezuela.com`) y un anuncio que en realidad vende un
+accesorio. La tercera que había —precio más de 50 % bajo el resto— **no se repite aquí**: es
+`price_anomaly`, y el agregador ya la aplica con ese mismo umbral.
 
 ## Puntaje de confianza por fuente
 

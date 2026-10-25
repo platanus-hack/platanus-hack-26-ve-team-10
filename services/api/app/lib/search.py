@@ -2,22 +2,16 @@ import asyncio
 import re
 from typing import Any
 
+from app.lib import contract_build
+from app.lib.contracts import Merchant as ContractMerchant
+from app.lib.contracts import Offer as ContractOffer
 from app.lib.contracts import (
-    CanonicalProduct,
-    Condition,
-    Location,
-    MerchantLink,
-    RateRef,
     TrustScore,
 )
-from app.lib.contracts import Merchant as ContractMerchant
-from app.lib.contracts import Money as ContractMoney
-from app.lib.contracts import Offer as ContractOffer
 from app.lib.prices import format_money, to_usd, trust_score
 from app.lib.rate import get_rate
 from app.lib.sources import sources
-from app.lib.sources.firecrawl import plain, search_open_web
-from app.lib.trust import entity_id_for
+from app.lib.sources.firecrawl import search_open_web
 from app.lib.types import (
     ExchangeRate,
     Merchant,
@@ -46,21 +40,6 @@ _REFURBISHED = re.compile(r"\b(reacondicionado|refurbished|renewed)\b")
 _HANDLE_OF: dict[str, str] = {"instagram": "instagram", "tiktok": "tiktok", "facebook": "facebook"}
 
 
-def product_key(text: str) -> str:
-    """Agrupa las ofertas comparables para la mediana. Todas las fuentes buscan el mismo texto."""
-    return "-".join(plain(text).split()) or "sin-producto"
-
-
-def _condition(declared: Condition | None, *texts: str) -> Condition:
-    """Lo que diga la fuente manda: ella vio la publicación entera, aquí solo llega el título."""
-    if declared is not None:
-        return declared
-    joined = plain(" ".join(texts))
-    if _REFURBISHED.search(joined):
-        return "reacondicionado"
-    if _USED.search(joined):
-        return "usado"
-    return "nuevo"
 
 
 def _contract(
@@ -71,44 +50,24 @@ def _contract(
     rate: ExchangeRate,
     product: str,
 ) -> tuple[ContractOffer, ContractMerchant]:
-    """La oferta y el comercio en el contrato de trust.py, con el puntaje parcial de la fuente.
-
-    El precio, la tasa y la conversión no los repite la fuente: salen de lo que ya calculó la
-    búsqueda, que es el único lugar donde viven.
-    """
-    evidence = entity_id_for(offer.url)
-    kind = _HANDLE_OF.get(merchant.channel)
-    links = [MerchantLink(kind=kind, value=merchant.id.split(":", 1)[-1])] if kind else []
-    contract_merchant = ContractMerchant(
-        id=merchant.id,
+    """Lo mismo que arma la web abierta: el armador vive en un solo sitio."""
+    return contract_build.build(
+        merchant_id=merchant.id,
         name=merchant.name,
         channel=merchant.channel,
-        url=merchant.url,
-        location=Location(city=merchant.zone),
+        merchant_url=merchant.url,
+        zone=merchant.zone,
         delivers=merchant.delivers,
-        links=links,
-    )
-    priced = offer.price is not None
-    contract_offer = ContractOffer(
-        id=evidence,
-        merchant_id=merchant.id,
-        product=CanonicalProduct(key=product_key(product), label=product),
-        condition=_condition(offer.condition, offer.title, product),
         title=offer.title,
         url=offer.url,
         seen_at=offer.seen_at,
-        evidence_ids=[evidence],
-        trust=trust,
-        price=ContractMoney(amount=offer.price.amount, currency=offer.price.currency) if priced else None,
-        price_kind="publicado" if priced else "al_dm",
+        price=offer.price,
         price_usd=card["priceUsd"],
-        rate_used=(
-            RateRef(source=rate.source, usd_to_ves=rate.usd_to_ves, observed_at=rate.observed_at)
-            if priced and offer.price.currency == "VES"
-            else None
-        ),
+        rate=rate,
+        product=product,
+        trust=trust,
+        condition=offer.condition,
     )
-    return contract_offer, contract_merchant
 
 
 # Único punto de búsqueda: lo usan el agente y MCP. Llama a todas las fuentes en paralelo.

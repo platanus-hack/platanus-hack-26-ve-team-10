@@ -73,6 +73,11 @@ los umbrales se portan de ahí, no se inventan. Lo que la fuente no trae queda e
 y su peso se reparte entre las señales que sí hay. Con menos del 40 % del peso medido el veredicto
 es `sin_datos`, que es la respuesta honesta cuando no se sabe.
 
+El armador del contrato (`app/lib/contract_build.py`) es uno solo para todas: una fuente del
+registro lo usa desde `search_offers` y la web abierta desde `open_web_trust.py`, que no pasa por
+el registro. Ahí viven también la clave del producto, que agrupa las ofertas comparables para la
+mediana, y la condición.
+
 Una fuente que todavía no puntúa su canal deja `trust` vacío y su oferta sigue mostrando el entero
 provisional de `prices.py`. Las dos formas conviven: `close_listings` cierra lo que trae contrato y
 deja pasar el resto.
