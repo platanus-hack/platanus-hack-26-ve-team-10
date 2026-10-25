@@ -379,6 +379,80 @@ def _matches(product: str, title: str) -> bool:
     return all(word in compact for word in required)
 
 
+# Company behind a model name. Titles often skip it ("iPhone", "Galaxy", "Redmi").
+_BRAND_ALIASES: dict[str, frozenset[str]] = {
+    "apple": frozenset({"apple", "iphone", "ipad"}),
+    "samsung": frozenset({"samsung", "galaxy"}),
+    "xiaomi": frozenset({"xiaomi", "redmi", "poco"}),
+    "google": frozenset({"google", "pixel"}),
+    "motorola": frozenset({"motorola"}),
+    "huawei": frozenset({"huawei"}),
+}
+# Words that name a more specific model. Same ones the question-before-search
+# treats as a different price: iPhone 14 is not the Pro, the Plus or the mini.
+_TIERS = ("pro max", "plus", "mini", "slim", "pro")
+_COMPARISON = re.compile(r"\s+(?:vs\.?|versus|contra)\s+", re.IGNORECASE)
+
+
+def _words(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]+", _plain(text)))
+
+
+def _brands_in(text: str) -> set[str]:
+    words = _words(text)
+    return {name for name, aliases in _BRAND_ALIASES.items() if words & aliases}
+
+
+def _has_phrase(text: str, phrase: str) -> bool:
+    return re.search(rf"(?<![a-z0-9]){re.escape(phrase)}(?![a-z0-9])", text) is not None
+
+
+def _extra_tier(query: str, title: str) -> bool:
+    """The title adds Pro, Plus, mini or slim, and the query did not ask for it."""
+    query_plain, title_plain = _plain(query), _plain(title)
+    return any(_has_phrase(title_plain, tier) and not _has_phrase(query_plain, tier) for tier in _TIERS)
+
+
+def _priced_side(title: str, brand: str | None) -> str | None:
+    """Name of the item the price belongs to.
+
+    A comparison headline names two products. Only the side of the priced
+    item's brand counts. With no brand, that headline is not one item for sale.
+    """
+    parts = [part.strip(" -–—|:") for part in _COMPARISON.split(title) if part.strip()]
+    if len(parts) <= 1:
+        return title.strip() or None
+    brands = _brands_in(brand or "")
+    if len(brands) != 1:
+        return None
+    aliases = _BRAND_ALIASES[next(iter(brands))]
+    sides = [part for part in parts if _words(part) & aliases]
+    if len(sides) == 1:
+        return sides[0].strip() or None
+    return None
+
+
+def _matching_title(query: str, title: str, brand: str | None = None) -> str | None:
+    """Title to show when the priced item is the product that was asked for.
+
+    Mentioning the query on the page is not enough. A comparison that names
+    both products counts only for the side the price belongs to.
+    """
+    priced = _priced_side(title, brand)
+    if not priced:
+        return None
+    query_brands = _brands_in(query)
+    priced_brands = _brands_in(priced)
+    item_brands = _brands_in(brand or "") or priced_brands
+    if query_brands and item_brands and query_brands.isdisjoint(item_brands):
+        return None
+    if len(priced_brands) > 1 and not priced_brands <= query_brands:
+        return None
+    if _extra_tier(query, priced) or not _matches(query, priced):
+        return None
+    return priced
+
+
 def _https_url(value: Any) -> str | None:
     if isinstance(value, str) and value.startswith("https://"):
         return value
@@ -430,7 +504,7 @@ def _same_page(one: str, other: str) -> bool:
     return _host(one) == _host(other) and path(one) == path(other)
 
 
-def _from_product(url: str, document: Any) -> _Found | None:
+def _from_product(url: str, document: Any) -> tuple[_Found, str | None] | None:
     product = getattr(document, "product", None)
     if product is None and isinstance(document, dict):
         product = document.get("product")
@@ -446,13 +520,18 @@ def _from_product(url: str, document: Any) -> _Found | None:
     currency = _currency(variants[0].price.currency)
     if not isinstance(amount, (int, float)) or not currency:
         return None
-    return _Found(
-        title=getattr(product, "title", None),
-        price=Money(float(amount), currency),
-        url=url,
-        image=_image_url(product, document),
-        seller=shop_name(url, _site_name(document), getattr(product, "brand", None)),
-        zone="Venezuela",
+    brand = getattr(product, "brand", None)
+    brand = brand if isinstance(brand, str) else None
+    return (
+        _Found(
+            title=getattr(product, "title", None),
+            price=Money(float(amount), currency),
+            url=url,
+            image=_image_url(product, document),
+            seller=shop_name(url, _site_name(document), brand),
+            zone="Venezuela",
+        ),
+        brand,
     )
 
 
@@ -473,7 +552,7 @@ def _listed_currency(listed: ListedOffer, published: dict[float, set[str | None]
 
 
 def _from_listing(url: str, document: Any, product: str) -> list[_Found]:
-    """Las ofertas de la extracción JSON que son el producto pedido y cuyo precio está en la página.
+    """Las ofertas de la extracción JSON cuyo artículo con precio es el producto pedido.
 
     La extracción pasa por un modelo: un monto que no aparece en el markdown de
     la página se descarta, para no mostrar nunca un precio inventado.
@@ -492,12 +571,13 @@ def _from_listing(url: str, document: Any, product: str) -> list[_Found]:
         if listed.variant and listed.variant.lower() not in title.lower():
             title = f"{title} {listed.variant}"
         currency = _listed_currency(listed, published)
-        if not listed.price or listed.price <= 0 or not currency or not _matches(product, title):
+        accepted = _matching_title(product, title)
+        if not listed.price or listed.price <= 0 or not currency or accepted is None:
             continue
         link = urljoin(url, listed.url) if listed.url else url
         found.append(
             _Found(
-                title=title,
+                title=accepted,
                 price=Money(listed.price, currency),
                 url=link if link.startswith("http") else url,
                 image=_https_url(listed.image) or _image_url(None, document),
@@ -635,10 +715,19 @@ async def _read_page(client: AsyncFirecrawl, page: _Page, product: str, deadline
                 page.outcome, page.detail = "error", "timeout"
             else:
                 page.credits += _credits(document)
-                found = _from_product(page.url, document)
-                block = None if found else _block(page.url, document)
-                if found:
-                    page.offers, page.outcome, page.complete = [found], "con_ofertas", True
+                priced = _from_product(page.url, document)
+                block = None if priced else _block(page.url, document)
+                if priced is not None:
+                    found, brand = priced
+                    title = _matching_title(product, found.title or "", brand)
+                    if title:
+                        found.title = title
+                        page.offers, page.outcome, page.complete = [found], "con_ofertas", True
+                    else:
+                        # The page priced a different product. That is not "no
+                        # price": do not start the listing read, or the other
+                        # product comes back and the product path scrapes twice.
+                        page.outcome, page.complete = "sin_ofertas", True
                 elif block:
                     page.outcome, page.complete = block, True
                 else:
