@@ -8,7 +8,7 @@ Prais compara el precio de un producto en los principales canales de venta de Ve
 |---|---|
 | `apps/api/` | Backend en Python (FastAPI): el agente ADK, el webhook de Kapso y el servidor MCP |
 | `apps/api/app/lib/` | Tipos y contratos, búsqueda, precios, confianza y tasa. Es la única fuente de esa lógica |
-| `apps/api/app/lib/sources/` | Fuentes del registro. Hoy solo la de ejemplo (`mock.py`). Firecrawl no está ahí: vive en `firecrawl.py` y se llama directo |
+| `apps/api/app/lib/sources/` | Fuentes del registro: la de ejemplo (`mock.py`) e Instagram y TikTok por Apify (`apify.py`). Firecrawl no está en el registro: vive en `firecrawl.py` y se llama directo |
 | `apps/api/app/agents/` | Código del orquestador y de sus tools. No es documentación |
 | `infra/`, `cloudbuild.*.yaml` | Scripts de `gcloud` y pipelines de Cloud Build |
 | `apps/web/` | Next.js: solo la interfaz. Su `/api/*` se reenvía al backend |

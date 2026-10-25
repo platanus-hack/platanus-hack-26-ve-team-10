@@ -54,12 +54,14 @@ async def find_listings_open_web(product: str) -> dict[str, Any]:
 PAUSED_TOOLS = [
     _listings_tool("the Meta Ad Library", None),
     _listings_tool("Mercado Libre", "mercadolibre"),
+    # Facebook Marketplace necesita un actor de pago y proxy residencial: ver docs/sources.md.
     _listings_tool("Facebook Marketplace", "facebook"),
-    _listings_tool("Instagram", "instagram"),
-    _listings_tool("TikTok", "tiktok"),
 ]
 
-# Solo la web abierta corre. Las demás se vuelven a sumar en SOURCE_TOOLS cuando estén listas.
+# La web abierta (Firecrawl) y las redes (Apify). Instagram y TikTok responden vacío mientras no
+# haya APIFY_TOKEN, y en la primera búsqueda de un producto: su actor tarda más que el plazo.
 SOURCE_TOOLS = [
     find_listings_open_web,
+    _listings_tool("Instagram", "instagram"),
+    _listings_tool("TikTok", "tiktok"),
 ]
