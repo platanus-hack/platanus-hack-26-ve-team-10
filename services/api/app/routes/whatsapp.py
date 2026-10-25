@@ -12,8 +12,8 @@ from fastapi.responses import PlainTextResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-from app.agent import FALLBACK_REPLY, ask_prais, drop_product_dialog
-from app.agents.listing import carousel_message, clamp_summary, list_message
+from app.agent import FALLBACK_REPLY, ask_prais
+from app.agents.listing import clamp_summary, shopping_message
 from app.lib import replies
 from app.lib.replies import ReplyInProgress
 from app.lib.tasks import enqueue_whatsapp_event, queue_enabled
@@ -27,6 +27,11 @@ KAPSO_MESSAGES_URL = "https://api.kapso.ai/meta/whatsapp/v24.0/{phone_number_id}
 # Debe coincidir con --max-attempts de la cola (infra/35-tasks.sh). En el último intento fallido
 # se le avisa a la persona en vez de dejarla sin respuesta.
 MAX_ATTEMPTS = int(os.environ.get("TASKS_MAX_ATTEMPTS", "5"))
+
+# Una persona, un turno. Los mensajes que llegan mientras se arma la respuesta
+# se suman y sale una sola contestación, no una búsqueda por mensaje.
+_inbox: dict[str, list[tuple[str, str | None, str]]] = {}
+_running: set[str] = set()
 
 
 def _valid_signature(raw_body: bytes, signature: str | None) -> bool:
@@ -102,23 +107,60 @@ async def _send_saved(phone_number_id: str, message_id: str | None, payload: dic
         await replies.complete(message_id, payload)
 
 
-_GREETINGS = {
-    "hola",
-    "hello",
-    "hi",
-    "hey",
-    "buenas",
-    "buen dia",
-    "buenos dias",
-    "buenas tardes",
-    "buenas noches",
-}
-_GREETING_REPLY = "Hola. Dime qué producto quieres comparar."
+async def _outbound(sender: str, answer: Any) -> dict[str, Any]:
+    try:
+        shopping = await shopping_message(sender, answer.listings, answer.text)
+    except Exception:
+        log.exception("whatsapp cards failed")
+        shopping = None
+    if shopping is not None:
+        return shopping
+    return _text_payload(sender, clamp_summary(answer.text))
 
 
-def _is_greeting(text: str) -> bool:
-    cleaned = "".join(char for char in text.lower() if char.isalnum() or char.isspace()).strip()
-    return cleaned in _GREETINGS
+async def _drain(sender: str) -> None:
+    """Responde cuando ya no queda texto nuevo de esta persona."""
+    pending_ids: list[str | None] = []
+    phone_number_id = ""
+    said: list[str] = []
+    while True:
+        batch = _inbox.pop(sender, [])
+        if not batch and not said:
+            return
+        if batch:
+            phone_number_id = batch[-1][0]
+            pending_ids.extend(item[1] for item in batch)
+            said.extend(item[2] for item in batch)
+        text = "\n".join(said)
+        answer = await ask_prais(f"whatsapp:{sender}", text)
+        if _inbox.get(sender):
+            continue
+        payload = await _outbound(sender, answer)
+        if _inbox.get(sender):
+            continue
+        try:
+            await _post_message(phone_number_id, payload)
+        except Exception:
+            log.exception("whatsapp send failed")
+            return
+        for message_id in pending_ids:
+            if message_id:
+                await replies.complete(message_id, payload)
+        pending_ids = []
+        if not _inbox.get(sender):
+            return
+
+
+async def _drain_if_idle(sender: str) -> None:
+    if sender in _running:
+        return
+    _running.add(sender)
+    try:
+        await _drain(sender)
+    finally:
+        _running.discard(sender)
+        if _inbox.get(sender):
+            await _drain_if_idle(sender)
 
 
 async def _reply(event: dict[str, Any], *, takeover: bool = False) -> None:
@@ -134,37 +176,8 @@ async def _reply(event: dict[str, Any], *, takeover: bool = False) -> None:
             return
         if claim.kind == "in_progress":
             raise ReplyInProgress()
-    if _is_greeting(text):
-        drop_product_dialog(f"whatsapp:{sender}")
-        await _send_saved(phone_number_id, message_id, _text_payload(sender, _GREETING_REPLY))
-        return
-    answer = await ask_prais(f"whatsapp:{sender}", text)
-    if answer.choices:
-        listing = list_message(
-            sender, answer.list_body or answer.text, answer.choices, section=answer.list_section or "Opciones"
-        )
-        if listing is not None:
-            try:
-                await _post_message(phone_number_id, listing)
-            except Exception:
-                log.exception("whatsapp list failed")
-            else:
-                if message_id:
-                    await replies.complete(message_id, listing)
-                return
-        await _send_saved(phone_number_id, message_id, _text_payload(sender, answer.text))
-        return
-    carousel = await carousel_message(sender, answer.listings, answer.text)
-    if carousel is not None:
-        try:
-            await _post_message(phone_number_id, carousel)
-        except Exception:
-            log.exception("whatsapp carousel failed")
-        else:
-            if message_id:
-                await replies.complete(message_id, carousel)
-            return
-    await _send_saved(phone_number_id, message_id, _text_payload(sender, clamp_summary(answer.text)))
+    _inbox.setdefault(sender, []).append((phone_number_id, message_id, text))
+    await _drain_if_idle(sender)
 
 
 async def _reply_all(events: list[dict[str, Any]]) -> None:

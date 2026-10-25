@@ -1055,3 +1055,28 @@ async def search_open_web(product: str, budget_s: float = BUDGET_S) -> dict[str,
         ttl = CACHE_S if result["offers"] and not errors else EMPTY_CACHE_S
         _cache[key] = (time.monotonic() + ttl, result)
     return result
+
+
+async def product_name_at(url: str) -> str | None:
+    """El nombre del producto en una página, para comparar un link. None si no se lee."""
+    if not os.environ.get("FIRECRAWL_API_KEY") or not url.startswith("http"):
+        return None
+    try:
+        document = await asyncio.wait_for(
+            AsyncFirecrawl(api_key=os.environ["FIRECRAWL_API_KEY"]).scrape(
+                url, formats=["product"], only_main_content=True, timeout=12_000
+            ),
+            timeout=15,
+        )
+    except Exception:  # noqa: BLE001  un link ilegible no tumba la conversación
+        return None
+    product = getattr(document, "product", None)
+    if product is None and isinstance(document, dict):
+        product = document.get("product")
+    title = getattr(product, "title", None) if product is not None and not isinstance(product, dict) else None
+    if title is None and isinstance(product, dict):
+        title = product.get("title")
+    if not isinstance(title, str):
+        return None
+    title = " ".join(title.split())
+    return title[:160] or None

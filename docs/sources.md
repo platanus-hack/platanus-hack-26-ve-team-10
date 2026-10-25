@@ -141,6 +141,8 @@ No se guardan las cotizaciones. Postgres hoy guarda la conversación del agente,
 
 ## Puntaje de confianza por fuente
 
+La web abierta no corre el puntaje estricto en cada búsqueda. El agente sigue [open_web_trust_skill.md](../services/api/app/agents/open_web_trust_skill.md): cada listado trae `trust_review` con las banderas que ya se ven (precio contra las otras ofertas, dominio que imita una marca, funda o copia). Antigüedad, RIF, políticas y Safe Browsing siguen en `resources/website_trust_score.py` y no se inventan.
+
 Cada canal mide cosas distintas. Para poder compararlos, todos entregan la misma caja: una lista de señales. Cada señal tiene un peso fijo (los de un canal suman 100) y un valor de 0 a 1.
 
 El motor está en `services/api/app/lib/trust.py`. Los modelos (`TrustSignal`, `TrustScore`, `Adjustment`, `MerchantIdentity`) están en `services/api/app/lib/contracts.py`. Los borradores de `resources/` no se importan: son la referencia de las fórmulas y de los nombres de campo. Antes de escribir un adapter, corre el actor con casos reales y confirma esos nombres.

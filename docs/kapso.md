@@ -12,46 +12,19 @@ Kapso exige que el webhook responda en menos de 10 segundos. Por eso la ruta res
 2. Copia el secreto del webhook a `KAPSO_WEBHOOK_SECRET` y la API key del proyecto a `KAPSO_API_KEY`. En local van en `services/api/.env`; en producción, en el secreto `prais-api-secrets` (`infra/40-secrets.sh`).
 3. Opcional: activa el buffering (5 segundos), para que los mensajes seguidos de una persona lleguen juntos.
 
-## Lo que llega del chat
+## Qué lee el agente
 
-El texto que escribe la persona, o el título de una fila que toca, llega al agente tal cual. Un catálogo no arma una lista de modelos antes.
+El texto de la persona llega al agente. Un toque en una lista vieja también: Kapso lo manda como `interactive` con `list_reply.title` (y `button_reply.title` para un botón). Ese título es el mensaje.
 
-La persona puede tocar una fila o contestar con texto. El texto se lee como siempre, en `message.text.body`. Un toque llega como mensaje `interactive`. Kapso documenta ese sobre para `button_reply` (`interactive.button_reply.title`); la fila de una lista usa el mismo sobre con `interactive.type` `list_reply` y `list_reply.title`.
+Hay dos recetas. Si el mensaje trae un link, se lee el nombre del producto en esa página y se compara ese nombre: no se vuelve a preguntar cuál modelo es. Si la persona empieza de cero y el nombre ya se puede buscar, se busca. Si es vago, el agente pregunta una sola cosa, en una frase. La misma pregunta no se manda dos veces: a la segunda, se busca con lo que la persona ya dijo.
 
-Si una respuesta ya trae opciones, WhatsApp las manda como lista. La forma es la de [Enviar listas](https://docs.kapso.ai/docs/whatsapp/send-messages/lists.md): `type: interactive`, `interactive.type: list`, `body.text`, `action.button` y `action.sections[].rows[]` con `id` y `title`. Se manda al mismo endpoint de mensajes, con `X-API-Key`. La arma `list_message` en `services/api/app/agents/listing.py` y la envía `services/api/app/routes/whatsapp.py` solo cuando la respuesta trae `choices`. Si la lista falla, el mismo texto se manda como mensaje de texto. El ejemplo de abajo es la forma del mensaje, no una lista que el catálogo arme solo.
-
-```json
-{
-  "messaging_product": "whatsapp",
-  "to": "584120000000",
-  "type": "interactive",
-  "interactive": {
-    "type": "list",
-    "body": { "text": "¿Cuál iPhone 14 buscas?" },
-    "action": {
-      "button": "Ver opciones",
-      "sections": [
-        {
-          "title": "Modelos",
-          "rows": [
-            { "id": "iphone-14", "title": "iPhone 14" },
-            { "id": "iphone-14-plus", "title": "iPhone 14 Plus" },
-            { "id": "iphone-14-pro", "title": "iPhone 14 Pro" },
-            { "id": "iphone-14-pro-max", "title": "iPhone 14 Pro Max" },
-            { "id": "me-da-igual", "title": "Me da igual" }
-          ]
-        }
-      ]
-    }
-  }
-}
-```
+No hay una lista de modelos armada en el código. Si el agente pregunta, la pregunta sale en texto. Cuando hay dos o más ofertas con precio, la respuesta es el carrusel. Cuando hay una sola, es una tarjeta con el botón para abrirla. El producto de la conversación queda en el estado de la sesión de ADK (`product`). Un mensaje que llega después ("el último", "el que salió") no borra ese producto y no dispara "¿cuál modelo buscas?".
 
 ## Carrusel de la comparación
 
 Cuando el producto ya está exacto, la respuesta es un carrusel (`carousel_message` en `services/api/app/agents/listing.py`). WhatsApp acepta de 2 a 10 tarjetas. Prais manda hasta cinco: las más baratas que publican un precio.
 
-Una fila sin precio no ocupa un lugar. Si hay ofertas reales con precio, las de ejemplo no se usan para llegar a cinco. Siguen marcadas como ejemplo y solo entran cuando no hay ninguna real con precio. Si hay menos de cinco, salen las que hay. Con una sola, o con ninguna, no se arma el carrusel, porque WhatsApp exige al menos dos tarjetas, y se manda el texto. No se inventan precios para completar las cinco.
+Una fila sin precio no ocupa un lugar. Si hay ofertas reales con precio, las de ejemplo no se usan para llegar a cinco. Siguen marcadas como ejemplo y solo entran cuando no hay ninguna real con precio. Si hay menos de cinco, salen las que hay. Con una sola se manda una tarjeta con botón, no un párrafo. Con ninguna, se manda el texto. No se inventan precios para completar las cinco.
 
 ## Pendiente
 
@@ -64,4 +37,3 @@ Una fila sin precio no ocupa un lugar. Si hay ofertas reales con precio, las de 
 - [Seguridad de los webhooks](https://docs.kapso.ai/docs/platform/webhooks/security.md)
 - [Eventos de mensajes](https://docs.kapso.ai/docs/platform/webhooks/message-events.md)
 - [Enviar texto](https://docs.kapso.ai/docs/whatsapp/send-messages/text.md)
-- [Enviar listas](https://docs.kapso.ai/docs/whatsapp/send-messages/lists.md)
