@@ -12,8 +12,8 @@ from fastapi.responses import PlainTextResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-from app.agent import FALLBACK_REPLY, ask_prais
-from app.agents.listing import carousel_message, clamp_summary
+from app.agent import FALLBACK_REPLY, PraisAnswer, ask_prais, drop_product_dialog
+from app.agents.listing import carousel_message, clamp_summary, list_message
 from app.lib.tasks import enqueue_whatsapp_event, queue_enabled
 
 router = APIRouter()
@@ -35,13 +35,36 @@ def _valid_signature(raw_body: bytes, signature: str | None) -> bool:
     return hmac.compare_digest(expected, signature)
 
 
-def _text_message(event: dict[str, Any]) -> tuple[str, str, str] | None:
-    """(phone_number_id, remitente, texto) si el evento es un mensaje de texto procesable."""
+def _reply_title(interactive: dict[str, Any]) -> str:
+    """Título de la fila o del botón. Kapso documenta button_reply así; la lista usa list_reply."""
+    kind = interactive.get("type")
+    if kind == "list_reply":
+        reply = interactive.get("list_reply") or {}
+    elif kind == "button_reply":
+        reply = interactive.get("button_reply") or {}
+    else:
+        return ""
+    if not isinstance(reply, dict):
+        return ""
+    return str(reply.get("title") or reply.get("id") or "").strip()
+
+
+def _inbound_text(event: dict[str, Any]) -> tuple[str, str, str] | None:
+    """(phone_number_id, remitente, texto) de un texto o de una fila tocada."""
     message = event.get("message") or {}
     phone_number_id = event.get("phone_number_id")
-    text = ((message.get("text") or {}).get("body") or "").strip()
     sender = message.get("from")
-    if message.get("type") != "text" or not text or not sender or not phone_number_id:
+    if not sender or not phone_number_id:
+        return None
+    kind = message.get("type")
+    if kind == "text":
+        text = ((message.get("text") or {}).get("body") or "").strip()
+    elif kind == "interactive":
+        interactive = message.get("interactive") or {}
+        text = _reply_title(interactive if isinstance(interactive, dict) else {})
+    else:
+        return None
+    if not text:
         return None
     return phone_number_id, sender, text
 
@@ -82,15 +105,34 @@ def _is_greeting(text: str) -> bool:
     return cleaned in _GREETINGS
 
 
+async def _send_choices(phone_number_id: str, sender: str, answer: PraisAnswer) -> bool:
+    if not answer.choices:
+        return False
+    listing = list_message(sender, answer.list_body or answer.text, answer.choices, section=answer.list_section or "Opciones")
+    if listing is None:
+        return False
+    await _post_message(phone_number_id, listing)
+    return True
+
+
 async def _reply(event: dict[str, Any]) -> None:
-    parsed = _text_message(event)
+    parsed = _inbound_text(event)
     if not parsed:
         return
     phone_number_id, sender, text = parsed
     if _is_greeting(text):
+        drop_product_dialog(f"whatsapp:{sender}")
         await _send_text(phone_number_id, sender, _GREETING_REPLY)
         return
     answer = await ask_prais(f"whatsapp:{sender}", text)
+    if answer.choices:
+        try:
+            if await _send_choices(phone_number_id, sender, answer):
+                return
+        except Exception:
+            log.exception("whatsapp list failed")
+        await _send_text(phone_number_id, sender, answer.text)
+        return
     carousel = await carousel_message(sender, answer.listings, answer.text)
     if carousel is not None:
         try:
@@ -119,7 +161,7 @@ async def whatsapp(request: Request, background: BackgroundTasks):
         return Response(status_code=200)
 
     payload = json.loads(raw_body)
-    events = [e for e in (payload["data"] if payload.get("batch") else [payload]) if _text_message(e)]
+    events = [e for e in (payload["data"] if payload.get("batch") else [payload]) if _inbound_text(e)]
 
     # Kapso exige un 200 en menos de 10 segundos. Con cola, encolar tarda milisegundos y la tarea
     # se reintenta si algo falla; si no se puede encolar, el 500 hace que Kapso reintente la entrega.
@@ -166,7 +208,7 @@ async def whatsapp_task(request: Request):
         log.exception("whatsapp task failed (intento %s de %s)", attempt, MAX_ATTEMPTS)
         if attempt < MAX_ATTEMPTS:
             return Response(status_code=500)
-        parsed = _text_message(event)
+        parsed = _inbound_text(event)
         if parsed:
             try:
                 await _send_text(parsed[0], parsed[1], FALLBACK_REPLY)

@@ -7,6 +7,7 @@ from google.adk.agents import LlmAgent
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
 
+from app.agents.clarify import next_question, search_is_allowed
 from app.agents.specialists import ORCHESTRATOR_NAME, SOURCE_TOOLS
 
 # Una búsqueda por mensaje. El estado de la sesión no sirve: el próximo mensaje
@@ -25,6 +26,37 @@ def _search_once(tool: BaseTool, args: dict[str, Any], tool_context: ToolContext
     return None
 
 
+def _session_user(tool_context: ToolContext) -> str:
+    try:
+        session = tool_context.session
+    except (AttributeError, RuntimeError):
+        return ""
+    user_id = getattr(session, "user_id", None)
+    return user_id if isinstance(user_id, str) else ""
+
+
+def _before_search(tool: BaseTool, args: dict[str, Any], tool_context: ToolContext) -> dict[str, Any] | None:
+    """No busca si el nombre todavía deja una elección que cambia el precio."""
+    product = args.get("product")
+    if tool.name.startswith("find_listings") and isinstance(product, str):
+        user_id = _session_user(tool_context)
+        if not search_is_allowed(user_id, product):
+            question = next_question(product, frozenset())
+            if question is not None:
+                return {
+                    "listings": [],
+                    "ask": {
+                        "question": question.text,
+                        "choices": list(question.choices),
+                        "dimension": question.dimension,
+                        "section": question.section,
+                        "product": product,
+                    },
+                    "notice": "Ask this one question and stop. Do not search.",
+                }
+    return _search_once(tool, args, tool_context)
+
+
 # Las tools devuelven el listado. No hay un segundo modelo reescribiendo ese JSON.
 root_agent = LlmAgent(
     name=ORCHESTRATOR_NAME,
@@ -35,7 +67,9 @@ root_agent = LlmAgent(
 
 Si no sabes qué producto o servicio comparar, pregunta una sola cosa y para. No llames a la tool todavía.
 
-Cuando lo sepas, llama una sola vez a cada tool find_listings_ que tengas, todas con ese mismo producto. Ninguna se repite. Una tool que responde sin ofertas no es un error: esa fuente no tenía nada ahora. Tú eres el único que le habla a la persona.
+Si el nombre todavía deja una elección que cambia el precio, pregunta solo esa y para. No llames a la tool. Esas elecciones son el modelo (regular, Pro, Pro Max u otra variante), si lo quiere nuevo o usado, y la capacidad. Una pregunta por mensaje. Si la tool responde con "ask", haz esa pregunta, con esas opciones, y para.
+
+Cuando el producto ya esté exacto, llama una sola vez a cada tool find_listings_ que tengas, todas con ese mismo texto, sin acortarlo ni cambiarlo. Ninguna se repite. Una tool que responde sin ofertas no es un error: esa fuente no tenía nada ahora. Tú eres el único que le habla a la persona.
 
 Tu mensaje cabe en 250 caracteres. Es el veredicto: cuál opción abrir primero y por qué, con lo que dijeron las tools. No enumeres las ofertas ni repitas vendedor, canal, tasa, reseñas, envío o el link: eso va en las tarjetas. El vendedor es el comercio del listado, nunca la marca del producto, salvo que el listado nombre a esa marca como tienda. Si una oferta es de ejemplo y la mencionas, di que es de ejemplo. Si no hay ofertas con precio, dilo en una frase. No le pidas a la persona que revise avisos sin precio.
 
@@ -45,5 +79,5 @@ Si una oferta trae example true, o el aviso dice datos de ejemplo, o el nombre d
 
 El único puntaje que existe es la confianza del vendedor. No digas que la confianza del precio no está evaluada. No narres lo que hizo cada especialista. No hables de política. Tuteo, sin signos de exclamación dobles, sin tablas. Si preguntan, eres el asistente de usaprais.""",
     tools=SOURCE_TOOLS,
-    before_tool_callback=_search_once,
+    before_tool_callback=_before_search,
 )
